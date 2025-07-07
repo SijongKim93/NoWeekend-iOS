@@ -7,6 +7,7 @@
 //
 
 import CalendarDomain
+import Foundation
 import NWNetwork
 
 public enum NetworkError: Error {
@@ -40,5 +41,78 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         
         return response.data.map { $0.toDomain() }
     }
-
+    
+    public func createSchedule(request: CreateScheduleRequest) async throws -> Schedule {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let isoFormatter = ISO8601DateFormatter()
+        
+        let requestDTO = CreateScheduleRequestDTO(
+            title: request.title,
+            date: dateFormatter.string(from: request.date),
+            startTime: isoFormatter.string(from: request.startTime),
+            endTime: isoFormatter.string(from: request.endTime),
+            category: request.category.rawValue,
+            temperature: request.temperature,
+            allDay: request.allDay,
+            alarmOption: request.alarmOption.rawValue
+        )
+        
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(requestDTO)
+        guard let parameters = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NetworkError.networkError("Failed to serialize parameters")
+        }
+        
+        let response: CreateScheduleResponseDTO = try await networkService.post(
+            endpoint: "/schedule",
+            parameters: parameters
+        )
+        
+        return response.toDomain()
+    }
+    
+    public func updateSchedule(id: String, request: UpdateScheduleRequest) async throws -> Schedule {
+        let isoFormatter = ISO8601DateFormatter()
+        
+        let requestDTO = UpdateScheduleRequestDTO(
+            title: request.title,
+            startTime: isoFormatter.string(from: request.startTime),
+            endTime: isoFormatter.string(from: request.endTime),
+            category: request.category.rawValue,
+            temperature: request.temperature,
+            allDay: request.allDay,
+            alarmOption: request.alarmOption.rawValue
+        )
+        
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(requestDTO)
+        guard let parameters = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NetworkError.networkError("Failed to serialize parameters")
+        }
+        
+        let response: UpdateScheduleAPIResponseDTO = try await networkService.put(
+            endpoint: "/schedule/\(id)",
+            parameters: parameters
+        )
+        
+        guard response.result == "SUCCESS", let data = response.data else {
+            let errorMessage = response.error?.message ?? "일정 수정 실패"
+            throw NetworkError.serverError(errorMessage)
+        }
+        
+        return data.toDomain()
+    }
+    
+    public func deleteSchedule(id: String) async throws {
+        let response: ScheduleResponseDTO = try await networkService.delete(
+            endpoint: "/schedule/\(id)"
+        )
+        
+        guard response.result == "SUCCESS" else {
+            let errorMessage = response.error?.message ?? "일정 삭제 실패"
+            throw NetworkError.serverError(errorMessage)
+        }
+    }
 }
