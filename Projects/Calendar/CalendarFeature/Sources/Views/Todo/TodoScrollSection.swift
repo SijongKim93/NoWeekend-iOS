@@ -15,6 +15,9 @@ struct TodoScrollSection: View {
     @Binding var showTaskEditSheet: Bool
     @Binding var scrollOffset: CGFloat
     @Binding var isScrolling: Bool
+    @Binding var editingTaskIndex: Int?
+    
+    var onTitleChanged: ((Int, String) -> Void)?
     
     private var incompleteTodoCount: Int {
         todoItems.filter { !$0.isCompleted }.count
@@ -110,7 +113,13 @@ struct TodoScrollSection: View {
                         onMoreTapped: {
                             selectedTaskIndex = index
                             showTaskEditSheet = true
-                        }
+                        },
+                        onTitleChanged: { newTitle in
+                            todoItems[index].title = newTitle
+                            editingTaskIndex = nil
+                            onTitleChanged?(index, newTitle)
+                        },
+                        forceEditMode: editingTaskIndex == index
                     )
                     .contentShape(Rectangle())
                 }
