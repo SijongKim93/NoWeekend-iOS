@@ -48,8 +48,7 @@ public struct TaskCategorySelectionView: View {
                         VStack(spacing: 0) {
                             ForEach(Array(categories.enumerated()), id: \.offset) { index, category in
                                 CategoryRowCenter(
-                                    category: category,
-                                    isLast: index == categories.count - 1
+                                    category: category
                                 ) {
                                     selectCategory(category)
                                 }
@@ -63,16 +62,15 @@ public struct TaskCategorySelectionView: View {
                         Button(action: {
                             dismissWithAnimation()
                         }) {
-                            HStack(spacing: 8) {
-                                DS.Images.icnEdit
-                                    .foregroundColor(DS.Colors.Neutral.gray500)
-                                
+                            HStack {
                                 Text("직접 입력")
                                     .font(.body1)
                                     .foregroundColor(DS.Colors.Text.netural)
+                                
+                                Spacer()
                             }
                             .padding(.vertical, 16)
-                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 20)
                             .contentShape(Rectangle())
                         }
                     }
@@ -120,44 +118,25 @@ public struct TaskCategorySelectionView: View {
 
 struct CategoryRowCenter: View {
     let category: TaskCategory
-    let isLast: Bool
     let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 0) {
-            Button(action: action) {
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(category.color)
-                        .frame(width: 8, height: 8)
-                    
-                    Text(category.name)
-                        .font(.body1)
-                        .foregroundColor(DS.Colors.Text.netural)
-                    
-                    Spacer()
-                }
-                .padding(.vertical, 16)
-                .padding(.horizontal, 20)
-                .contentShape(Rectangle())
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(category.color)
+                    .frame(width: 8, height: 8)
+                
+                Text(category.name)
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Text.netural)
+                
+                Spacer()
             }
-            
-            if !isLast {
-                Rectangle()
-                    .fill(DS.Colors.Border.border01)
-                    .frame(height: 1)
-            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .contentShape(Rectangle())
         }
-    }
-}
-
-public struct TaskCategory {
-    public let name: String
-    public let color: Color
-    
-    public init(name: String, color: Color) {
-        self.name = name
-        self.color = color
     }
 }
 
