@@ -6,9 +6,11 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import Foundation
 import CalendarDomain
 import Foundation
 import NWNetwork
+import Utils
 
 public enum NetworkError: Error {
     case serverError(String)
@@ -61,9 +63,7 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         
         let encoder = JSONEncoder()
         let data = try encoder.encode(requestDTO)
-        guard let parameters = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NetworkError.networkError("Failed to serialize parameters")
-        }
+        let parameters = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         
         let response: CreateScheduleResponseDTO = try await networkService.post(
             endpoint: "/schedule",
@@ -88,9 +88,7 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         
         let encoder = JSONEncoder()
         let data = try encoder.encode(requestDTO)
-        guard let parameters = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw NetworkError.networkError("Failed to serialize parameters")
-        }
+        let parameters = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         
         let response: UpdateScheduleAPIResponseDTO = try await networkService.put(
             endpoint: "/schedule/\(id)",

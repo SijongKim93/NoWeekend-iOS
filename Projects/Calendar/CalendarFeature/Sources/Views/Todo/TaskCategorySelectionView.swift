@@ -9,6 +9,16 @@
 import DesignSystem
 import SwiftUI
 
+public struct TaskCategory {
+    public let name: String
+    public let color: Color
+    
+    public init(name: String, color: Color) {
+        self.name = name
+        self.color = color
+    }
+}
+
 public struct TaskCategorySelectionView: View {
     @Binding var isPresented: Bool
     let onCategorySelected: (TaskCategory) -> Void
