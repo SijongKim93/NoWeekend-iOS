@@ -60,6 +60,13 @@ public struct CalendarView: View {
         .task {
             await initializeView()
         }
+        .alert("삭제 실패", isPresented: .constant(errorMessage != nil && (errorMessage!.contains("삭제") || errorMessage!.contains("일정")))) {
+            Button("확인") {
+                errorMessage = nil
+            }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 }
 
