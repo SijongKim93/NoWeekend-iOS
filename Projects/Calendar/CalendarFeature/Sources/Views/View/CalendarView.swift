@@ -17,26 +17,20 @@ public struct CalendarView: View {
 
     @State private var selectedDate = Date()
     @State private var selectedToggle: CalendarNavigationBar.ToggleOption = .week
+    @State private var dailySchedules: [DailySchedule] = []
+    
     @State private var showDatePicker = false
     @State private var showTaskEditSheet = false
-    @State private var selectedTaskIndex: Int?
+    @State private var showCategorySelection = false
     @State private var scrollOffset: CGFloat = 0
     @State private var isScrolling = false
     
-    @State private var dailySchedules: [DailySchedule] = []
+    @State private var selectedTaskIndex: Int?
+    @State private var todoItems = TodoItem.mockData
+    
     @State private var isLoading = false
-    @State private var errorMessage: String?
-    
     @State private var isDeletingSchedule = false
-    @State private var selectedScheduleId: String?
-    
-    @State private var todoItems = [
-        TodoItem(id: 1, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 2, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 3, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 4, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 5, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00")
-    ]
+    @State private var errorMessage: String?
     
     private var isFloatingButtonExpanded: Bool {
         scrollOffset == 0 && !isScrolling
@@ -46,163 +40,208 @@ public struct CalendarView: View {
     
     public var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                CalendarNavigationBar(
-                    dateText: formatSelectedDate(selectedDate),
-                    onDateTapped: {
-                        showDatePicker = true
-                    },
-                    onToggleChanged: { toggle in
-                        selectedToggle = toggle
-                        Task {
-                            await loadSchedules()
-                        }
-                    }
-                )
-                
-                CalendarSection(
-                    selectedDate: selectedDate,
-                    selectedToggle: selectedToggle,
-                    onDateTap: { date in
-                        selectedDate = date
-                        Task {
-                            await loadSchedules()
-                        }
-                    },
-                    calendarCellContent: calendarCellContent
-                )
-                
-                if selectedToggle == .week {
-                    TodoScrollSection(
-                        todoItems: $todoItems,
-                        selectedTaskIndex: $selectedTaskIndex,
-                        showTaskEditSheet: $showTaskEditSheet,
-                        scrollOffset: $scrollOffset,
-                        isScrolling: $isScrolling
-                    )
-                    .background(.white)
-                } else {
-                    Spacer()
-                        .background(.white)
-                }
-            }
-            .background(.white)
-            
-            // 플로팅 버튼
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    FloatingAddButton(
-                        isExpanded: isFloatingButtonExpanded,
-                        action: addNewTodo
-                    )
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 33)
-                }
-            }
+            mainContent
+            categorySelectionOverlay
+            floatingButton
         }
         .sheet(isPresented: $showDatePicker) {
             DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
         }
         .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
-                onEditAction: {
-                    showTaskEditSheet = false
-                    // TODO: 할일/일정 수정 로직 구현
-                },
-                onTomorrowAction: {
-                    showTaskEditSheet = false
-                    // TODO: 내일 또 하기 로직 구현
-                },
-                onDeleteAction: {
-                    showTaskEditSheet = false
-                    
-                    if let index = selectedTaskIndex {
-                        todoItems.remove(at: index)
-                        selectedTaskIndex = nil
-                    }
-                    
-                    if let firstSchedule = getFirstAvailableSchedule() {
-                        selectedScheduleId = firstSchedule.id
-                        Task {
-                            await deleteSchedule(id: firstSchedule.id)
-                        }
-                    }
-                },
+                onEditAction: handleTaskEdit,
+                onTomorrowAction: handleTomorrowAction,
+                onDeleteAction: handleDeleteAction,
                 isPresented: $showTaskEditSheet
             )
         }
         .task {
-            scrollOffset = 0
-            await loadSchedules()
-        }
-        .alert("삭제 실패", isPresented: .constant(errorMessage != nil && (errorMessage!.contains("삭제") || errorMessage!.contains("일정")))) {
-            Button("확인") {
-                errorMessage = nil
-            }
-        } message: {
-            Text(errorMessage ?? "")
+            await initializeView()
         }
     }
+}
 
-    private func loadSchedules() async {
+// MARK: - View Components
+private extension CalendarView {
+    var mainContent: some View {
+        VStack(spacing: 0) {
+            CalendarNavigationBar(
+                dateText: formatSelectedDate(selectedDate),
+                onDateTapped: { showDatePicker = true },
+                onToggleChanged: handleToggleChange
+            )
+            
+            CalendarSection(
+                selectedDate: selectedDate,
+                selectedToggle: selectedToggle,
+                onDateTap: handleDateTap,
+                calendarCellContent: calendarCellContent
+            )
+            
+            contentSection
+        }
+        .background(.white)
+    }
+    
+    @ViewBuilder
+    var contentSection: some View {
+        if selectedToggle == .week {
+            TodoScrollSection(
+                todoItems: $todoItems,
+                selectedTaskIndex: $selectedTaskIndex,
+                showTaskEditSheet: $showTaskEditSheet,
+                scrollOffset: $scrollOffset,
+                isScrolling: $isScrolling
+            )
+            .background(.white)
+        } else {
+            Spacer()
+                .background(.white)
+        }
+    }
+    
+    @ViewBuilder
+    var categorySelectionOverlay: some View {
+        if showCategorySelection {
+            TaskCategorySelectionView(
+                isPresented: $showCategorySelection,
+                onCategorySelected: addNewTodoWithCategory
+            )
+            .zIndex(1)
+        }
+    }
+    
+    var floatingButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                FloatingAddButton(
+                    isExpanded: isFloatingButtonExpanded,
+                    isShowingCategory: showCategorySelection,
+                    action: showCategorySelectionWithAnimation,
+                    dismissAction: hideCategorySelectionWithAnimation
+                )
+                .padding(.trailing, 20)
+                .padding(.bottom, 33)
+            }
+        }
+        .zIndex(2)
+    }
+}
+
+private extension CalendarView {
+    func handleToggleChange(_ toggle: CalendarNavigationBar.ToggleOption) {
+        selectedToggle = toggle
+        Task { await loadSchedules() }
+    }
+    
+    func handleDateTap(_ date: Date) {
+        selectedDate = date
+        Task { await loadSchedules() }
+    }
+    
+    func handleTaskEdit() {
+        showTaskEditSheet = false
+        // TODO: 할일/일정 수정 로직 구현
+    }
+    
+    func handleTomorrowAction() {
+        showTaskEditSheet = false
+        // TODO: 내일 또 하기 로직 구현
+    }
+    
+    func handleDeleteAction() {
+        showTaskEditSheet = false
+        
+        if let index = selectedTaskIndex {
+            todoItems.remove(at: index)
+            selectedTaskIndex = nil
+        }
+        
+        if let schedule = getFirstAvailableSchedule() {
+            Task { await deleteSchedule(id: schedule.id) }
+        }
+    }
+    
+    func showCategorySelectionWithAnimation() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showCategorySelection = true
+        }
+    }
+    
+    func hideCategorySelectionWithAnimation() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showCategorySelection = false
+        }
+    }
+}
+
+// MARK: - Data Operations
+private extension CalendarView {
+    func initializeView() async {
+        scrollOffset = 0
+        await loadSchedules()
+    }
+    
+    func loadSchedules() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            switch selectedToggle {
-            case .week:
-                dailySchedules = try await calendarUseCase.getWeeklySchedules(for: selectedDate)
-            case .month:
-                dailySchedules = try await calendarUseCase.getMonthlySchedules(for: selectedDate)
-            }
-            print("📅 로드된 일정: \(dailySchedules.count)일, 총 \(dailySchedules.flatMap { $0.schedules }.count)개 일정")
+            dailySchedules = try await fetchSchedules()
+            logScheduleData()
         } catch {
-            errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
-            print("일정 로드 실패: \(error)")
+            handleScheduleLoadError(error)
         }
         
         isLoading = false
     }
     
-    private func deleteSchedule(id: String) async {
+    func fetchSchedules() async throws -> [DailySchedule] {
+        switch selectedToggle {
+        case .week:
+            return try await calendarUseCase.getWeeklySchedules(for: selectedDate)
+        case .month:
+            return try await calendarUseCase.getMonthlySchedules(for: selectedDate)
+        }
+    }
+    
+    func deleteSchedule(id: String) async {
         isDeletingSchedule = true
-        print("🗑️ 일정 삭제 시작 - ID: \(id)")
         
         do {
             let result = try await calendarUseCase.deleteSchedule(id: id)
-            print("✅ 일정 삭제 성공: \(result)")
-            
             await loadSchedules()
-            
-            selectedScheduleId = nil
-            
         } catch {
-            errorMessage = "일정 삭제에 실패했습니다: \(error.localizedDescription)"
-            print("❌ 일정 삭제 실패: \(error)")
+            print("일정 삭제 실패: \(error)")
         }
         
         isDeletingSchedule = false
     }
     
-    
-    // TODO: API 연결 테스트용, 추후 서버 정상작동시 삭제예정
-    private func getFirstAvailableSchedule() -> Schedule? {
-        let allSchedules = dailySchedules.flatMap { $0.schedules }
-        let firstSchedule = allSchedules.first
+    func addNewTodoWithCategory(_ category: TaskCategory) {
+        let newTodo = TodoItem.create(
+            id: todoItems.count + 1,
+            title: category.name,
+            category: category
+        )
         
-        if let schedule = firstSchedule {
-            print("🎯 삭제 대상 일정 선택: \(schedule.title) (ID: \(schedule.id))")
-        } else {
-            print("⚠️ 삭제할 수 있는 일정이 없습니다.")
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            todoItems.append(newTodo)
         }
-        
-        return firstSchedule
     }
-        
+}
+
+// MARK: - Helper Functions
+private extension CalendarView {
+    func getFirstAvailableSchedule() -> Schedule? {
+        let allSchedules = dailySchedules.flatMap { $0.schedules }
+        return allSchedules.first
+    }
+    
     @ViewBuilder
-    private func calendarCellContent(for date: Date) -> some View {
+    func calendarCellContent(for date: Date) -> some View {
         let schedulesForDate = getSchedulesForDate(date)
         
         if !schedulesForDate.isEmpty {
@@ -216,33 +255,50 @@ public struct CalendarView: View {
         }
     }
     
-    private func getSchedulesForDate(_ date: Date) -> [Schedule] {
+    func getSchedulesForDate(_ date: Date) -> [Schedule] {
         let dateString = date.toString(format: "yyyy-MM-dd")
         return dailySchedules
             .first { $0.date == dateString }?
             .schedules ?? []
     }
     
-    private func formatSelectedDate(_ date: Date) -> String {
+    func formatSelectedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "yyyy년 M월"
         return formatter.string(from: date)
     }
     
-    private func getTodosForDate(_ date: Date) -> [TodoItem] {
-        todoItems.prefix(2).map { $0 }
+    func logScheduleData() {
+        let totalSchedules = dailySchedules.flatMap { $0.schedules }.count
     }
     
-    private func addNewTodo() {
-        let newTodo = TodoItem(
-            id: todoItems.count + 1,
-            title: "새로운 할 일",
+    func handleScheduleLoadError(_ error: Error) {
+        errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
+        print("일정 로드 실패: \(error)")
+    }
+}
+
+// MARK: - TodoItem Extensions
+private extension TodoItem {
+    static var mockData: [TodoItem] {
+        [
+            TodoItem(id: 1, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
+            TodoItem(id: 2, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
+            TodoItem(id: 3, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
+            TodoItem(id: 4, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
+            TodoItem(id: 5, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00")
+        ]
+    }
+    
+    static func create(id: Int, title: String, category: TaskCategory) -> TodoItem {
+        TodoItem(
+            id: id,
+            title: title,
             isCompleted: false,
-            category: DesignSystem.TodoCategory(name: "개인", color: DS.Colors.TaskItem.green),
+            category: DesignSystem.TodoCategory(name: category.name, color: category.color),
             time: nil
         )
-        todoItems.append(newTodo)
     }
 }
 
