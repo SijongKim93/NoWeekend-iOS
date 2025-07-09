@@ -9,13 +9,15 @@
 import SwiftUI
 import DesignSystem
 
-struct HomeView: View {
+public struct HomeView: View {
     @StateObject private var store = HomeStore()
     
     @State private var currentLongCardPage: Int = 0
     @State private var currentShortCardPage: Int = 0
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         ZStack(alignment: .top) {
             DS.Images.imgGradient
                 .resizable()
