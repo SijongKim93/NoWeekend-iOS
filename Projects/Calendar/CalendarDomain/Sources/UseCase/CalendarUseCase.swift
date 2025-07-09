@@ -37,8 +37,55 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         )
     }
     
-    public func deleteSchedule(id: String) async throws -> String {
-        return try await calendarRepository.deleteSchedule(id: id)
+    public func createSchedule(
+        title: String,
+        date: Date,
+        startTime: Date,
+        endTime: Date,
+        category: ScheduleCategory,
+        temperature: Int = 3,
+        allDay: Bool = false,
+        alarmOption: AlarmOption = .none
+    ) async throws -> Schedule {
+        let request = CreateScheduleRequest(
+            title: title,
+            date: date,
+            startTime: startTime,
+            endTime: endTime,
+            category: category,
+            temperature: temperature,
+            allDay: allDay,
+            alarmOption: alarmOption
+        )
+        
+        return try await calendarRepository.createSchedule(request: request)
+    }
+    
+    public func updateSchedule(
+        id: String,
+        title: String,
+        startTime: Date,
+        endTime: Date,
+        category: ScheduleCategory,
+        temperature: Int = 3,
+        allDay: Bool = false,
+        alarmOption: AlarmOption = .none
+    ) async throws -> Schedule {
+        let request = UpdateScheduleRequest(
+            title: title,
+            startTime: startTime,
+            endTime: endTime,
+            category: category,
+            temperature: temperature,
+            allDay: allDay,
+            alarmOption: alarmOption
+        )
+        
+        return try await calendarRepository.updateSchedule(id: id, request: request)
+    }
+    
+    public func deleteSchedule(id: String) async throws {
+        try await calendarRepository.deleteSchedule(id: id)
     }
     
     private func calculateWeekRange(for date: Date) -> (Date, Date) {
