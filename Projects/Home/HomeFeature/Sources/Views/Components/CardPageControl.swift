@@ -1,6 +1,6 @@
 //
 //  CardPageControl.swift
-//  Home
+//  HomeFeature
 //
 //  Created by 김나희 on 6/29/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.

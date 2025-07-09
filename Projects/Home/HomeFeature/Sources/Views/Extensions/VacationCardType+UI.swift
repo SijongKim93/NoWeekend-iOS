@@ -1,44 +1,15 @@
 //
-//  VactionCardType.swift
-//  Home
+//  VacationCardType+UI.swift
+//  HomeFeature
 //
-//  Created by 김나희 on 6/29/25.
+//  Created by 김나희 on 7/3/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
 import SwiftUI
 import DesignSystem
 
-enum VacationCardType: CaseIterable, Hashable {
-    
-    enum ViewType {
-        case long
-        case short
-    }
-
-    case monday, birthday, holiday, sandwich, noholiday, friday
-    case trip, good, home, koreaTrip
-
-    var viewType: ViewType {
-        switch self {
-        case .trip, .good, .home, .koreaTrip:
-            return .long
-        default:
-            return .short
-        }
-    }
-    
-    var icon: Image {
-        switch self {
-        case .trip: return DS.Images.imgTrip
-        case .good, .friday, .monday: return DS.Images.imgStar
-        case .home: return DS.Images.imgHome
-        case .koreaTrip: return DS.Images.imgTrain
-        case .birthday: return DS.Images.imgCake
-        case .holiday, .noholiday: return DS.Images.imgKorea
-        case .sandwich: return DS.Images.imgSandwich
-        }
-    }
+extension VacationCardType {
     
     var text: String {
         switch self {
@@ -66,6 +37,18 @@ enum VacationCardType: CaseIterable, Hashable {
         }
     }
     
+    var icon: Image {
+        switch self {
+        case .trip: return DS.Images.imgTrip
+        case .good, .friday, .monday: return DS.Images.imgStar
+        case .home: return DS.Images.imgHome
+        case .koreaTrip: return DS.Images.imgTrain
+        case .birthday: return DS.Images.imgCake
+        case .holiday, .noholiday: return DS.Images.imgKorea
+        case .sandwich: return DS.Images.imgSandwich
+        }
+    }
+    
     var attributedText: AttributedString? {
         switch self {
         case .birthday:
@@ -75,9 +58,7 @@ enum VacationCardType: CaseIterable, Hashable {
             }
             return str
         case .holiday:
-            var str = AttributedString("공휴일")
-            // 예시: 전체를 하이라이트하지 않음
-            return str
+            return AttributedString("공휴일")
         case .friday:
             var str = AttributedString("금요일에 연차쓰고 일 쉬어요")
             if let range = str.range(of: "일 쉬어요") {
@@ -100,4 +81,4 @@ enum VacationCardType: CaseIterable, Hashable {
             return nil
         }
     }
-}
+} 

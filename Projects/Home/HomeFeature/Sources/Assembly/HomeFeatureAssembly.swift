@@ -18,12 +18,12 @@ public struct HomeFeatureAssembly: Assembly {
         print("🏠 HomeFeatureAssembly 등록 시작")
         
         // UseCase만 등록
-        container.register(EventUseCaseProtocol.self) { resolver in
-            print("📋 EventUseCase 생성 (Feature)")
-            let repository = resolver.resolve(EventRepositoryProtocol.self)!
-            return EventUseCase(eventRepository: repository)
+        container.register(HomeUseCaseProtocol.self) { resolver in
+            print("📋 HomeUseCase 생성 (Feature)")
+            let repository = resolver.resolve(HomeRepositoryProtocol.self)!
+            return HomeUseCase(homeRepository: repository)
         }.inObjectScope(.graph)
         
         print("✅ HomeFeatureAssembly 등록 완료")
     }
-}
+} 
