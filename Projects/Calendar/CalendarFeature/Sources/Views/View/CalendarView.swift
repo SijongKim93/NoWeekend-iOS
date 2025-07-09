@@ -11,7 +11,6 @@ import DesignSystem
 import Utils
 import DIContainer
 import SwiftUI
-import Utils
 
 public struct CalendarView: View {
     @Dependency private var calendarUseCase: CalendarUseCaseProtocol
@@ -27,6 +26,9 @@ public struct CalendarView: View {
     @State private var dailySchedules: [DailySchedule] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    
+    @State private var isDeletingSchedule = false
+    @State private var selectedScheduleId: String?
     
     @State private var todoItems = [
         TodoItem(id: 1, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
@@ -52,6 +54,9 @@ public struct CalendarView: View {
                     },
                     onToggleChanged: { toggle in
                         selectedToggle = toggle
+                        Task {
+                            await loadSchedules()
+                        }
                     }
                 )
                 
@@ -60,6 +65,9 @@ public struct CalendarView: View {
                     selectedToggle: selectedToggle,
                     onDateTap: { date in
                         selectedDate = date
+                        Task {
+                            await loadSchedules()
+                        }
                     },
                     calendarCellContent: calendarCellContent
                 )
@@ -101,65 +109,119 @@ public struct CalendarView: View {
             TaskEditBottomSheet(
                 onEditAction: {
                     showTaskEditSheet = false
+                    // TODO: 할일/일정 수정 로직 구현
                 },
                 onTomorrowAction: {
                     showTaskEditSheet = false
+                    // TODO: 내일 또 하기 로직 구현
                 },
                 onDeleteAction: {
+                    showTaskEditSheet = false
+                    
                     if let index = selectedTaskIndex {
                         todoItems.remove(at: index)
+                        selectedTaskIndex = nil
                     }
-                    selectedTaskIndex = nil
-                    showTaskEditSheet = false
+                    
+                    if let firstSchedule = getFirstAvailableSchedule() {
+                        selectedScheduleId = firstSchedule.id
+                        Task {
+                            await deleteSchedule(id: firstSchedule.id)
+                        }
+                    }
                 },
                 isPresented: $showTaskEditSheet
             )
         }
-        .onAppear {
+        .task {
             scrollOffset = 0
+            await loadSchedules()
+        }
+        .alert("삭제 실패", isPresented: .constant(errorMessage != nil && (errorMessage!.contains("삭제") || errorMessage!.contains("일정")))) {
+            Button("확인") {
+                errorMessage = nil
+            }
+        } message: {
+            Text(errorMessage ?? "")
         }
     }
 
     private func loadSchedules() async {
-            isLoading = true
-            errorMessage = nil
-            
-            do {
-                switch selectedToggle {
-                case .week:
-                    dailySchedules = try await calendarUseCase.getWeeklySchedules(for: selectedDate)
-                case .month:
-                    dailySchedules = try await calendarUseCase.getMonthlySchedules(for: selectedDate)
-                }
-            } catch {
-                errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
-                print("일정 로드 실패: \(error)")
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            switch selectedToggle {
+            case .week:
+                dailySchedules = try await calendarUseCase.getWeeklySchedules(for: selectedDate)
+            case .month:
+                dailySchedules = try await calendarUseCase.getMonthlySchedules(for: selectedDate)
             }
-            
-            isLoading = false
+            print("📅 로드된 일정: \(dailySchedules.count)일, 총 \(dailySchedules.flatMap { $0.schedules }.count)개 일정")
+        } catch {
+            errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
+            print("일정 로드 실패: \(error)")
         }
         
-        @ViewBuilder
-        private func calendarCellContent(for date: Date) -> some View {
-            let schedulesForDate = getSchedulesForDate(date)
+        isLoading = false
+    }
+    
+    private func deleteSchedule(id: String) async {
+        isDeletingSchedule = true
+        print("🗑️ 일정 삭제 시작 - ID: \(id)")
+        
+        do {
+            let result = try await calendarUseCase.deleteSchedule(id: id)
+            print("✅ 일정 삭제 성공: \(result)")
             
-            if !schedulesForDate.isEmpty {
-                DS.Images.imgToastDefault
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                DS.Images.imgFlour
-                    .resizable()
-                    .scaledToFit()
-            }
+            await loadSchedules()
+            
+            selectedScheduleId = nil
+            
+        } catch {
+            errorMessage = "일정 삭제에 실패했습니다: \(error.localizedDescription)"
+            print("❌ 일정 삭제 실패: \(error)")
         }
         
-        private func getSchedulesForDate(_ date: Date) -> [Schedule] {
-            let dateString = date.toString(format: "yyyy-MM-dd")
-            return dailySchedules
-                .first { $0.date == dateString }?
-                .schedules ?? []
+        isDeletingSchedule = false
+    }
+    
+    
+    // TODO: API 연결 테스트용, 추후 서버 정상작동시 삭제예정
+    private func getFirstAvailableSchedule() -> Schedule? {
+        let allSchedules = dailySchedules.flatMap { $0.schedules }
+        let firstSchedule = allSchedules.first
+        
+        if let schedule = firstSchedule {
+            print("🎯 삭제 대상 일정 선택: \(schedule.title) (ID: \(schedule.id))")
+        } else {
+            print("⚠️ 삭제할 수 있는 일정이 없습니다.")
         }
+        
+        return firstSchedule
+    }
+        
+    @ViewBuilder
+    private func calendarCellContent(for date: Date) -> some View {
+        let schedulesForDate = getSchedulesForDate(date)
+        
+        if !schedulesForDate.isEmpty {
+            DS.Images.imgToastDefault
+                .resizable()
+                .scaledToFit()
+        } else {
+            DS.Images.imgFlour
+                .resizable()
+                .scaledToFit()
+        }
+    }
+    
+    private func getSchedulesForDate(_ date: Date) -> [Schedule] {
+        let dateString = date.toString(format: "yyyy-MM-dd")
+        return dailySchedules
+            .first { $0.date == dateString }?
+            .schedules ?? []
+    }
     
     private func formatSelectedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -172,7 +234,7 @@ public struct CalendarView: View {
         todoItems.prefix(2).map { $0 }
     }
     
-  private func addNewTodo() {
+    private func addNewTodo() {
         let newTodo = TodoItem(
             id: todoItems.count + 1,
             title: "새로운 할 일",
