@@ -409,17 +409,6 @@ private extension TodoItem {
     }
 }
 
-// MARK: - TaskCategory 타입 정의
-public struct TaskCategory {
-    public let name: String
-    public let color: Color
-    
-    public init(name: String, color: Color) {
-        self.name = name
-        self.color = color
-    }
-}
-
 #Preview {
     CalendarView()
 }
