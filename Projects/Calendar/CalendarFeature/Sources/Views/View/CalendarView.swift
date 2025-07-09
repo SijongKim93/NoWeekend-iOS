@@ -60,13 +60,75 @@ public struct CalendarView: View {
         .task {
             await initializeView()
         }
-        .alert("삭제 실패", isPresented: .constant(errorMessage != nil && (errorMessage!.contains("삭제") || errorMessage!.contains("일정")))) {
-            Button("확인") {
-                errorMessage = nil
-            }
-        } message: {
-            Text(errorMessage ?? "")
+    }
+}
+
+// MARK: - View Components
+private extension CalendarView {
+    var mainContent: some View {
+        VStack(spacing: 0) {
+            CalendarNavigationBar(
+                dateText: formatSelectedDate(selectedDate),
+                onDateTapped: { showDatePicker = true },
+                onToggleChanged: handleToggleChange
+            )
+            
+            CalendarSection(
+                selectedDate: selectedDate,
+                selectedToggle: selectedToggle,
+                onDateTap: handleDateTap,
+                calendarCellContent: calendarCellContent
+            )
+            
+            contentSection
         }
+        .background(.white)
+    }
+    
+    @ViewBuilder
+    var contentSection: some View {
+        if selectedToggle == .week {
+            TodoScrollSection(
+                todoItems: $todoItems,
+                selectedTaskIndex: $selectedTaskIndex,
+                showTaskEditSheet: $showTaskEditSheet,
+                scrollOffset: $scrollOffset,
+                isScrolling: $isScrolling
+            )
+            .background(.white)
+        } else {
+            Spacer()
+                .background(.white)
+        }
+    }
+    
+    @ViewBuilder
+    var categorySelectionOverlay: some View {
+        if showCategorySelection {
+            TaskCategorySelectionView(
+                isPresented: $showCategorySelection,
+                onCategorySelected: addNewTodoWithCategory
+            )
+            .zIndex(1)
+        }
+    }
+    
+    var floatingButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                FloatingAddButton(
+                    isExpanded: isFloatingButtonExpanded,
+                    isShowingCategory: showCategorySelection,
+                    action: showCategorySelectionWithAnimation,
+                    dismissAction: hideCategorySelectionWithAnimation
+                )
+                .padding(.trailing, 20)
+                .padding(.bottom, 33)
+            }
+        }
+        .zIndex(2)
     }
 }
 
