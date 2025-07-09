@@ -119,7 +119,7 @@ struct TodoScrollSection: View {
                             editingTaskIndex = nil
                             onTitleChanged?(index, newTitle)
                         },
-                        forceEditMode: editingTaskIndex == index
+                        isEditingMode: editingTaskIndex == index
                     )
                     .contentShape(Rectangle())
                 }
