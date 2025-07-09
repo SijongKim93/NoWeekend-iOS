@@ -44,7 +44,6 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         return response.data.map { $0.toDomain() }
     }
     
-<<<<<<< HEAD
     public func createSchedule(request: CreateScheduleRequest) async throws -> Schedule {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -106,24 +105,16 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
     
     public func deleteSchedule(id: String) async throws {
         let response: ScheduleResponseDTO = try await networkService.delete(
-=======
-    public func deleteSchedule(id: String) async throws -> String {
-        let response: DeleteScheduleResponseDTO = try await networkService.delete(
->>>>>>> 7a5f5bf (feat/#62 일정삭제 레포지토리 구현)
             endpoint: "/schedule/\(id)"
         )
         
         guard response.result == "SUCCESS" else {
-<<<<<<< HEAD
-            let errorMessage = response.error?.message ?? "일정 삭제 실패"
-            throw NetworkError.serverError(errorMessage)
         }
-=======
-            let errorMessage = response.error?.message ?? "일정 삭제에 실패했습니다."
+            throw NetworkError.serverError(errorMessage)
+            let errorMessage = response.error?.message ?? "일정 삭제 실패"
             throw NetworkError.serverError(errorMessage)
         }
         
         return response.data ?? "일정이 성공적으로 삭제되었습니다."
->>>>>>> 7a5f5bf (feat/#62 일정삭제 레포지토리 구현)
     }
 }
