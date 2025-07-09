@@ -26,10 +26,12 @@ public struct CalendarView: View {
     @State private var isScrolling = false
     
     @State private var selectedTaskIndex: Int?
+    @State private var editingTaskIndex: Int? = nil
     @State private var todoItems = TodoItem.mockData
     
     @State private var isLoading = false
     @State private var isDeletingSchedule = false
+    @State private var isUpdatingSchedule = false  // ← 수정 중 상태
     @State private var errorMessage: String?
     
     private var isFloatingButtonExpanded: Bool {
@@ -41,7 +43,7 @@ public struct CalendarView: View {
     public var body: some View {
         ZStack {
             mainContent
-            categorySelectionOverlay
+            overlayContent
             floatingButton
         }
         .sheet(isPresented: $showDatePicker) {
@@ -91,7 +93,13 @@ private extension CalendarView {
                 selectedTaskIndex: $selectedTaskIndex,
                 showTaskEditSheet: $showTaskEditSheet,
                 scrollOffset: $scrollOffset,
-                isScrolling: $isScrolling
+                isScrolling: $isScrolling,
+                editingTaskIndex: $editingTaskIndex,
+                onTitleChanged: { index, newTitle in
+                    Task {
+                        await updateTodoTitle(index: index, newTitle: newTitle)
+                    }
+                }
             )
             .background(.white)
         } else {
@@ -101,11 +109,11 @@ private extension CalendarView {
     }
     
     @ViewBuilder
-    var categorySelectionOverlay: some View {
+    var overlayContent: some View {
         if showCategorySelection {
             TaskCategorySelectionView(
                 isPresented: $showCategorySelection,
-                onCategorySelected: addNewTodoWithCategory
+                onCategorySelected: handleCategorySelection
             )
             .zIndex(1)
         }
@@ -126,10 +134,11 @@ private extension CalendarView {
                 .padding(.bottom, 33)
             }
         }
-        .zIndex(2)
+        .zIndex(4)
     }
 }
 
+// MARK: - Event Handlers
 private extension CalendarView {
     func handleToggleChange(_ toggle: CalendarNavigationBar.ToggleOption) {
         selectedToggle = toggle
@@ -143,7 +152,10 @@ private extension CalendarView {
     
     func handleTaskEdit() {
         showTaskEditSheet = false
-        // TODO: 할일/일정 수정 로직 구현
+        
+        if let index = selectedTaskIndex {
+            editingTaskIndex = index
+        }
     }
     
     func handleTomorrowAction() {
@@ -162,6 +174,20 @@ private extension CalendarView {
         if let schedule = getFirstAvailableSchedule() {
             Task { await deleteSchedule(id: schedule.id) }
         }
+    }
+    
+    func handleCategorySelection(_ category: TaskCategory) {
+        let newTodo = TodoItem.create(
+            id: todoItems.count + 1,
+            title: "새로운 \(category.name)",
+            category: category
+        )
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            todoItems.append(newTodo)
+        }
+        
+        showCategorySelection = false
     }
     
     func showCategorySelectionWithAnimation() {
@@ -207,11 +233,57 @@ private extension CalendarView {
         }
     }
     
+    // ✅ API 연결된 할일 제목 수정 함수
+    func updateTodoTitle(index: Int, newTitle: String) async {
+        guard index < todoItems.count else { return }
+        
+        // 일단 로컬 상태 업데이트
+        let originalTitle = todoItems[index].title
+        todoItems[index].title = newTitle
+        
+        // 해당 할일에 연결된 스케줄 ID 찾기
+        if let scheduleId = getScheduleIdForTodo(at: index) {
+            isUpdatingSchedule = true
+            
+            do {
+                let todo = todoItems[index]
+                let schedule = getScheduleForTodo(at: index)
+                
+                let updatedSchedule = try await calendarUseCase.updateSchedule(
+                    id: scheduleId,
+                    title: newTitle,
+                    startTime: schedule?.startTime ?? Date(),
+                    endTime: schedule?.endTime ?? Date(),
+                    category: schedule?.category ?? .other,
+                    temperature: schedule?.temperature ?? 3,
+                    allDay: schedule?.allDay ?? false,
+                    alarmOption: schedule?.alarmOption ?? .none
+                )
+                
+                print("✅ 할일 제목 수정 성공: \(newTitle)")
+                
+                // 일정 목록 새로고침
+                await loadSchedules()
+                
+            } catch {
+                print("❌ 할일 제목 수정 실패: \(error)")
+                
+                // 실패 시 원래 제목으로 되돌리기
+                todoItems[index].title = originalTitle
+                errorMessage = "할일 수정에 실패했습니다: \(error.localizedDescription)"
+            }
+            
+            isUpdatingSchedule = false
+        } else {
+            print("⚠️ 할일에 연결된 스케줄 ID를 찾을 수 없습니다.")
+        }
+    }
+    
     func deleteSchedule(id: String) async {
         isDeletingSchedule = true
         
         do {
-            let result = try await calendarUseCase.deleteSchedule(id: id)
+            try await calendarUseCase.deleteSchedule(id: id)
             await loadSchedules()
         } catch {
             print("일정 삭제 실패: \(error)")
@@ -220,16 +292,16 @@ private extension CalendarView {
         isDeletingSchedule = false
     }
     
-    func addNewTodoWithCategory(_ category: TaskCategory) {
-        let newTodo = TodoItem.create(
-            id: todoItems.count + 1,
-            title: category.name,
-            category: category
-        )
-        
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            todoItems.append(newTodo)
-        }
+    // 할일 인덱스로 스케줄 ID 찾기 (임시 구현)
+    func getScheduleIdForTodo(at index: Int) -> String? {
+        // 실제로는 TodoItem에 scheduleId가 있어야 함
+        // 지금은 임시로 첫 번째 스케줄 ID 사용
+        return getFirstAvailableSchedule()?.id
+    }
+    
+    // 할일 인덱스로 스케줄 객체 찾기 (임시 구현)
+    func getScheduleForTodo(at index: Int) -> Schedule? {
+        return getFirstAvailableSchedule()
     }
 }
 
@@ -271,6 +343,7 @@ private extension CalendarView {
     
     func logScheduleData() {
         let totalSchedules = dailySchedules.flatMap { $0.schedules }.count
+        print("📅 로드된 일정 수: \(totalSchedules)개")
     }
     
     func handleScheduleLoadError(_ error: Error) {
@@ -291,14 +364,25 @@ private extension TodoItem {
         ]
     }
     
-    static func create(id: Int, title: String, category: TaskCategory) -> TodoItem {
+    static func create(id: Int, title: String, category: TaskCategory, time: String? = nil) -> TodoItem {
         TodoItem(
             id: id,
             title: title,
             isCompleted: false,
             category: DesignSystem.TodoCategory(name: category.name, color: category.color),
-            time: nil
+            time: time
         )
+    }
+}
+
+// MARK: - TaskCategory 타입 정의
+public struct TaskCategory {
+    public let name: String
+    public let color: Color
+    
+    public init(name: String, color: Color) {
+        self.name = name
+        self.color = color
     }
 }
 
