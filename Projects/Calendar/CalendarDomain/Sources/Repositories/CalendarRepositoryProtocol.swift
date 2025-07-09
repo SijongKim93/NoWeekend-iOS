@@ -10,4 +10,5 @@ import Foundation
 
 public protocol CalendarRepositoryProtocol {
     func getSchedules(startDate: String, endDate: String) async throws -> [DailySchedule]
+    func deleteSchedule(id: String) async throws -> String
 }
