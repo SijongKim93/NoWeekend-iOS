@@ -12,4 +12,5 @@ public protocol CalendarUseCaseProtocol {
     func getWeeklySchedules(for date: Date) async throws -> [DailySchedule]
     func getMonthlySchedules(for date: Date) async throws -> [DailySchedule]
     func getSchedulesForDateRange(startDate: Date, endDate: Date) async throws -> [DailySchedule]
+    func deleteSchedule(id: String) async throws -> String
 }
