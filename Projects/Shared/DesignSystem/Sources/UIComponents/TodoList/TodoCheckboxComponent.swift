@@ -20,7 +20,7 @@ public struct TodoCategory {
 
 public struct TodoItem: Identifiable {
     public let id: Int
-    public let title: String
+    public var title: String
     public var isCompleted: Bool
     public let category: TodoCategory?
     public let time: String?
@@ -38,11 +38,25 @@ public struct TodoCheckboxComponent: View {
     public let todoItem: TodoItem
     public let onToggle: () -> Void
     public let onMoreTapped: (() -> Void)?
+    public let onTitleChanged: ((String) -> Void)?
+    public let isEditingMode: Bool
     
-    public init(todoItem: TodoItem, onToggle: @escaping () -> Void, onMoreTapped: (() -> Void)? = nil) {
+    @State private var isEditing: Bool = false
+    @State private var editingTitle: String = ""
+    @FocusState private var isTextFieldFocused: Bool
+    
+    public init(
+        todoItem: TodoItem,
+        onToggle: @escaping () -> Void,
+        onMoreTapped: (() -> Void)? = nil,
+        onTitleChanged: ((String) -> Void)? = nil,
+        isEditingMode: Bool = false
+    ) {
         self.todoItem = todoItem
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
+        self.onTitleChanged = onTitleChanged
+        self.isEditingMode = isEditingMode
     }
     
     public init(
@@ -51,10 +65,12 @@ public struct TodoCheckboxComponent: View {
         category: TodoCategory? = TodoCategory(name: "개인", color: DS.Colors.TaskItem.orange),
         time: String? = nil,
         onToggle: @escaping () -> Void,
-        onMoreTapped: (() -> Void)? = nil
+        onMoreTapped: (() -> Void)? = nil,
+        onTitleChanged: ((String) -> Void)? = nil,
+        isEditingMode: Bool = false
     ) {
         self.todoItem = TodoItem(
-            id: 0, // 임시 ID
+            id: 0,
             title: title,
             isCompleted: isCompleted,
             category: category,
@@ -62,6 +78,8 @@ public struct TodoCheckboxComponent: View {
         )
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
+        self.onTitleChanged = onTitleChanged
+        self.isEditingMode = isEditingMode
     }
     
     private var timeOrDate: String {
@@ -83,10 +101,8 @@ public struct TodoCheckboxComponent: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(todoItem.title)
-                    .font(.body2)
-                    .foregroundColor(DS.Colors.Neutral.gray900)
-                    .lineLimit(1)
+                titleSection
+                
                 if todoItem.category != nil {
                     HStack(spacing: 8) {
                         if let category = todoItem.category {
@@ -123,6 +139,57 @@ public struct TodoCheckboxComponent: View {
         .padding(.trailing, 16)
         .opacity(todoItem.isCompleted ? 0.32 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: todoItem.isCompleted)
+        .onTapGesture {
+            if onTitleChanged != nil && !isEditing {
+                startEditing()
+            }
+        }
+        .onChange(of: isEditingMode) { _, newValue in
+            if newValue && onTitleChanged != nil {
+                startEditing()
+            }
+        }
+    }
+}
+
+// MARK: - 편집 기능
+private extension TodoCheckboxComponent {
+    @ViewBuilder
+    var titleSection: some View {
+        if isEditing {
+            TextField("할 일을 입력하세요", text: $editingTitle)
+                .font(.body2)
+                .foregroundColor(DS.Colors.Neutral.gray900)
+                .focused($isTextFieldFocused)
+                .onSubmit {
+                    finishEditing()
+                }
+        } else {
+            Text(todoItem.title)
+                .font(.body2)
+                .foregroundColor(DS.Colors.Neutral.gray900)
+                .lineLimit(1)
+        }
+    }
+    
+    func startEditing() {
+        editingTitle = todoItem.title
+        isEditing = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            isTextFieldFocused = true
+        }
+    }
+    
+    func finishEditing() {
+        let trimmedTitle = editingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if !trimmedTitle.isEmpty && trimmedTitle != todoItem.title {
+            onTitleChanged?(trimmedTitle)
+        }
+        
+        isEditing = false
+        isTextFieldFocused = false
     }
 }
 
@@ -131,46 +198,20 @@ public struct TodoCheckboxComponent: View {
         TodoCheckboxComponent(
             isCompleted: false,
             title: "기본 개인 할일",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            todoItem: TodoItem(
-                id: 1,
-                title: "TodoItem으로 생성된 할일",
-                isCompleted: false,
-                category: TodoCategory(name: "회사", color: DS.Colors.TaskItem.purple),
-                time: "오전 10:00"
-            ),
-            onToggle: { }
+            onToggle: { },
+            onTitleChanged: { newTitle in
+                print("제목 변경: \(newTitle)")
+            }
         )
         
         TodoCheckboxComponent(
             isCompleted: false,
-            title: "시간이 있는 할일입니다 이것은 길어질 수 있는 텍스트입니다",
-            time: "오전 10:00",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "시간 없는 할일",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "회사 업무",
-            category: TodoCategory(name: "회사", color: DS.Colors.TaskItem.purple),
-            time: "오후 2:00",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: true,
-            title: "완료된 할일",
-            time: "오전 9:00",
-            onToggle: { }
+            title: "편집 모드 할일",
+            onToggle: { },
+            onTitleChanged: { newTitle in
+                print("제목 변경: \(newTitle)")
+            },
+            isEditingMode: true
         )
     }
     .background(Color.gray.opacity(0.1))
