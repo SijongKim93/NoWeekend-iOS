@@ -93,7 +93,13 @@ private extension CalendarView {
                 selectedTaskIndex: $selectedTaskIndex,
                 showTaskEditSheet: $showTaskEditSheet,
                 scrollOffset: $scrollOffset,
-                isScrolling: $isScrolling
+                isScrolling: $isScrolling,
+                editingTaskIndex: $editingTaskIndex,
+                onTitleChanged: { index, newTitle in
+                    Task {
+                        await updateTodoTitle(index: index, newTitle: newTitle)
+                    }
+                }
             )
             .background(.white)
         } else {
@@ -103,11 +109,11 @@ private extension CalendarView {
     }
     
     @ViewBuilder
-    var categorySelectionOverlay: some View {
+    var overlayContent: some View {
         if showCategorySelection {
             TaskCategorySelectionView(
                 isPresented: $showCategorySelection,
-                onCategorySelected: addNewTodoWithCategory
+                onCategorySelected: handleCategorySelection
             )
             .zIndex(1)
         }
@@ -128,7 +134,7 @@ private extension CalendarView {
                 .padding(.bottom, 33)
             }
         }
-        .zIndex(2)
+        .zIndex(4)
     }
 }
 
@@ -400,6 +406,17 @@ private extension TodoItem {
             category: DesignSystem.TodoCategory(name: category.name, color: category.color),
             time: time
         )
+    }
+}
+
+// MARK: - TaskCategory 타입 정의
+public struct TaskCategory {
+    public let name: String
+    public let color: Color
+    
+    public init(name: String, color: Color) {
+        self.name = name
+        self.color = color
     }
 }
 
