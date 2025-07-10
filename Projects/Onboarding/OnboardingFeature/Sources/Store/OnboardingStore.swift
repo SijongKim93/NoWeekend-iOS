@@ -1,5 +1,5 @@
 //
-//  OnboardingStore.swift (Reducer 중심으로 수정된 버전)
+//  OnboardingStore.swift (Main Actor 문제 해결된 버전)
 //  Onboarding
 //
 //  Created by SiJongKim on 6/23/25.
@@ -10,7 +10,7 @@ import SwiftUI
 import Combine
 import OnboardingDomain
 
-@MainActor
+
 public class OnboardingStore: ObservableObject {
     
     // MARK: - Published State
@@ -27,7 +27,6 @@ public class OnboardingStore: ObservableObject {
     private let validateBirthDateUseCase: ValidateBirthDateUseCaseInterface
     private let validateRemainingDaysUseCase: ValidateRemainingDaysUseCaseInterface
     
-    // MARK: - Initialization
     public init(
         saveProfileUseCase: SaveProfileUseCaseInterface,
         saveLeaveUseCase: SaveLeaveUseCaseInterface,
@@ -43,12 +42,18 @@ public class OnboardingStore: ObservableObject {
         self.validateBirthDateUseCase = validateBirthDateUseCase
         self.validateRemainingDaysUseCase = validateRemainingDaysUseCase
         
-        Task {
-            await send(.validateCurrentStep)
+        Task { @MainActor in
+            await self.initializeUI()
         }
     }
     
-    // MARK: - Intent Processing
+    @MainActor
+    private func initializeUI() async {
+        // 초기 유효성 검사 수행
+        send(.validateCurrentStep)
+    }
+    
+    @MainActor
     public func send(_ intent: OnboardingIntent) {
         let validationActions = createValidationActions(for: intent)
         
@@ -102,9 +107,11 @@ public class OnboardingStore: ObservableObject {
         }
     }
     
-    // MARK: - Action Processing (단일 진실의 원천)
+    @MainActor
     private func processAction(_ action: OnboardingAction) {
+        
         state = reducer.reduce(state, action)
+        
         
         handleSideEffects(for: action)
     }
@@ -119,9 +126,14 @@ public class OnboardingStore: ObservableObject {
                         nickname: state.nickname,
                         birthDate: state.birthDate
                     )
-                    processAction(.saveProfileSucceeded)
+                    // MainActor에서 안전하게 processAction 호출
+                    await MainActor.run {
+                        self.processAction(.saveProfileSucceeded)
+                    }
                 } catch {
-                    processAction(.saveProfileFailed(error))
+                    await MainActor.run {
+                        self.processAction(.saveProfileFailed(error))
+                    }
                 }
             }
             
@@ -132,9 +144,13 @@ public class OnboardingStore: ObservableObject {
                     let hours = Int(state.remainingHours) ?? 0
                     
                     try await saveLeaveUseCase.execute(days: days, hours: hours)
-                    processAction(.saveLeaveSucceeded)
+                    await MainActor.run {
+                        self.processAction(.saveLeaveSucceeded)
+                    }
                 } catch {
-                    processAction(.saveLeaveFailed(error))
+                    await MainActor.run {
+                        self.processAction(.saveLeaveFailed(error))
+                    }
                 }
             }
             
@@ -143,15 +159,22 @@ public class OnboardingStore: ObservableObject {
                 do {
                     let tags = Array(state.selectedTags)
                     try await saveTagsUseCase.execute(tags: tags)
-                    processAction(.saveTagsSucceeded)
+                    await MainActor.run {
+                        self.processAction(.saveTagsSucceeded)
+                    }
                 } catch {
-                    processAction(.saveTagsFailed(error))
+                    await MainActor.run {
+                        self.processAction(.saveTagsFailed(error))
+                    }
                 }
             }
             
         case .saveTagsSucceeded:
             print("✅ OnboardingStore: 모든 온보딩 데이터 저장 완료")
-            processAction(.onboardingCompleted)
+            // 동기적 호출이므로 MainActor.assumeIsolated 사용
+            MainActor.assumeIsolated {
+                self.processAction(.onboardingCompleted)
+            }
             
         default:
             break
