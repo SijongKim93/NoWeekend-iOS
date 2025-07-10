@@ -11,9 +11,4 @@ import Foundation
 public struct GoogleLoginRequestDTO: Encodable {
     public let authorizationCode: String
     public let name: String?
-
-    public init(authorizationCode: String, name: String?) {
-        self.authorizationCode = authorizationCode
-        self.name = name
-    }
 }

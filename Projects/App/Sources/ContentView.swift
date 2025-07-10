@@ -20,21 +20,22 @@ struct ContentView: View {
     init() {}
     
     var body: some View {
-        Group {
-            if appState.isLoading {
-                LoadingView()
-            } else if !appState.isLoggedIn {
-                LoginView()
-            } else if !appState.isOnboardingCompleted {
-                OnboardingView {
-                    appState.completeOnboarding()
-                }
-            } else {
-                TabBarView()
+        currentView
+            .onAppear {
+                appState.checkLoginStatus()
             }
-        }
-        .onAppear {
-            appState.checkLoginStatus()
+    }
+
+    @ViewBuilder
+    private var currentView: some View {
+        if appState.isLoading {
+            LoadingView()
+        } else if !appState.isLoggedIn {
+            OnboardingView()
+        } else if !appState.isOnboardingCompleted {
+            OnboardingView()
+        } else {
+            TabBarView()
         }
     }
 }
