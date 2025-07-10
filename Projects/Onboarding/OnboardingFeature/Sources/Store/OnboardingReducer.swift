@@ -1,5 +1,5 @@
 //
-//  OnboardingReducer.swift (최소화된 버전 - 필요한 부분만)
+//  OnboardingReducer.swift (확장된 버전)
 //  Onboarding
 //
 //  Created by SiJongKim on 7/2/25.
@@ -12,13 +12,25 @@ public struct OnboardingReducer {
     
     public init() {}
     
-    public func reduce(
-        _ state: OnboardingState,
-        _ action: OnboardingAction
-    ) -> OnboardingState {
+    public func reduce(_ state: OnboardingState, _ action: OnboardingAction) -> OnboardingState {
         var newState = state
         
         switch action {
+        case .nicknameUpdated(let nickname, let errorMessage):
+            newState.nickname = nickname
+            newState.nicknameError = errorMessage
+            
+        case .birthDateUpdated(let birthDate, let errorMessage):
+            newState.birthDate = birthDate
+            newState.birthDateError = errorMessage
+            
+        case .remainingDaysUpdated(let days, let errorMessage):
+            newState.remainingDays = days
+            newState.remainingDaysError = errorMessage
+            
+        case .stepValidationRequested:
+            newState.isNextButtonEnabled = newState.isCurrentStepValid && !newState.isLoading
+            
         case .halfDayToggled(let hasHalfDay):
             newState.hasHalfDay = hasHalfDay
             newState.remainingHours = hasHalfDay ? "4" : "0"
@@ -50,7 +62,7 @@ public struct OnboardingReducer {
             newState.isLoading = false
             newState.nicknameError = "프로필 저장에 실패했습니다. 다시 시도해주세요."
             
-        case .saveLeaveSuccaFailed:
+        case .saveLeaveFailed:
             newState.isLoading = false
             newState.remainingDaysError = "연차 정보 저장에 실패했습니다. 다시 시도해주세요."
             
