@@ -16,7 +16,10 @@ let project = Project.make(
         .framework(
             name: "NWNetwork",
             bundleId: BundleID.Core.nwnetwork,
-            sources: ["NWNetwork/Sources/**"],
+            sources: [
+                "NWNetwork/Sources/**",
+                "!NWNetwork/Sources/NetworkService/Config.swift"  
+            ],
             dependencies: [
                 .External.alamofire
             ],
