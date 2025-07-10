@@ -20,6 +20,7 @@ public struct ProfileView: View {
     
 }
 
+
 private struct ProfileHeaderSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
     
@@ -47,7 +48,9 @@ private struct ProfileHeaderSection: View {
     }
 }
 
+
 private struct ProfileVacationSection: View {
+
     var body: some View {
         statusCardView
             .padding(.horizontal, 20)
@@ -99,13 +102,14 @@ private struct ProfileVacationSection: View {
 
 private struct ProfileSettingSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
-    
+
     var body: some View {
         VStack(spacing: 32) {
             SettingSection(
                 title: "정보") {
                     SettingRow.basic(title: "연차 관리") {
                         coordinator.push(.vacation)
+
                     }
                     
                     SettingDivider()
