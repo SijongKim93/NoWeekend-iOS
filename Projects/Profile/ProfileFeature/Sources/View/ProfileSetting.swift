@@ -23,7 +23,11 @@ public struct SettingSection<Content: View>: View {
             HStack(alignment: .center) {
                 Text(title)
                     .font(.body1)
+<<<<<<< HEAD
                     .foregroundColor(DS.Colors.Text.body)
+=======
+                    .foregroundColor(DS.Colors.Text.body)//body
+>>>>>>> a5a7495ff885613ef21bf6147c4dbb969a6d4598
                 
                 
                 Spacer()
@@ -78,6 +82,10 @@ public struct SettingRow: View {
                 
                 Spacer()
                 
+<<<<<<< HEAD
+=======
+                // 오른쪽 콘텐츠
+>>>>>>> a5a7495ff885613ef21bf6147c4dbb969a6d4598
                 if hasToggle, let isToggleOn = isToggleOn {
                     Toggle("", isOn: isToggleOn)
                         .labelsHidden()
