@@ -10,16 +10,15 @@ import SwiftUI
 import DesignSystem
 
 public struct ProfileEditView: View {
+    
     @State private var nickname: String = ""
     @State private var birthDate: String = ""
     @State private var nicknameError: String? = nil
     @State private var birthDateError: String? = nil
     
-    // 저장 상태
     @State private var isLoading: Bool = false
     @State private var showSaveSuccess: Bool = false
     
-    // 초기값 로드를 위한 클로저
     public let onLoad: () -> (nickname: String, birthDate: String)
     public let onSave: (String, String) -> Void
     
