@@ -19,9 +19,9 @@ struct CoordinatorFactory {
         HomeCoordinatorView()
     }
     
-    var profileCoordinatorRootView: some View {
-        ProfileCoordinatorView()
-    }
+//    var profileCoordinatorRootView: some View {
+//        //ProfileCoordinatorView()
+//    }
     
     var calendarCoordinatorRootView: some View {
         CalendarCoordinatorView()
