@@ -75,3 +75,4 @@ fastlane/report.xml
 # Network configuration containing sensitive data
 Projects/Core/NWNetwork/Sources/NetworkService/Config.swift
 **/Config.swift
+Projects/Core/NWNetwork/Sources/NetworkService/Config.swift
