@@ -1,5 +1,5 @@
 //
-//  OnboardingState.swift (업데이트된 버전)
+//  OnboardingState.swift (오타 수정된 버전)
 //  Onboarding
 //
 //  Created by SiJongKim on 6/23/25.
@@ -75,9 +75,13 @@ public struct OnboardingState: Equatable {
 
 // MARK: - OnboardingAction (Store에서 즉시 처리하는 액션들 제거)
 public enum OnboardingAction {
+    case nicknameUpdated(String, errorMessage: String?)
+    case birthDateUpdated(String, errorMessage: String?)
+    case remainingDaysUpdated(String, errorMessage: String?)
+    case stepValidationRequested
+    
     case halfDayToggled(Bool)
     case tagToggled(String)
-
     case stepValidated(Bool)
     
     case saveProfileStarted
@@ -86,7 +90,7 @@ public enum OnboardingAction {
     
     case saveLeaveStarted
     case saveLeaveSucceeded
-    case saveLeaveSuccaFailed(Error)
+    case saveLeaveFailed(Error)
     
     case saveTagsStarted
     case saveTagsSucceeded

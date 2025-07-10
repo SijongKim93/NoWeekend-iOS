@@ -1,5 +1,5 @@
 //
-//  OnboardingStore.swift (수정된 버전)
+//  OnboardingStore.swift (Reducer 중심으로 수정된 버전)
 //  Onboarding
 //
 //  Created by SiJongKim on 6/23/25.
@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 import OnboardingDomain
 
+@MainActor
 public class OnboardingStore: ObservableObject {
     
     // MARK: - Published State
@@ -42,72 +43,68 @@ public class OnboardingStore: ObservableObject {
         self.validateBirthDateUseCase = validateBirthDateUseCase
         self.validateRemainingDaysUseCase = validateRemainingDaysUseCase
         
-        DispatchQueue.main.async {
-            self.send(.validateCurrentStep)
+        Task {
+            await send(.validateCurrentStep)
         }
     }
     
     // MARK: - Intent Processing
     public func send(_ intent: OnboardingIntent) {
-        performImmediateValidation(for: intent)
+        let validationActions = createValidationActions(for: intent)
         
-        let actions = intentMapper.mapIntent(intent, currentState: state)
+        let mappedActions = intentMapper.mapIntent(intent, currentState: state)
         
-        for action in actions {
+        let allActions = validationActions + mappedActions
+        
+        for action in allActions {
             processAction(action)
         }
-        
-        performAdditionalValidation(for: intent)
     }
     
-    // MARK: - 즉시 유효성 검사
-    private func performImmediateValidation(for intent: OnboardingIntent) {
+    // MARK: - 유효성 검사를 통한 Action 생성
+    private func createValidationActions(for intent: OnboardingIntent) -> [OnboardingAction] {
         switch intent {
         case .updateNickname(let nickname):
             let filteredNickname = String(nickname.prefix(7))
             let result = validateNicknameUseCase.execute(filteredNickname)
             
-            DispatchQueue.main.async {
-                self.state.nickname = filteredNickname
-                self.state.nicknameError = result.errorMessage
-                self.updateStepValidation()
-            }
+            return [
+                .nicknameUpdated(filteredNickname, errorMessage: result.errorMessage),
+                .stepValidationRequested
+            ]
             
         case .updateBirthDate(let birthDate):
             let filteredBirthDate = String(birthDate.filter { $0.isNumber }.prefix(8))
             let result = validateBirthDateUseCase.execute(filteredBirthDate)
             
-            DispatchQueue.main.async {
-                self.state.birthDate = filteredBirthDate
-                self.state.birthDateError = result.errorMessage
-                self.updateStepValidation()
-            }
+            return [
+                .birthDateUpdated(filteredBirthDate, errorMessage: result.errorMessage),
+                .stepValidationRequested
+            ]
             
         case .updateRemainingDays(let days):
             let filteredDays = String(days.filter { $0.isNumber }.prefix(2))
             let result = validateRemainingDaysUseCase.execute(filteredDays)
             
-            DispatchQueue.main.async {
-                self.state.remainingDays = filteredDays
-                self.state.remainingDaysError = result.errorMessage
-                self.updateStepValidation()
-            }
+            return [
+                .remainingDaysUpdated(filteredDays, errorMessage: result.errorMessage),
+                .stepValidationRequested
+            ]
+            
+        case .updateHasHalfDay(_), .toggleTag(_):
+            return [.stepValidationRequested]
+            
+        case .validateCurrentStep:
+            return [.stepValidationRequested]
             
         default:
-            break
+            return []
         }
     }
     
-    // MARK: - 스텝 유효성 즉시 업데이트
-    private func updateStepValidation() {
-        state.isNextButtonEnabled = state.isCurrentStepValid && !state.isLoading
-    }
-    
-    // MARK: - Action Processing
+    // MARK: - Action Processing (단일 진실의 원천)
     private func processAction(_ action: OnboardingAction) {
-        DispatchQueue.main.async {
-            self.state = self.reducer.reduce(self.state, action)
-        }
+        state = reducer.reduce(state, action)
         
         handleSideEffects(for: action)
     }
@@ -116,7 +113,7 @@ public class OnboardingStore: ObservableObject {
     private func handleSideEffects(for action: OnboardingAction) {
         switch action {
         case .saveProfileStarted:
-            Task { @MainActor in
+            Task {
                 do {
                     try await saveProfileUseCase.execute(
                         nickname: state.nickname,
@@ -129,7 +126,7 @@ public class OnboardingStore: ObservableObject {
             }
             
         case .saveLeaveStarted:
-            Task { @MainActor in
+            Task {
                 do {
                     let days = Int(state.remainingDays) ?? 0
                     let hours = Int(state.remainingHours) ?? 0
@@ -137,12 +134,12 @@ public class OnboardingStore: ObservableObject {
                     try await saveLeaveUseCase.execute(days: days, hours: hours)
                     processAction(.saveLeaveSucceeded)
                 } catch {
-                    processAction(.saveLeaveSuccaFailed(error))
+                    processAction(.saveLeaveFailed(error))
                 }
             }
             
         case .saveTagsStarted:
-            Task { @MainActor in
+            Task {
                 do {
                     let tags = Array(state.selectedTags)
                     try await saveTagsUseCase.execute(tags: tags)
@@ -152,30 +149,9 @@ public class OnboardingStore: ObservableObject {
                 }
             }
             
-            // 모든 저장이 완료되었을 때 온보딩 완료 처리
         case .saveTagsSucceeded:
             print("✅ OnboardingStore: 모든 온보딩 데이터 저장 완료")
-            DispatchQueue.main.async {
-                self.state.isOnboardingCompleted = true
-            }
-            
-        default:
-            break
-        }
-    }
-    
-    // MARK: - Additional Validation (토글, 태그 등에만 사용)
-    private func performAdditionalValidation(for intent: OnboardingIntent) {
-        switch intent {
-        case .updateHasHalfDay(_), .toggleTag(_):
-            DispatchQueue.main.async {
-                self.updateStepValidation()
-            }
-            
-        case .validateCurrentStep:
-            DispatchQueue.main.async {
-                self.updateStepValidation()
-            }
+            processAction(.onboardingCompleted)
             
         default:
             break
