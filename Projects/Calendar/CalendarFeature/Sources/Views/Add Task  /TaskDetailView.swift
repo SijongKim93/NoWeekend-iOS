@@ -10,14 +10,16 @@ import DesignSystem
 import SwiftUI
 
 public struct TaskDetailView: View {
-    @EnvironmentObject private var coordinator: CalendarCoordinator
+    @Environment(\.dismiss) private var dismiss
+    
+    let selectedCategory: TaskCreateCategory
     
     @State private var startDate = Date()
     @State private var endDate = Date()
     @State private var isAllDay = false
     @State private var selectedAlarm: AlarmOption = .none
     @State private var temperatureText: String = "5"
-    
+    @State private var selectedVacationType: VacationType = .halfDay
     @State private var isStartDateExpanded = false
     @State private var isEndDateExpanded = false
     
@@ -35,7 +37,9 @@ public struct TaskDetailView: View {
         return formatter
     }()
     
-    public init() {}
+    public init(selectedCategory: TaskCreateCategory) {
+        self.selectedCategory = selectedCategory
+    }
     
     public var body: some View {
         VStack(spacing: 0) {
@@ -43,7 +47,12 @@ public struct TaskDetailView: View {
             
             ScrollView {
                 VStack(spacing: 0) {
-                    dateSection
+                    if selectedCategory == .vacation {
+                        vacationSection
+                    } else {
+                        dateSection
+                    }
+                    
                     temperatureSection
                 }
             }
@@ -58,12 +67,161 @@ public struct TaskDetailView: View {
         CustomNavigationBar(
             type: .backWithLabelAndSave("세부사항"),
             onBackTapped: {
-                coordinator.pop()
+                dismiss()
             },
             onSaveTapped: {
                 saveDetails()
             }
         )
+    }
+    
+    private var vacationSection: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("연차 유형")
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Text.netural)
+                
+                Spacer()
+                
+                Menu {
+                    ForEach(VacationType.allCases, id: \.self) { type in
+                        Button(action: {
+                            selectedVacationType = type
+                        }) {
+                            HStack {
+                                Text(type.displayName)
+                                if selectedVacationType == type {
+                                    Spacer()
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(selectedVacationType.displayName)
+                            .font(.body1)
+                            .foregroundColor(DS.Colors.Text.netural)
+                        
+                        DS.Images.icnChevronDown
+                            .foregroundColor(DS.Colors.Neutral.gray500)
+                    }
+                }
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            
+            Rectangle()
+                .fill(DS.Colors.Border.border01)
+                .frame(height: 1)
+                .padding(.horizontal, 20)
+            
+            VStack(spacing: 0) {
+                Button(action: {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
+                        isStartDateExpanded.toggle()
+                        if isStartDateExpanded {
+                            isEndDateExpanded = false
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("시작")
+                            .font(.body1)
+                            .foregroundColor(DS.Colors.Text.netural)
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(dateFormatter.string(from: startDate))
+                                .font(.body1)
+                                .foregroundColor(DS.Colors.Text.netural)
+                            
+                            Rectangle()
+                                .fill(DS.Colors.Border.border01)
+                                .frame(height: 1)
+                                .frame(width: 120)
+                        }
+                    }
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 20)
+                    .contentShape(Rectangle())
+                }
+                
+                if isStartDateExpanded {
+                    DatePicker(
+                        "",
+                        selection: $startDate,
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
+                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
+                    ))
+                }
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isStartDateExpanded)
+            
+            Rectangle()
+                .fill(DS.Colors.Border.border01)
+                .frame(height: 1)
+                .padding(.horizontal, 20)
+            
+            VStack(spacing: 0) {
+                Button(action: {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
+                        isEndDateExpanded.toggle()
+                        if isEndDateExpanded {
+                            isStartDateExpanded = false
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("종료")
+                            .font(.body1)
+                            .foregroundColor(DS.Colors.Text.netural)
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(dateFormatter.string(from: endDate))
+                                .font(.body1)
+                                .foregroundColor(DS.Colors.Text.netural)
+                            
+                            Rectangle()
+                                .fill(DS.Colors.Border.border01)
+                                .frame(height: 1)
+                                .frame(width: 120)
+                        }
+                    }
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 20)
+                    .contentShape(Rectangle())
+                }
+                
+                if isEndDateExpanded {
+                    DatePicker(
+                        "",
+                        selection: $endDate,
+                        displayedComponents: [.date]
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
+                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
+                    ))
+                }
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isEndDateExpanded)
+        }
     }
     
     private var dateSection: some View {
@@ -248,8 +406,28 @@ public struct TaskDetailView: View {
     }
     
     private func saveDetails() {
-        print("세부사항 저장")
-        coordinator.pop()
+        if selectedCategory == .vacation {
+            print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
+        } else {
+            print("일반 세부사항 저장 - 하루 종일: \(isAllDay)")
+        }
+        dismiss()
+    }
+}
+
+enum VacationType: String, CaseIterable {
+    case halfDay = "half_day"
+    case fullDay = "full_day"
+    case morningHalf = "morning_half"
+    case afternoonHalf = "afternoon_half"
+    
+    var displayName: String {
+        switch self {
+        case .halfDay: return "반차"
+        case .fullDay: return "하루 종일"
+        case .morningHalf: return "오전 반차"
+        case .afternoonHalf: return "오후 반차"
+        }
     }
 }
 
@@ -294,7 +472,6 @@ enum AlarmOption: String, CaseIterable {
 
 #Preview {
     NavigationView {
-        TaskDetailView()
-            .environmentObject(CalendarCoordinator())
+        TaskDetailView(selectedCategory: .vacation)
     }
 }
