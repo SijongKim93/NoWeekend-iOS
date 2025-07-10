@@ -20,11 +20,7 @@ let project = Project.make(
                 .Shared.designSystem,
                 .Shared.utils
             ],
-            settings: .settings(
-                base: [
-                    "OTHER_LDFLAGS": "$(inherited) -ObjC"
-                ]
-            )
+            settings: .appSettings(teamID: Environment.teamID)
         )
     ],
     resourceSynthesizers: [
