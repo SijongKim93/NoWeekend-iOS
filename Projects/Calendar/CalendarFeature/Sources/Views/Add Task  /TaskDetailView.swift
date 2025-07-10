@@ -17,22 +17,23 @@ public struct TaskDetailView: View {
     @State private var startDate = Date()
     @State private var endDate = Date()
     @State private var isAllDay = false
-    @State private var selectedAlarm: AlarmOption = .none
     @State private var temperatureText: String = "5"
     @State private var selectedVacationType: VacationType = .halfDay
     @State private var isStartDateExpanded = false
     @State private var isEndDateExpanded = false
+    @State private var isStartTimeExpanded = false
+    @State private var isEndTimeExpanded = false
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
+        formatter.dateFormat = "yyyy.M.d (E)"
         formatter.locale = Locale(identifier: "ko_KR")
         return formatter
     }()
     
     private let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.timeStyle = .short
+        formatter.dateFormat = "a h:mm"
         formatter.locale = Locale(identifier: "ko_KR")
         return formatter
     }()
@@ -45,8 +46,7 @@ public struct TaskDetailView: View {
         VStack(spacing: 0) {
             navigationBar
             
-            ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: 30) {
                     if selectedCategory == .vacation {
                         vacationSection
                     } else {
@@ -55,7 +55,9 @@ public struct TaskDetailView: View {
                     
                     temperatureSection
                 }
-            }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+            
             
             Spacer()
         }
@@ -76,7 +78,7 @@ public struct TaskDetailView: View {
     }
     
     private var vacationSection: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 24) {
             HStack {
                 Text("연차 유형")
                     .font(.body1)
@@ -93,13 +95,13 @@ public struct TaskDetailView: View {
                                 Text(type.displayName)
                                 if selectedVacationType == type {
                                     Spacer()
-                                    Image(systemName: "checkmark")
+                                    DS.Images.icnChecked
                                 }
                             }
                         }
                     }
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 0) {
                         Text(selectedVacationType.displayName)
                             .font(.body1)
                             .foregroundColor(DS.Colors.Text.netural)
@@ -109,144 +111,35 @@ public struct TaskDetailView: View {
                     }
                 }
             }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 20)
-            
-            Rectangle()
-                .fill(DS.Colors.Border.border01)
-                .frame(height: 1)
-                .padding(.horizontal, 20)
-            
-            VStack(spacing: 0) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
-                        isStartDateExpanded.toggle()
-                        if isStartDateExpanded {
-                            isEndDateExpanded = false
-                        }
-                    }
-                }) {
-                    HStack {
-                        Text("시작")
-                            .font(.body1)
-                            .foregroundColor(DS.Colors.Text.netural)
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text(dateFormatter.string(from: startDate))
-                                .font(.body1)
-                                .foregroundColor(DS.Colors.Text.netural)
-                            
-                            Rectangle()
-                                .fill(DS.Colors.Border.border01)
-                                .frame(height: 1)
-                                .frame(width: 120)
-                        }
-                    }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 20)
-                    .contentShape(Rectangle())
-                }
+            datePickerSection
+        }
+    }
+    private var dateSection: some View {
+        VStack(spacing: 24) {
+            HStack {
+                Text("하루 종일")
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Text.netural)
+                                
+                Spacer()
                 
-                if isStartDateExpanded {
-                    DatePicker(
-                        "",
-                        selection: $startDate,
-                        displayedComponents: [.date]
-                    )
-                    .datePickerStyle(.wheel)
+                Toggle("", isOn: $isAllDay)
                     .labelsHidden()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
-                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
-                    ))
-                }
             }
-            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isStartDateExpanded)
             
-            Rectangle()
-                .fill(DS.Colors.Border.border01)
-                .frame(height: 1)
-                .padding(.horizontal, 20)
-            
-            VStack(spacing: 0) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
-                        isEndDateExpanded.toggle()
-                        if isEndDateExpanded {
-                            isStartDateExpanded = false
-                        }
-                    }
-                }) {
-                    HStack {
-                        Text("종료")
-                            .font(.body1)
-                            .foregroundColor(DS.Colors.Text.netural)
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text(dateFormatter.string(from: endDate))
-                                .font(.body1)
-                                .foregroundColor(DS.Colors.Text.netural)
-                            
-                            Rectangle()
-                                .fill(DS.Colors.Border.border01)
-                                .frame(height: 1)
-                                .frame(width: 120)
-                        }
-                    }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 20)
-                    .contentShape(Rectangle())
-                }
-                
-                if isEndDateExpanded {
-                    DatePicker(
-                        "",
-                        selection: $endDate,
-                        displayedComponents: [.date]
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
-                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
-                    ))
-                }
-            }
-            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isEndDateExpanded)
+            datePickerSection
         }
     }
     
-    private var dateSection: some View {
-        VStack(spacing: 0) {
-            DetailSettingRowWithoutDivider(
-                title: "하루 종일",
-                content: {
-                    Toggle("", isOn: $isAllDay)
-                        .labelsHidden()
-                        .onChange(of: isAllDay) { _ in
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                isStartDateExpanded = false
-                                isEndDateExpanded = false
-                            }
-                        }
-                }
-            )
-            
-            VStack(spacing: 0) {
+    private var datePickerSection: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 16) {
                 Button(action: {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isStartDateExpanded.toggle()
-                        if isStartDateExpanded {
-                            isEndDateExpanded = false
-                        }
+                        isEndDateExpanded = false
+                        isStartTimeExpanded = false
+                        isEndTimeExpanded = false
                     }
                 }) {
                     HStack {
@@ -256,55 +149,67 @@ public struct TaskDetailView: View {
                         
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 4) {
-                            HStack(spacing: 8) {
+                        HStack(spacing: 20) {
+                            VStack(alignment: .trailing, spacing: 4) {
                                 Text(dateFormatter.string(from: startDate))
                                     .font(.body1)
                                     .foregroundColor(DS.Colors.Text.netural)
-                                
-                                if !isAllDay {
-                                    Text(timeFormatter.string(from: startDate))
-                                        .font(.body1)
-                                        .foregroundColor(DS.Colors.Text.netural)
-                                }
+                                    .overlay(
+                                        Rectangle()
+                                            .fill(isStartDateExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
+                                            .frame(height: isStartDateExpanded ? 2 : 1)
+                                            .offset(y: 8),
+                                        alignment: .bottom
+                                    )
                             }
                             
-                            Rectangle()
-                                .fill(DS.Colors.Border.border01)
-                                .frame(height: 1)
-                                .frame(width: 120)
+                            if !isAllDay && selectedCategory != .vacation {
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        isStartTimeExpanded.toggle()
+                                        isStartDateExpanded = false
+                                        isEndDateExpanded = false
+                                        isEndTimeExpanded = false
+                                    }
+                                }) {
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text(timeFormatter.string(from: startDate))
+                                            .font(.body1)
+                                            .foregroundColor(DS.Colors.Text.netural)
+                                            .overlay(
+                                                Rectangle()
+                                                    .fill(isStartTimeExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
+                                                    .frame(height: isStartTimeExpanded ? 2 : 1)
+                                                    .offset(y: 8),
+                                                alignment: .bottom
+                                            )
+                                    }
+                                }
+                            }
                         }
                     }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 20)
-                    .contentShape(Rectangle())
                 }
                 
                 if isStartDateExpanded {
-                    DatePicker(
-                        "",
-                        selection: $startDate,
-                        displayedComponents: isAllDay ? [.date] : [.date, .hourAndMinute]
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
-                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
-                    ))
+                    DatePicker("", selection: $startDate, displayedComponents: [.date])
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
+                }
+                
+                if isStartTimeExpanded {
+                    DatePicker("", selection: $startDate, displayedComponents: [.hourAndMinute])
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
                 }
             }
-            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isStartDateExpanded)
             
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
                 Button(action: {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0)) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isEndDateExpanded.toggle()
-                        if isEndDateExpanded {
-                            isStartDateExpanded = false
-                        }
+                        isStartDateExpanded = false
+                        isStartTimeExpanded = false
+                        isEndTimeExpanded = false
                     }
                 }) {
                     HStack {
@@ -314,97 +219,110 @@ public struct TaskDetailView: View {
                         
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 4) {
-                            HStack(spacing: 8) {
+                        HStack(spacing: 20) {
+                            // 날짜 섹션
+                            VStack(alignment: .trailing, spacing: 4) {
                                 Text(dateFormatter.string(from: endDate))
                                     .font(.body1)
                                     .foregroundColor(DS.Colors.Text.netural)
-                                
-                                if !isAllDay {
-                                    Text(timeFormatter.string(from: endDate))
-                                        .font(.body1)
-                                        .foregroundColor(DS.Colors.Text.netural)
-                                }
+                                    .overlay(
+                                        Rectangle()
+                                            .fill(isEndDateExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
+                                            .frame(height: isEndDateExpanded ? 2 : 1)
+                                            .offset(y: 8),
+                                        alignment: .bottom
+                                    )
                             }
                             
-                            Rectangle()
-                                .fill(DS.Colors.Border.border01)
-                                .frame(height: 1)
-                                .frame(width: 120)
+                            // 시간 섹션 (조건부 표시)
+                            if !isAllDay && selectedCategory != .vacation {
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        isEndTimeExpanded.toggle()
+                                        isStartDateExpanded = false
+                                        isEndDateExpanded = false
+                                        isStartTimeExpanded = false
+                                    }
+                                }) {
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        Text(timeFormatter.string(from: endDate))
+                                            .font(.body1)
+                                            .foregroundColor(DS.Colors.Text.netural)
+                                            .overlay(
+                                                Rectangle()
+                                                    .fill(isEndTimeExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
+                                                    .frame(height: isEndTimeExpanded ? 2 : 1)
+                                                    .offset(y: 8),
+                                                alignment: .bottom
+                                            )
+                                    }
+                                }
+                            }
                         }
                     }
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 20)
-                    .contentShape(Rectangle())
                 }
                 
                 if isEndDateExpanded {
-                    DatePicker(
-                        "",
-                        selection: $endDate,
-                        displayedComponents: isAllDay ? [.date] : [.date, .hourAndMinute]
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top)),
-                        removal: .scale(scale: 0.95).combined(with: .opacity).combined(with: .move(edge: .top))
-                    ))
+                    DatePicker("", selection: $endDate, displayedComponents: [.date])
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
+                }
+                
+                if isEndTimeExpanded {
+                    DatePicker("", selection: $endDate, displayedComponents: [.hourAndMinute])
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
                 }
             }
-            .animation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0), value: isEndDateExpanded)
         }
     }
     
     private var temperatureSection: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("열정 온도")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Text.netural)
+        VStack(spacing: 8) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("열정 온도")
+                        .font(.body1)
+                        .foregroundColor(DS.Colors.Text.netural)
+                    
+                    Text("0 ~ 100°C 범위")
+                        .font(.body2)
+                        .foregroundColor(DS.Colors.Text.disable)
+                }
                 
                 Spacer()
                 
                 HStack(spacing: 4) {
-                    TextField("5", text: $temperatureText)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 40)
-                        .font(.body1)
-                        .foregroundColor(DS.Colors.Text.netural)
-                        .onChange(of: temperatureText) { newValue in
-                            let filtered = newValue.filter { $0.isNumber }
-                            if let number = Int(filtered), number <= 100 {
-                                temperatureText = filtered
-                            } else if filtered.isEmpty {
-                                temperatureText = ""
-                            } else {
-                                temperatureText = "100"
+                    VStack(spacing: 8) {
+                        TextField("5", text: $temperatureText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.leading)
+                            .frame(width: 70)
+                            .font(.body1)
+                            .foregroundColor(DS.Colors.Text.netural)
+                            .onChange(of: temperatureText) { _, newValue in
+                                let filtered = newValue.filter { $0.isNumber }
+                                if let number = Int(filtered), number <= 100 {
+                                    temperatureText = filtered
+                                } else if filtered.isEmpty {
+                                    temperatureText = ""
+                                } else {
+                                    temperatureText = "100"
+                                }
                             }
-                        }
+                        
+                        Rectangle()
+                            .fill(DS.Colors.Border.border01)
+                            .frame(width: 70, height: 1)
+                    }
                     
                     Text("°C")
                         .font(.body1)
                         .foregroundColor(DS.Colors.Text.netural)
                 }
             }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 20)
-            
-            HStack {
-                Text("0 ~ 100°C 범위")
-                    .font(.body3)
-                    .foregroundColor(DS.Colors.Text.disable)
-                
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 16)
         }
     }
-    
     private func saveDetails() {
         if selectedCategory == .vacation {
             print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
@@ -415,63 +333,9 @@ public struct TaskDetailView: View {
     }
 }
 
-enum VacationType: String, CaseIterable {
-    case halfDay = "half_day"
-    case fullDay = "full_day"
-    case morningHalf = "morning_half"
-    case afternoonHalf = "afternoon_half"
-    
-    var displayName: String {
-        switch self {
-        case .halfDay: return "반차"
-        case .fullDay: return "하루 종일"
-        case .morningHalf: return "오전 반차"
-        case .afternoonHalf: return "오후 반차"
-        }
-    }
-}
-
-struct DetailSettingRowWithoutDivider<Content: View>: View {
-    let title: String
-    let content: () -> Content
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.body1)
-                .foregroundColor(DS.Colors.Text.netural)
-            
-            Spacer()
-            
-            content()
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
-    }
-}
-
-enum AlarmOption: String, CaseIterable {
-    case none = "NONE"
-    case fiveMinutesBefore = "FIVE_MINUTES_BEFORE"
-    case fifteenMinutesBefore = "FIFTEEN_MINUTES_BEFORE"
-    case thirtyMinutesBefore = "THIRTY_MINUTES_BEFORE"
-    case oneHourBefore = "ONE_HOUR_BEFORE"
-    case oneDayBefore = "ONE_DAY_BEFORE"
-    
-    var displayName: String {
-        switch self {
-        case .none: return "없음"
-        case .fiveMinutesBefore: return "5분 전"
-        case .fifteenMinutesBefore: return "15분 전"
-        case .thirtyMinutesBefore: return "30분 전"
-        case .oneHourBefore: return "1시간 전"
-        case .oneDayBefore: return "1일 전"
-        }
-    }
-}
 
 #Preview {
     NavigationView {
-        TaskDetailView(selectedCategory: .vacation)
+        TaskDetailView(selectedCategory: .company)
     }
 }

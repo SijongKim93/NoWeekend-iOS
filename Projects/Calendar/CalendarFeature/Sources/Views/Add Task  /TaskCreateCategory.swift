@@ -33,3 +33,19 @@ public enum TaskCreateCategory: String, CaseIterable, Hashable {
         }
     }
 }
+
+enum VacationType: String, CaseIterable {
+    case halfDay = "half_day"
+    case fullDay = "full_day"
+    case morningHalf = "morning_half"
+    case afternoonHalf = "afternoon_half"
+    
+    var displayName: String {
+        switch self {
+        case .halfDay: return "반차"
+        case .fullDay: return "하루 종일"
+        case .morningHalf: return "오전 반차"
+        case .afternoonHalf: return "오후 반차"
+        }
+    }
+}
