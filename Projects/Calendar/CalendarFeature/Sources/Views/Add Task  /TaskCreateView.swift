@@ -11,35 +11,38 @@ import SwiftUI
 
 public struct TaskCreateView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var coordinator: CalendarCoordinator
     
     @State private var selectedCategory: TaskCreateCategory = .company
     @State private var title: String = ""
     @State private var titleError: String?
+    @State private var showTaskDetail = false
     
-    // TODO: API로 대체
     private let categories: [TaskCreateCategory] = [.company, .personal, .other, .vacation]
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            navigationBar
-            
-            ScrollView {
-                VStack(spacing: 32) {
-                    categorySection
-                    titleSection
-                    detailSection
+        NavigationStack {
+            VStack(spacing: 0) {
+                navigationBar
+                
+                ScrollView {
+                    VStack(spacing: 32) {
+                        categorySection
+                        titleSection
+                        detailSection
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 24)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
+                
+                Spacer()
             }
-            
-            Spacer()
+            .background(DS.Colors.Background.normal)
+            .navigationDestination(isPresented: $showTaskDetail) {
+                TaskDetailView(selectedCategory: selectedCategory)
+            }
         }
-        .background(DS.Colors.Background.normal)
-        .navigationBarHidden(true)
     }
     
     private var navigationBar: some View {
@@ -107,7 +110,7 @@ public struct TaskCreateView: View {
             DetailRowButton(
                 title: "세부사항",
                 onTap: {
-//                    coordinator.push(.taskDetail)
+                    showTaskDetail = true
                 }
             )
         }
@@ -120,7 +123,6 @@ public struct TaskCreateView: View {
         }
         
         titleError = nil
-        // TODO: 할 일 저장 로직 구현
         print("할 일 저장: \(title), 카테고리: \(selectedCategory.displayName)")
         dismiss()
     }
@@ -165,34 +167,6 @@ struct DetailRowButton: View {
     }
 }
 
-enum TaskCreateCategory: String, CaseIterable {
-    case company = "company"
-    case personal = "personal"
-    case other = "other"
-    case vacation = "vacation"
-    
-    var displayName: String {
-        switch self {
-        case .company: return "회사"
-        case .personal: return "개인"
-        case .other: return "기타"
-        case .vacation: return "연차"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .company: return DS.Colors.TaskItem.green
-        case .personal: return DS.Colors.TaskItem.orange
-        case .other: return DS.Colors.TaskItem.etc
-        case .vacation: return DS.Colors.TaskItem.purple
-        }
-    }
-}
-
 #Preview {
-    NavigationView {
-        TaskCreateView()
-            .environmentObject(CalendarCoordinator())
-    }
+    TaskCreateView()
 }
