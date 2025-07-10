@@ -14,20 +14,24 @@ public struct CustomNavigationBar: View {
         case backWithLabel(String)
         case backWithLabelAndSave(String)
         case cancelWithLabelAndSave(String)
+        case labelOnly(String)
     }
     
     public let type: NavigationType
+    public let showBackButton: Bool
     public let onBackTapped: (() -> Void)?
     public let onCancelTapped: (() -> Void)?
     public let onSaveTapped: (() -> Void)?
     
     public init(
         type: NavigationType,
+        showBackButton: Bool = true,
         onBackTapped: (() -> Void)? = nil,
         onCancelTapped: (() -> Void)? = nil,
         onSaveTapped: (() -> Void)? = nil
     ) {
         self.type = type
+        self.showBackButton = showBackButton
         self.onBackTapped = onBackTapped
         self.onCancelTapped = onCancelTapped
         self.onSaveTapped = onSaveTapped
@@ -42,6 +46,7 @@ public struct CustomNavigationBar: View {
     }
 }
 
+
 private extension CustomNavigationBar {
     var navigationContent: some View {
         HStack {
@@ -55,15 +60,30 @@ private extension CustomNavigationBar {
     var leftButtonContent: some View {
         switch type {
         case .backOnly, .backWithLabel, .backWithLabelAndSave:
-            Button(action: { onBackTapped?() }) {
-                Image(.icnChevronLeft)
+            if showBackButton {
+                Button(action: { onBackTapped?() }) {
+                    Image(.icnChevronLeft)
+                }
+            } else {
+                Color.clear
+                    .frame(width: 24, height: 24)
             }
+            
         case .cancelWithLabelAndSave:
-            Button(action: { onCancelTapped?() }) {
-                Text("취소")
-                    .font(.heading6)
-                    .foregroundColor(DS.Colors.Text.disable)
+            if showBackButton {
+                Button(action: { onCancelTapped?() }) {
+                    Text("취소")
+                        .font(.heading6)
+                        .foregroundColor(DS.Colors.Text.netural)
+                }
+            } else {
+                Color.clear
+                    .frame(width: 60, height: 32)
             }
+            
+        case .labelOnly:
+            Color.clear
+                .frame(width: 24, height: 24)
         }
     }
     
@@ -74,8 +94,10 @@ private extension CustomNavigationBar {
             EmptyView()
         case .backWithLabel(let title),
              .backWithLabelAndSave(let title),
-             .cancelWithLabelAndSave(let title):
+             .cancelWithLabelAndSave(let title),
+             .labelOnly(let title):
             Text(title)
+                .font(.heading6)
                 .navigationTitleStyle()
         }
     }
@@ -83,7 +105,7 @@ private extension CustomNavigationBar {
     @ViewBuilder
     var rightButtonContent: some View {
         switch type {
-        case .backOnly, .backWithLabel:
+        case .backOnly, .backWithLabel, .labelOnly:
             Color.clear
                 .frame(width: 60, height: 32)
         case .backWithLabelAndSave, .cancelWithLabelAndSave:
@@ -119,6 +141,28 @@ private extension View {
     }
 }
 
+public extension CustomNavigationBar {
+    static func labelOnly(
+        title: String
+    ) -> CustomNavigationBar {
+        CustomNavigationBar(
+            type: .labelOnly(title)
+        )
+    }
+    
+    static func conditionalBack(
+        title: String,
+        showBackButton: Bool,
+        onBackTapped: (() -> Void)? = nil
+    ) -> CustomNavigationBar {
+        CustomNavigationBar(
+            type: .backWithLabel(title),
+            showBackButton: showBackButton,
+            onBackTapped: onBackTapped
+        )
+    }
+}
+
 // MARK: - Preview
 #Preview {
     VStack(spacing: 1) {
@@ -128,6 +172,7 @@ private extension View {
             onBackTapped: { print("뒤로가기 tapped") }
         )
         .previewNavigationBarBackground()
+        
         
         // Back with Label
         CustomNavigationBar(

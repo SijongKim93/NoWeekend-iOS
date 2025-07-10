@@ -11,6 +11,7 @@ let project = Project.make(
             dependencies: [
                 .Login.domain,
                 .Core.nwnetwork,
+                .Core.diContainer,
                 .External.googleSignIn
             ],
             settings: .frameworkSettings

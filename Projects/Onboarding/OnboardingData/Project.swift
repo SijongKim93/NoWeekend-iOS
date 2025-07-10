@@ -10,7 +10,8 @@ let project = Project.make(
             sources: ["Sources/**"],
             dependencies: [
                 .Onboarding.domain,
-                .Core.diContainer
+                .Core.diContainer,
+                .Core.nwnetwork
             ],
             settings: .frameworkSettings
         )
