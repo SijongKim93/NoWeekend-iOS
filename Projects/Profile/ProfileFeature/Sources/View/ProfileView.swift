@@ -3,15 +3,16 @@ import ProfileDomain
 import DesignSystem
 
 public struct ProfileView: View {
+    @EnvironmentObject var coordinator: ProfileCoordinator
     var isToggle: Bool = false
     
     public init() {}
     
     public var body: some View {
         VStack {
-            MypageHeaderSection()
-            MypageVacationSection()
-            MypageSettingSection()
+            ProfileHeaderSection()
+            ProfileVacationSection()
+            ProfileSettingSection()
             
             Spacer()
         }
@@ -19,21 +20,24 @@ public struct ProfileView: View {
     
 }
 
-private struct MypageHeaderSection: View {
+private struct ProfileHeaderSection: View {
+    @EnvironmentObject var coordinator: ProfileCoordinator
+    
     var body: some View {
         HStack(alignment:.center) {
             Text("김시종이")
                 .font(.heading4)
-                .foregroundColor(DS.Colors.Text.netural)//netural
+                .foregroundColor(DS.Colors.Text.netural)
             
             Spacer()
             
             Button {
                 print("프로필 정보 수정 버튼")
+                coordinator.push(.infoEdit)
             } label: {
                 Text("수정")
                     .font(.body2)
-                    .foregroundColor(DS.Colors.Text.body)//body
+                    .foregroundColor(DS.Colors.Text.body)
             }
         }
         .frame(maxWidth: .infinity)
@@ -43,7 +47,7 @@ private struct MypageHeaderSection: View {
     }
 }
 
-private struct MypageVacationSection: View {
+private struct ProfileVacationSection: View {
     var body: some View {
         statusCardView
             .padding(.horizontal, 20)
@@ -93,13 +97,15 @@ private struct MypageVacationSection: View {
     }
 }
 
-private struct MypageSettingSection: View {
+private struct ProfileSettingSection: View {
+    @EnvironmentObject var coordinator: ProfileCoordinator
+    
     var body: some View {
         VStack(spacing: 32) {
             SettingSection(
                 title: "정보") {
                     SettingRow.basic(title: "연차 관리") {
-                        
+                        coordinator.push(.vacation)
                     }
                     
                     SettingDivider()
@@ -112,10 +118,6 @@ private struct MypageSettingSection: View {
                     ) //선택한 카테고리값 적용해야함
                     
                     SettingDivider()
-    
-//                    SettingRow.basic(title: "알림 설정") {
-//                        
-//                    }
                     
                 }
             
