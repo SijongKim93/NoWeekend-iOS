@@ -13,5 +13,4 @@ public protocol CalendarRepositoryProtocol {
     func createSchedule(request: CreateScheduleRequest) async throws -> Schedule
     func updateSchedule(id: String, request: UpdateScheduleRequest) async throws -> Schedule  
     func deleteSchedule(id: String) async throws
-    func deleteSchedule(id: String) async throws -> String
 }
