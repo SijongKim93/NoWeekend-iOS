@@ -9,11 +9,13 @@
 import Foundation
 import GoogleSignIn
 import LoginDomain
+import NWNetwork
 import UIKit
 
 public final class GoogleAuthService: GoogleAuthServiceInterface {
     public init() {
         print("🔐 GoogleAuthService 초기화 완료")
+        ensureGoogleSignInConfiguration()
     }
     
     @MainActor
@@ -21,111 +23,104 @@ public final class GoogleAuthService: GoogleAuthServiceInterface {
         print("🚀 Google 로그인 시작")
         print("📱 PresentingViewController: \(type(of: presentingViewController))")
         
-        // Google Sign-In 설정 상태 확인
+        // Google Sign-In 설정 상태 재확인 및 필요시 재설정
+        ensureGoogleSignInConfiguration()
+        
         guard let configuration = GIDSignIn.sharedInstance.configuration else {
-            print("❌ Google Sign-In 설정이 없습니다.")
+            print("❌ Google Sign-In 설정 실패")
             throw NSError(domain: "GoogleSignIn", code: -1,
-                         userInfo: [NSLocalizedDescriptionKey: "Google Sign-In 설정이 누락되었습니다."])
+                          userInfo: [NSLocalizedDescriptionKey: "Google Sign-In 설정이 누락되었습니다."])
         }
         
         print("✅ Google Sign-In 설정 확인:")
         print("   - Client ID: \(configuration.clientID)")
-        print("   - Server Client ID: \(configuration.serverClientID ?? "없음")")
+        print("   - Server Client ID: \(configuration.serverClientID ?? "❌ 없음")")
         
-        return try await withCheckedThrowingContinuation { continuation in
-            print("🔄 GIDSignIn.signIn 호출 시작")
+        // Authorization Code를 받으려면 serverClientID가 필수
+        guard let serverClientID = configuration.serverClientID, !serverClientID.isEmpty else {
+            throw NSError(
+                domain: "GoogleSignIn",
+                code: -3,
+                userInfo: [NSLocalizedDescriptionKey: "Authorization Code를 받으려면 Server Client ID가 필요합니다."]
+            )
+        }
+        
+        print("🔧 Authorization Code 요청 설정 완료")
+        print("   - Server Client ID: \(serverClientID)")
+        
+        do {
+            // 추가 스코프 요청
+            let additionalScopes = [
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile"
+            ]
             
-            GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
-                print("📞 Google Sign-In 콜백 받음")
-                
-                if let error = error {
-                    print("❌ Google Sign-In 오류 발생:")
-                    print("   - Error Domain: \(error._domain)")
-                    print("   - Error Code: \(error._code)")
-                    print("   - Error Description: \(error.localizedDescription)")
-                    print("   - Error UserInfo: \(error)")
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let result = result else {
-                    print("❌ Google Sign-In 결과가 nil입니다.")
-                    let error = NSError(
-                        domain: "GoogleSignInError",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "No result received"]
-                    )
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                print("✅ Google Sign-In 성공! 결과 분석:")
-                
-                let user = result.user
-                print("👤 사용자 정보:")
-                print("   - User ID: \(user.userID ?? "없음")")
-                
-                // 프로필 정보 확인
-                if let profile = user.profile {
-                    print("📋 프로필 정보:")
-                    print("   - Name: \(profile.name)")
-                    print("   - Email: \(profile.email)")
-                    print("   - Given Name: \(profile.givenName ?? "없음")")
-                    print("   - Family Name: \(profile.familyName ?? "없음")")
-                    print("   - Has Image: \(profile.hasImage)")
-                    if profile.hasImage {
-                        print("   - Image URL: \(profile.imageURL(withDimension: 200)?.absoluteString ?? "없음")")
-                    }
-                } else {
-                    print("⚠️ 프로필 정보가 없습니다.")
-                }
-                
-                // 토큰 정보 확인
-                print("🎫 토큰 정보:")
-                let accessToken = user.accessToken.tokenString
-                print("   - Access Token 길이: \(accessToken.count)자")
-                print("   - Access Token 앞 10자: \(String(accessToken.prefix(10)))...")
-                
-                if let idToken = user.idToken {
-                    print("   - ID Token 길이: \(idToken.tokenString.count)자")
-                    print("   - ID Token 앞 10자: \(String(idToken.tokenString.prefix(10)))...")
-                } else {
-                    print("   - ID Token: 없음")
-                }
-                
-                // 권한 범위 확인
-                if let grantedScopes = user.grantedScopes {
-                    print("🔑 부여된 권한:")
-                    for scope in grantedScopes {
-                        print("   - \(scope)")
-                    }
-                } else {
-                    print("🔑 부여된 권한: 없음")
-                }
-                
-                // GoogleSignInResult 생성
-                let authorizationCode = accessToken
-                let signInResult = GoogleSignInResult(
-                    authorizationCode: authorizationCode,
-                    name: user.profile?.name,
-                    email: user.profile?.email
+            print("🔧 추가 스코프와 함께 로그인 요청:")
+            additionalScopes.forEach { print("   - \($0)") }
+            
+            let result = try await GIDSignIn.sharedInstance.signIn(
+                withPresenting: presentingViewController,
+                hint: nil,
+                additionalScopes: additionalScopes
+            )
+            
+            guard let authorizationCode = result.serverAuthCode,
+                  authorizationCode.hasPrefix("4/") else {
+                throw NSError(
+                    domain: "GoogleSignIn",
+                    code: -4,
+                    userInfo: [NSLocalizedDescriptionKey: "Authorization Code(serverAuthCode)를 받지 못했습니다."]
                 )
-                
-                print("📦 GoogleSignInResult 생성:")
-                print("   - Authorization Code 길이: \(signInResult.authorizationCode.count)자")
-                print("   - Name: \(signInResult.name ?? "없음")")
-                print("   - Email: \(signInResult.email ?? "없음")")
-                
-                print("✅ Google 로그인 완료 - UseCase로 전달")
-                continuation.resume(returning: signInResult)
             }
+            print("✅ Authorization Code 획득: \(String(authorizationCode.prefix(30)))…")
+            
+            // 사용자 정보 로깅
+            let user = result.user
+            print("👤 사용자 정보:")
+            print("   - User ID: \(user.userID ?? "없음")")
+            if let profile = user.profile {
+                print("📋 프로필 정보:")
+                print("   - Name: \(profile.name)")
+            }
+            
+            // 서버로 전달할 결과 생성
+            let signInResult = GoogleSignInResult(
+                authorizationCode: authorizationCode,
+                name: user.profile?.name,
+                email: user.profile?.email
+            )
+            
+            print("✅ Google 로그인 완료 - UseCase로 전달")
+            return signInResult
+            
+        } catch {
+            print("❌ Google Sign-In 실패: \(error)")
+            throw error
         }
     }
-
-    @MainActor
+    
     public func signOut() {
         print("🚪 Google 로그아웃 시작")
         GIDSignIn.sharedInstance.signOut()
         print("✅ Google 로그아웃 완료")
+    }
+    
+    // MARK: - Private Methods
+    
+    private func ensureGoogleSignInConfiguration() {
+        print("🔧 Google Sign-In 설정 확인 및 구성")
+        
+        let clientID = GoogleConfig.clientID
+        let serverClientID = GoogleConfig.serverClientID
+        
+        
+        
+        let config = GIDConfiguration(
+            clientID: clientID,
+            serverClientID: serverClientID
+        )
+        
+        GIDSignIn.sharedInstance.configuration = config
+        
     }
 }

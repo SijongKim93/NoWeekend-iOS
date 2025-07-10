@@ -10,6 +10,9 @@ let project = Project.make(
             sources: ["Sources/**"],
             dependencies: [
                 .Onboarding.domain,
+                .Onboarding.data,
+                .Core.coordinator,
+                .Core.diContainer,
                 .Shared.designSystem,
                 .Shared.utils
             ],
