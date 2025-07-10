@@ -18,15 +18,15 @@
 //                .Login.feature,
 //                .Bridge.dataBridge,
 //                .Shared.designSystem,
-//                .Shared.utils
-//            ],
-//            settings: .settings(
-//                base: [
-//                    "OTHER_LDFLAGS": "$(inherited) -ObjC"
-//                ]
-//            )
-//        )
-//    ],
+                .Shared.utils
+            ],
+            settings: .settings(
+                base: [
+                    "OTHER_LDFLAGS": "$(inherited) -ObjC"
+                ]
+            )
+        )
+    ],
 //    resourceSynthesizers: [
 //        .custom(
 //            name: "Fonts",
