@@ -107,17 +107,14 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
     }
     
     public func deleteSchedule(id: String) async throws {
-        let response: ScheduleResponseDTO = try await networkService.delete(
+        let response: DeleteScheduleResponseDTO = try await networkService.delete(
             endpoint: "/schedule/\(id)"
         )
         
         guard response.result == "SUCCESS" else {
-        }
-            throw NetworkError.serverError(errorMessage)
             let errorMessage = response.error?.message ?? "일정 삭제 실패"
             throw NetworkError.serverError(errorMessage)
         }
         
-        return response.data ?? "일정이 성공적으로 삭제되었습니다."
     }
 }
