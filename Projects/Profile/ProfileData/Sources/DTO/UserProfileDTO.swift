@@ -34,7 +34,7 @@ public struct UserProfileDTO: Codable {
     public let remainingAnnualLeave: Double
     public let createdAt: String
     public let updatedAt: String
-    public let location: LocationDTO?
+    public let location: UserLocationDTO?
     public let averageTemperature: Double
     
     public init(
@@ -50,7 +50,7 @@ public struct UserProfileDTO: Codable {
         remainingAnnualLeave: Double,
         createdAt: String,
         updatedAt: String,
-        location: LocationDTO?,
+        location: UserLocationDTO?,
         averageTemperature: Double
     ) {
         self.id = id

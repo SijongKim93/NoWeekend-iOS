@@ -12,6 +12,7 @@ import Foundation
 public protocol NWNetworkServiceProtocol {
     func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
     func post<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
+    func patch<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
     func put<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
     func delete<T: Decodable>(endpoint: String) async throws -> T
 }
@@ -50,6 +51,10 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     
     public func delete<T: Decodable>(endpoint: String) async throws -> T {
         try await request(endpoint: endpoint, method: .delete, parameters: nil)
+    }
+    
+    public func patch<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
+        return try await request(endpoint: endpoint, method: .patch, parameters: parameters)
     }
     
     private func request<T: Decodable>(

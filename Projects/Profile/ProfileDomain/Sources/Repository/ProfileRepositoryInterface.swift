@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol ProfileRepositoryProtocol {
+public protocol ProfileRepositoryInterface {
     func getUserProfile() async throws -> UserProfile
     func updateUserProfile(_ request: UserProfileUpdateRequest) async throws -> UserProfile
     func getUserTags() async throws -> UserTagsResponse
