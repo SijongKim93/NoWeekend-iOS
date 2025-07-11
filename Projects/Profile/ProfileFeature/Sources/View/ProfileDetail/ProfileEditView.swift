@@ -9,7 +9,8 @@
 import SwiftUI
 import DesignSystem
 
-public struct ProfileEditView: View {
+struct ProfileEditView: View {
+    @EnvironmentObject private var coordinator: ProfileCoordinator
     
     @State private var nickname: String = ""
     @State private var birthDate: String = ""
@@ -19,10 +20,10 @@ public struct ProfileEditView: View {
     @State private var isLoading: Bool = false
     @State private var showSaveSuccess: Bool = false
     
-    public let onLoad: () -> (nickname: String, birthDate: String)
-    public let onSave: (String, String) -> Void
+    let onLoad: () -> (nickname: String, birthDate: String)
+    let onSave: (String, String) -> Void
     
-    public init(
+    init(
         onLoad: @escaping () -> (nickname: String, birthDate: String),
         onSave: @escaping (String, String) -> Void
     ) {
@@ -30,13 +31,13 @@ public struct ProfileEditView: View {
         self.onSave = onSave
     }
     
-    public var body: some View {
+    var body: some View {
         VStack {
             CustomNavigationBar.conditionalBack(
                 title: "계정 설정",
                 showBackButton: true,
                 onBackTapped: {
-                    
+                    coordinator.pop()
                 }
             )
             

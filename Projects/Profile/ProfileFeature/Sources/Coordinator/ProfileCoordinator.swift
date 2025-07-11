@@ -12,84 +12,71 @@ import SwiftUI
 
 public final class ProfileCoordinator: ObservableObject, Coordinatorable {
     
+
     public typealias Screen = ProfileRouter.Screen
     public typealias SheetScreen = ProfileRouter.Sheet
     public typealias FullScreen = ProfileRouter.FullScreen
+    
+    public typealias PushView = AnyView
+    public typealias SheetView = AnyView
+    public typealias FullView = AnyView
     
     @Published public var path: NavigationPath = NavigationPath()
     @Published public var sheet: SheetScreen?
     @Published public var fullScreenCover: FullScreen?
     
-    public init() {
-        print("🧭 ProfileCoordinator 생성")
-    }
+    public init() {}
     
-    @ViewBuilder
-    public func view(_ screen: Screen) -> some View {
+    public func view(_ screen: Screen) -> AnyView {
         switch screen {
         case .home:
-            ProfileView()
+            return AnyView(ProfileView())
         case .edit:
-            ProfileEditView()
+            return AnyView(
+                ProfileEditView(
+                    onLoad: { [weak self] in
+                        self?.loadProfileData() ?? (nickname: "", birthDate: "")
+                    },
+                    onSave: { [weak self] nickname, birthDate in
+                        self?.saveProfileData(nickname: nickname, birthDate: birthDate)
+                    }
+                )
+            )
         case .infoEdit:
-            ProfileInfoDetailView()
+            return AnyView(ProfileInfoDetailView())
         case .tags:
-            
+            return AnyView(ProfileTagsView())
         case .vacation:
-            
+            return AnyView(ProfileVacationView())
         }
     }
     
-    @ViewBuilder
-    public func presentView(_ sheet: SheetScreen) -> some View {
+    // MARK: - Sheet View
+    public func presentView(_ sheet: SheetScreen) -> AnyView {
         switch sheet {
         case .tagResult(let selectedTags):
-            
+            return AnyView(ProfileTagResultView())
         case .category(let currentCategory):
-            
+            return AnyView(ProfileCategoryView())
         }
     }
     
-    @ViewBuilder
-    public func fullCoverView(_ cover: FullScreen) -> some View {
+    // MARK: - Full Screen View
+    public func fullCoverView(_ cover: FullScreen) -> AnyView {
         switch cover {
         case .webView(let url):
-            
-        }
-    }
-}
-
-public enum ProfileRouter {
-    public enum Screen: Hashable {
-        case home
-        case edit
-        case infoEdit
-        case tags
-        case vacation
-    }
-    
-    public enum Sheet: Identifiable {
-        case tagResult(selectedTags: [String])
-        case category(currentCategory: String)
-        
-        public var id: String {
-            switch self {
-            case .tagResult:
-                return "tagResult"
-            case .category:
-                return "category"
-            }
+            return AnyView(ProfileVacationView()) //예시 수정해야함
         }
     }
     
-    public enum FullScreen: Identifiable {
-        case webView(URL)
-        
-        public var id: String {
-            switch self {
-            case .webView(let url):
-                return "webView_\(url.absoluteString)"
-            }
-        }
+    // MARK: - Business Logic
+    private func loadProfileData() -> (nickname: String, birthDate: String) {
+        // 실제 구현에서는 Repository나 UseCase를 통해 데이터 로드
+        return (nickname: "김시종이", birthDate: "1990-01-01")
+    }
+    
+    private func saveProfileData(nickname: String, birthDate: String) {
+        // 실제 구현에서는 Repository나 UseCase를 통해 데이터 저장
+        print("프로필 데이터 저장: \(nickname), \(birthDate)")
     }
 }
