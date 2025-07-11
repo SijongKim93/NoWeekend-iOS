@@ -14,6 +14,7 @@ import SwiftUI
 
 public struct CalendarView: View {
     @Dependency private var calendarUseCase: CalendarUseCaseProtocol
+    @EnvironmentObject private var coordinator: CalendarCoordinator
 
     @State private var selectedDate = Date()
     @State private var selectedToggle: CalendarNavigationBar.ToggleOption = .week
@@ -30,8 +31,6 @@ public struct CalendarView: View {
     @State private var todoItems = TodoItem.mockData
     
     @State private var isLoading = false
-    @State private var isDeletingSchedule = false
-    @State private var isUpdatingSchedule = false
     @State private var errorMessage: String?
     
     private var isFloatingButtonExpanded: Bool {
@@ -113,7 +112,8 @@ private extension CalendarView {
         if showCategorySelection {
             TaskCategorySelectionView(
                 isPresented: $showCategorySelection,
-                onCategorySelected: handleCategorySelection
+                onCategorySelected: handleCategorySelection,
+                onDirectInputTapped: handleDirectInput
             )
             .zIndex(1)
         }
@@ -170,10 +170,6 @@ private extension CalendarView {
             todoItems.remove(at: index)
             selectedTaskIndex = nil
         }
-        
-        if let schedule = getFirstAvailableSchedule() {
-            Task { await deleteSchedule(id: schedule.id) }
-        }
     }
     
     func handleCategorySelection(_ category: TaskCategory) {
@@ -188,8 +184,12 @@ private extension CalendarView {
         }
         
         editingTaskIndex = todoItems.count - 1
-        
         showCategorySelection = false
+    }
+    
+    func handleDirectInput() {
+        showCategorySelection = false
+        coordinator.push(.taskCreate)
     }
     
     func showCategorySelectionWithAnimation() {
@@ -239,38 +239,12 @@ private extension CalendarView {
         guard index < todoItems.count else { return }
         
         let originalTitle = todoItems[index].title
-        todoItems[index].title = newTitle        
-    }
-    
-    func deleteSchedule(id: String) async {
-        isDeletingSchedule = true
-        
-        do {
-            // TODO: 실제 삭제 로직 구현
-            await loadSchedules()
-        } catch {
-            print("일정 삭제 실패: \(error)")
-        }
-        
-        isDeletingSchedule = false
-    }
-    
-    func getScheduleIdForTodo(at index: Int) -> String? {
-        return getFirstAvailableSchedule()?.id
-    }
-    
-    func getScheduleForTodo(at index: Int) -> Schedule? {
-        return getFirstAvailableSchedule()
+        todoItems[index].title = newTitle
     }
 }
 
 // MARK: - Helper Functions
 private extension CalendarView {
-    func getFirstAvailableSchedule() -> Schedule? {
-        let allSchedules = dailySchedules.flatMap { $0.schedules }
-        return allSchedules.first
-    }
-    
     @ViewBuilder
     func calendarCellContent(for date: Date) -> some View {
         let schedulesForDate = getSchedulesForDate(date)
@@ -335,5 +309,5 @@ private extension TodoItem {
 }
 
 #Preview {
-    CalendarView()
+    CalendarCoordinatorView()
 }
