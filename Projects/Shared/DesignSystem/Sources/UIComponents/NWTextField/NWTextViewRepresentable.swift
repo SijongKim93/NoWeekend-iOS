@@ -14,19 +14,22 @@ public struct NWTextViewRepresentable: UIViewRepresentable {
     @Binding public var isEditing: Bool
     public let placeholder: String
     public let currentState: NWTextFieldState
+    public let keyboardType: UIKeyboardType
     
     public init(
         text: Binding<String>,
         errorMessage: Binding<String?>,
         isEditing: Binding<Bool>,
         placeholder: String,
-        currentState: NWTextFieldState
+        currentState: NWTextFieldState,
+        keyboardType: UIKeyboardType = .default
     ) {
         self._text = text
         self._errorMessage = errorMessage
         self._isEditing = isEditing
         self.placeholder = placeholder
         self.currentState = currentState
+        self.keyboardType = keyboardType
     }
     
     public func makeCoordinator() -> NWTextViewCoordinator {
@@ -75,6 +78,7 @@ public struct NWTextViewRepresentable: UIViewRepresentable {
         
         textView.font = UIFont(font: DesignSystemFontFamily.Pretendard.medium, size: 16)
         textView.textColor = UIColor(DS.Colors.Text.netural)
+        textView.keyboardType = keyboardType
     }
     
     private func setupInitialContent(_ textView: NWUITextView) {

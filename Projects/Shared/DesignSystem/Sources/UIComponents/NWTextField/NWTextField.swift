@@ -15,6 +15,7 @@ public struct NWTextField: View {
     @Binding private var errorMessage: String?
     @State private var isEditing: Bool = false
     private let style: NWTextFieldStyle
+    private let keyboardType: UIKeyboardType
     
     // MARK: - Computed Properties
     private var currentState: NWTextFieldState {
@@ -36,12 +37,14 @@ public struct NWTextField: View {
         text: Binding<String>,
         placeholder: String = "",
         errorMessage: Binding<String?> = .constant(nil),
-        style: NWTextFieldStyle = .todoMultiLine
+        style: NWTextFieldStyle = .todoMultiLine,
+        keyboardType: UIKeyboardType = .default
     ) {
         self._text = text
         self.placeholder = placeholder
         self._errorMessage = errorMessage
         self.style = style
+        self.keyboardType = keyboardType
     }
     
     // MARK: - Body
@@ -91,7 +94,8 @@ public struct NWTextField: View {
             errorMessage: $errorMessage,
             isEditing: $isEditing,
             placeholder: placeholder,
-            currentState: currentState
+            currentState: currentState,
+            keyboardType: keyboardType
         )
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -137,7 +141,8 @@ public extension NWTextField {
             text: self._text,
             placeholder: self.placeholder,
             errorMessage: .constant(message),
-            style: self.style
+            style: self.style,
+            keyboardType: self.keyboardType
         )
     }
     
@@ -146,7 +151,8 @@ public extension NWTextField {
             text: self._text,
             placeholder: text,
             errorMessage: self._errorMessage,
-            style: self.style
+            style: self.style,
+            keyboardType: self.keyboardType
         )
     }
     
@@ -155,7 +161,8 @@ public extension NWTextField {
             text: self._text,
             placeholder: self.placeholder,
             errorMessage: self._errorMessage,
-            style: style
+            style: style,
+            keyboardType: self.keyboardType
         )
     }
     
@@ -164,7 +171,18 @@ public extension NWTextField {
             text: self._text,
             placeholder: self.placeholder,
             errorMessage: self._errorMessage,
-            style: .userInputTextField(text)
+            style: .userInputTextField(text),
+            keyboardType: self.keyboardType
+        )
+    }
+    
+    func keyboardType(_ type: UIKeyboardType) -> NWTextField {
+        NWTextField(
+            text: self._text,
+            placeholder: self.placeholder,
+            errorMessage: self._errorMessage,
+            style: self.style,
+            keyboardType: type
         )
     }
 }
@@ -173,13 +191,15 @@ public extension NWTextField {
     static func todoMultiLine(
         text: Binding<String>,
         placeholder: String = "",
-        errorMessage: Binding<String?> = .constant(nil)
+        errorMessage: Binding<String?> = .constant(nil),
+        keyboardType: UIKeyboardType = .default
     ) -> NWTextField {
         NWTextField(
             text: text,
             placeholder: placeholder,
             errorMessage: errorMessage,
-            style: .todoMultiLine
+            style: .todoMultiLine,
+            keyboardType: keyboardType
         )
     }
     
@@ -187,13 +207,15 @@ public extension NWTextField {
         text: Binding<String>,
         suffixText: String,
         placeholder: String = "",
-        errorMessage: Binding<String?> = .constant(nil)
+        errorMessage: Binding<String?> = .constant(nil),
+        keyboardType: UIKeyboardType = .default
     ) -> NWTextField {
         NWTextField(
             text: text,
             placeholder: placeholder,
             errorMessage: errorMessage,
-            style: .userInputTextField(suffixText)
+            style: .userInputTextField(suffixText),
+            keyboardType: keyboardType
         )
     }
 }
