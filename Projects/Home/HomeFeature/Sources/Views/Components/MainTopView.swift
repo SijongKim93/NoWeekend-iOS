@@ -10,6 +10,9 @@ import SwiftUI
 import DesignSystem
 
 struct MainTopView: View {
+    let vacationBakingStatus: VacationBakingStatus
+    let onVacationBakingTapped: () -> Void
+    
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -27,12 +30,14 @@ struct MainTopView: View {
                 Text("평균 열정온도:")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Text.body)
+                // TODO: 데이터 넣기
                 Text("97°C")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Toast._600)
             }
             .padding(.bottom, 4)
-            Text("온도를 식히는 휴식 어떠세요?")
+            
+            Text(vacationBakingStatus.titleText)
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
             
@@ -41,8 +46,18 @@ struct MainTopView: View {
                 .frame(width: 140, height: 140)
                 .padding(.vertical, 16)
             
-            NWButton.primary("최대 7일 휴가 굽기", action: { })
-                .frame(width: 200, height: 60)
+            Button(action: onVacationBakingTapped) {
+                Text(vacationBakingStatus.buttonText)
+                    .font(.body1)
+                    .foregroundColor(vacationBakingStatus.isButtonEnabled ? .white : DS.Colors.Text.body)
+                    .frame(width: 200, height: 60)
+                    .background(
+                        RoundedRectangle(cornerRadius: 30)
+                            .fill(vacationBakingStatus.isButtonEnabled ? DS.Colors.Toast._600 : DS.Colors.Background.alternative01)
+                    )
+            }
+            .disabled(!vacationBakingStatus.isButtonEnabled)
+            .buttonStyle(PlainButtonStyle())
         }
     }
 } 

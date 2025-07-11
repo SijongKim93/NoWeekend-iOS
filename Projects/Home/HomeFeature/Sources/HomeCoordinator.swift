@@ -18,6 +18,9 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
     @Published var sheet: SheetScreen?
     @Published var fullScreenCover: FullScreen?
     
+    var onVacationBakingCompleted: (() -> Void)?
+    var remainingAnnualLeave: Int = 0
+    
     init() {}
     
     @ViewBuilder
@@ -25,6 +28,13 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
         switch screen {
         case .main:
             HomeView()
+        case .vacationBaking:
+            VacationBakingView(
+                remainingAnnualLeave: remainingAnnualLeave,
+                onCompleted: {
+                    self.onVacationBakingCompleted?()
+                }
+            )
         }
     }
     
@@ -42,6 +52,7 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
 enum HomeRouter {
     enum Screen: Hashable {
         case main
+        case vacationBaking
     }
     
     enum Sheet: String, Identifiable {

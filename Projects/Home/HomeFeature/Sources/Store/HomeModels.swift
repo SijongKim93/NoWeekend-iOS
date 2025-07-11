@@ -8,11 +8,15 @@
 
 import Foundation
 
+// VacationBakingStatus는 VacationBakingModels.swift에서 정의됨
+
 // MARK: - Home State
 
 struct HomeState: Equatable {
     var isLoading: Bool = false
     var errorMessage: String? = nil
+    var vacationBakingStatus: VacationBakingStatus = .notStarted
+    var remainingAnnualLeave: Int = 10
     
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
@@ -33,6 +37,9 @@ enum HomeIntent {
     case viewDidLoad
     case vacationCardTapped(VacationCardType)
     case refreshData
+    case vacationBakingCompleted
+    case vacationBakingProcessed
+    case remainingAnnualLeaveLoaded(Int)
 }
 
 // MARK: - Home Effect
