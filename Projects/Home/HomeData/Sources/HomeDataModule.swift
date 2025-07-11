@@ -14,8 +14,8 @@ public enum HomeDataModule {
         print("🏠 HomeData Repository 등록")
         
         // Domain Protocol을 Data 모듈에서 등록
-        DIContainer.shared.container.register(EventRepositoryProtocol.self) { _ in
-            EventRepositoryImpl()
+        DIContainer.shared.container.register(HomeRepositoryProtocol.self) { _ in
+            HomeRepositoryImpl()
         }.inObjectScope(.container)
         
         print("✅ HomeData Repository 등록 완료")
