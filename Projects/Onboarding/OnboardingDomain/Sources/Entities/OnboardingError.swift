@@ -76,3 +76,6 @@ public enum OnboardingError: Error, LocalizedError, Equatable {
         }
     }
 }
+
+// 올바른 생년월일을 입력해 주세요 로 수정해야함
+

@@ -40,22 +40,37 @@ struct ProfileEditView: View {
                     coordinator.pop()
                 }
             )
+            .padding(.bottom, 48)
             
             NWUserInputView(
                 title: "정보를 작성해 주세요."
             ) {
-                NWNicknameInputSection(
-                    nickname: Binding(
-                        get: { nickname },
-                        set: { newValue in
-                            let filteredValue = String(newValue.prefix(7))
-                            nickname = filteredValue
-                            validateNickname(filteredValue)
-                        }
-                    ),
-                    nicknameError: nicknameError
-                )
+                VStack(spacing: 24) {
+                    NWNicknameInputSection(
+                        nickname: Binding(
+                            get: { nickname },
+                            set: { newValue in
+                                let filteredValue = String(newValue.prefix(7))
+                                nickname = filteredValue
+                                validateNickname(filteredValue)
+                            }
+                        ),
+                        nicknameError: nicknameError
+                    )
+                    
+                    NWBirthDateInputSection(
+                        birthDate: Binding(
+                            get: { store.state.birthDate },
+                            set: { newValue in
+                                let filtered = newValue.filter { $0.isNumber }
+                                store.send(.updateBirthDate(filtered))
+                            }
+                        ),
+                        birthDateError: store.state.birthDateError
+                    )
+                }
             }
+            .padding(.bottom, 48)
         }
     }
     
