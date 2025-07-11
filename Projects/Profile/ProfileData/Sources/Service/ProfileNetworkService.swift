@@ -1,0 +1,102 @@
+//
+//  ProfileNetworkService.swift
+//  ProfileData
+//
+//  Created by SiJongKim on 7/11/25.
+//  Copyright © 2025 com.noweekend. All rights reserved.
+//
+
+import Foundation
+import ProfileDomain
+import NWNetwork
+
+
+public final class ProfileNetworkService: ProfileNetworkServiceInterface {
+    
+    private let networkService: NWNetworkServiceProtocol
+    
+    public init(networkService: NWNetworkServiceProtocol) {
+        self.networkService = networkService
+    }
+    
+    public func getUserProfile() async throws -> UserProfileDTO {
+        let response: ApiResponse<UserProfileDTO> = try await networkService.get(
+            endpoint: "/user",
+            parameters: nil
+        )
+        
+        guard let data = response.data else {
+            throw ProfileNetworkError.noData(endpoint: "/user")
+        }
+        
+        return data
+    }
+    
+    public func updateUserProfile(_ request: UserProfileUpdateRequestDTO) async throws -> UserProfileDTO {
+        let parameters = try request.asDictionary()
+        
+        let response: ApiResponse<UserProfileDTO> = try await networkService.patch(
+            endpoint: "/user/profile",
+            parameters: parameters
+        )
+        
+        guard let data = response.data else {
+            throw ProfileNetworkError.updateFailed(endpoint: "/user/profile")
+        }
+        
+        return data
+    }
+    
+    public func getUserTags() async throws -> UserTagsResponseDTO {
+        let response: ApiResponse<UserTagsResponseDTO> = try await networkService.get(
+            endpoint: "/user/tags",
+            parameters: nil
+        )
+        
+        guard let data = response.data else {
+            throw ProfileNetworkError.noData(endpoint: "/user/tags")
+        }
+        
+        return data
+    }
+    
+    public func updateUserTags(_ request: UserTagsUpdateRequestDTO) async throws -> UserTagsResponseDTO {
+        let parameters = try request.asDictionary()
+        
+        let response: ApiResponse<UserTagsResponseDTO> = try await networkService.patch(
+            endpoint: "/user/tags",
+            parameters: parameters
+        )
+        
+        guard let data = response.data else {
+            throw ProfileNetworkError.updateFailed(endpoint: "/user/tags")
+        }
+        
+        return data
+    }
+    
+    public func updateVacationLeave(_ request: VacationLeaveDTO) async throws -> VacationLeaveDTO {
+        let parameters = try request.asDictionary()
+        
+        let response: ApiResponse<VacationLeaveDTO> = try await networkService.patch(
+            endpoint: "/user/leave",
+            parameters: parameters
+        )
+        
+        guard let data = response.data else {
+            throw ProfileNetworkError.updateFailed(endpoint: "/user/leave")
+        }
+        
+        return data
+    }
+}
+
+extension Encodable {
+    func asDictionary() throws -> [String: Any] {
+        let data = try JSONEncoder().encode(self)
+        guard let dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
+            throw ProfileNetworkError.invalidResponse(endpoint: "encoding")
+        }
+        return dictionary
+    }
+}
