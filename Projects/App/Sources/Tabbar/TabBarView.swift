@@ -72,7 +72,7 @@ public struct TabBarView: View {
                 .tag(Tab.calendar)
             
             // 프로필 탭
-            ProfileView()
+            ProfileCoordinatorView()
                 .tabItem {
                     (selectedTab == .profile ? Tab.profile.iconOn : Tab.profile.iconOff)
                     Text(Tab.profile.title)

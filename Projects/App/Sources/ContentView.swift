@@ -31,7 +31,7 @@ struct ContentView: View {
         if appState.isLoading {
             LoadingView()
         } else if !appState.isLoggedIn {
-            OnboardingView()
+            LoginView()
         } else if !appState.isOnboardingCompleted {
             OnboardingView()
         } else {
