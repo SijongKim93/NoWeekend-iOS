@@ -10,7 +10,7 @@ import DesignSystem
 import SwiftUI
 
 public struct TaskCreateView: View {
-    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var coordinator: CalendarCoordinator
     
     @State private var selectedCategory: TaskCreateCategory = .company
     @State private var title: String = ""
@@ -22,34 +22,33 @@ public struct TaskCreateView: View {
     public init() {}
     
     public var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                navigationBar
-                
-                ScrollView {
-                    VStack(spacing: 32) {
-                        categorySection
-                        titleSection
-                        detailSection
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 24)
+        VStack(spacing: 0) {
+            navigationBar
+            
+            ScrollView {
+                VStack(spacing: 32) {
+                    categorySection
+                    titleSection
+                    detailSection
                 }
-                
-                Spacer()
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
             }
-            .background(DS.Colors.Background.normal)
-            .navigationDestination(isPresented: $showTaskDetail) {
-                TaskDetailView(selectedCategory: selectedCategory)
-            }
+            
+            Spacer()
         }
+        .background(DS.Colors.Background.normal)
+        .navigationDestination(isPresented: $showTaskDetail) {
+            TaskDetailView(selectedCategory: selectedCategory)
+        }
+        .navigationBarBackButtonHidden(true)
     }
     
     private var navigationBar: some View {
         CustomNavigationBar(
             type: .cancelWithLabelAndSave("할 일 추가"),
             onCancelTapped: {
-                dismiss()
+                coordinator.pop()
             },
             onSaveTapped: {
                 saveTask()
@@ -124,7 +123,7 @@ public struct TaskCreateView: View {
         
         titleError = nil
         print("할 일 저장: \(title), 카테고리: \(selectedCategory.displayName)")
-        dismiss()
+        coordinator.pop()
     }
 }
 
@@ -168,5 +167,8 @@ struct DetailRowButton: View {
 }
 
 #Preview {
-    TaskCreateView()
+    NavigationStack {
+        TaskCreateView()
+            .environmentObject(CalendarCoordinator())
+    }
 }

@@ -28,10 +28,8 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
         switch screen {
         case .main:
             CalendarView()
-        case .eventDetail(let eventId):
-            CalendarEventDetailView(eventId: eventId)
-        case .settings:
-            CalendarSettingsView()
+        case .taskCreate:
+            TaskCreateView()
         }
     }
     
@@ -40,8 +38,6 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
         switch sheet {
         case .createEvent:
             CreateCalendarEventView()
-        case .eventFilter:
-            EventFilterView()
         }
     }
     
@@ -57,81 +53,17 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
 public enum CalendarRouter {
     public enum Screen: Hashable {
         case main
-        case eventDetail(String)
-        case settings
+        case taskCreate
     }
     
     public enum Sheet: String, Identifiable {
         case createEvent
-        case eventFilter
         public var id: String { self.rawValue }
     }
     
     public enum FullScreen: String, Identifiable {
         case eventImport
         public var id: String { self.rawValue }
-    }
-}
-
-// MARK: - 예시 뷰들
-struct CalendarEventDetailView: View {
-    let eventId: String
-    @EnvironmentObject var coordinator: CalendarCoordinator
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("📅 캘린더 이벤트 상세")
-                .font(.largeTitle)
-                .bold()
-            
-            Text("이벤트 ID: \(eventId)")
-                .foregroundColor(.secondary)
-            
-            Button("설정으로 이동") {
-                coordinator.push(.settings)
-            }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            
-            Button("뒤로가기") {
-                coordinator.pop()
-            }
-            .padding()
-            .background(Color.gray)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-        }
-        .padding()
-        .navigationTitle("이벤트 상세")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct CalendarSettingsView: View {
-    @EnvironmentObject var coordinator: CalendarCoordinator
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("⚙️ 캘린더 설정")
-                .font(.largeTitle)
-                .bold()
-            
-            Text("캘린더 설정 화면입니다.")
-                .foregroundColor(.secondary)
-            
-            Button("루트로 돌아가기") {
-                coordinator.popToRoot()
-            }
-            .padding()
-            .background(Color.red)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-        }
-        .padding()
-        .navigationTitle("설정")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -157,32 +89,6 @@ struct CreateCalendarEventView: View {
         }
         .padding()
         .navigationTitle("새 이벤트")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct EventFilterView: View {
-    @EnvironmentObject var coordinator: CalendarCoordinator
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("🔍 이벤트 필터")
-                .font(.largeTitle)
-                .bold()
-            
-            Text("필터 설정 화면입니다.")
-                .foregroundColor(.secondary)
-            
-            Button("적용") {
-                coordinator.dismissSheet()
-            }
-            .padding()
-            .background(Color.orange)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-        }
-        .padding()
-        .navigationTitle("필터")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
