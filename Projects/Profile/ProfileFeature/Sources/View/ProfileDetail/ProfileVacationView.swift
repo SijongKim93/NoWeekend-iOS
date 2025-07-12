@@ -34,7 +34,7 @@ struct ProfileVacationView: View {
                     vacationStore.saveVacationLeave()
                 }
             )
-            .padding(.bottom, 48)
+            .padding(.bottom, 40)
             
             NWUserInputView(
                 title: "올해 남은 연차를 알려주세요"
@@ -67,12 +67,9 @@ struct ProfileVacationView: View {
                     
                     Spacer()
                 }
-                .padding(.top, 40)
-                .padding(.horizontal, 24)
             }
-            
-            Spacer()
         }
+        .padding(.horizontal, 24)
         .navigationBarHidden(true)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)
