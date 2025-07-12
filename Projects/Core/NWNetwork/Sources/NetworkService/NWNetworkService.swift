@@ -68,7 +68,7 @@ public class NWNetworkService: NWNetworkServiceProtocol {
             return staticToken
         }
         
-        return nil
+        return Config.tempAccessToken
     }
     
     private func request<T: Decodable>(

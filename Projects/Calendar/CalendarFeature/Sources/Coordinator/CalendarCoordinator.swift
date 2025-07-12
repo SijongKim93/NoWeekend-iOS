@@ -19,17 +19,23 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
     @Published public var sheet: SheetScreen?
     @Published public var fullScreenCover: FullScreen?
     
-    public init() {
-        print("🧭 CalendarCoordinator 생성")
-    }
+    public init() {}
     
     @ViewBuilder
     public func view(_ screen: Screen) -> some View {
         switch screen {
         case .main:
             CalendarView()
-        case .taskCreate:
-            TaskCreateView()
+        case .taskCreate(let selectedDate):
+            TaskCreateView(selectedDate: selectedDate)
+        case .taskEdit(let todoId, let title, let category, let scheduleId, let selectedDate):
+            TaskCreateView(
+                editingTodoId: todoId,
+                editingTitle: title,
+                editingCategory: category,
+                editingScheduleId: scheduleId,
+                selectedDate: selectedDate
+            )
         }
     }
     
@@ -53,7 +59,35 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
 public enum CalendarRouter {
     public enum Screen: Hashable {
         case main
-        case taskCreate
+        case taskCreate(selectedDate: Date)
+        case taskEdit(todoId: Int, title: String, category: String?, scheduleId: String?, selectedDate: Date)
+        
+        public func hash(into hasher: inout Hasher) {
+            switch self {
+            case .main:
+                hasher.combine("main")
+            case .taskCreate(let selectedDate):
+                hasher.combine("taskCreate")
+                hasher.combine(selectedDate.timeIntervalSince1970)
+            case .taskEdit(let todoId, _, _, _, let selectedDate):
+                hasher.combine("taskEdit")
+                hasher.combine(todoId)
+                hasher.combine(selectedDate.timeIntervalSince1970)
+            }
+        }
+        
+        public static func == (lhs: CalendarRouter.Screen, rhs: CalendarRouter.Screen) -> Bool {
+            switch (lhs, rhs) {
+            case (.main, .main):
+                return true
+            case (.taskCreate(let lhsDate), .taskCreate(let rhsDate)):
+                return lhsDate == rhsDate
+            case (.taskEdit(let lhsId, _, _, _, let lhsDate), .taskEdit(let rhsId, _, _, _, let rhsDate)):
+                return lhsId == rhsId && lhsDate == rhsDate
+            default:
+                return false
+            }
+        }
     }
     
     public enum Sheet: String, Identifiable {
