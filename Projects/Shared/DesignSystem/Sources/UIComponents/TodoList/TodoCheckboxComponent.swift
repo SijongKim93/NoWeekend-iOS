@@ -24,13 +24,15 @@ public struct TodoItem: Identifiable {
     public var isCompleted: Bool
     public let category: TodoCategory?
     public let time: String?
+    public var scheduleId: String? // API의 실제 일정 ID
     
-    public init(id: Int, title: String, isCompleted: Bool, category: TodoCategory?, time: String?) {
+    public init(id: Int, title: String, isCompleted: Bool, category: TodoCategory?, time: String?, scheduleId: String? = nil) {
         self.id = id
         self.title = title
         self.isCompleted = isCompleted
         self.category = category
         self.time = time
+        self.scheduleId = scheduleId // scheduleId 파라미터 추가
     }
 }
 
@@ -64,6 +66,7 @@ public struct TodoCheckboxComponent: View {
         title: String,
         category: TodoCategory? = TodoCategory(name: "개인", color: DS.Colors.TaskItem.orange),
         time: String? = nil,
+        scheduleId: String? = nil, // scheduleId 파라미터 추가
         onToggle: @escaping () -> Void,
         onMoreTapped: (() -> Void)? = nil,
         onTitleChanged: ((String) -> Void)? = nil,
@@ -74,7 +77,8 @@ public struct TodoCheckboxComponent: View {
             title: title,
             isCompleted: isCompleted,
             category: category,
-            time: time
+            time: time,
+            scheduleId: scheduleId // scheduleId 전달
         )
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
@@ -191,28 +195,4 @@ private extension TodoCheckboxComponent {
         isEditing = false
         isTextFieldFocused = false
     }
-}
-
-#Preview {
-    VStack(spacing: 16) {
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "기본 개인 할일",
-            onToggle: { },
-            onTitleChanged: { newTitle in
-                print("제목 변경: \(newTitle)")
-            }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "편집 모드 할일",
-            onToggle: { },
-            onTitleChanged: { newTitle in
-                print("제목 변경: \(newTitle)")
-            },
-            isEditingMode: true
-        )
-    }
-    .background(Color.gray.opacity(0.1))
 }

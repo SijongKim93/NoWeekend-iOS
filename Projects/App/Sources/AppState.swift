@@ -9,8 +9,8 @@ import Combine
 import DIContainer
 import Foundation
 import LoginFeature
-import OnboardingDomain
 import NWNetwork
+import OnboardingDomain
 
 @MainActor
 @Observable

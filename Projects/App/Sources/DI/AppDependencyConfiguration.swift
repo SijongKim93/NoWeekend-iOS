@@ -5,15 +5,15 @@
 //  Created by 이지훈 on 7/3/25.
 //
 
+import CalendarFeature
+import DataBridge
+import DIContainer
 import Foundation
 import HomeFeature
-import ProfileFeature
-import CalendarFeature
-import OnboardingFeature
-import DataBridge
-import NWNetwork
-import DIContainer
 import LoginFeature
+import NWNetwork
+import OnboardingFeature
+import ProfileFeature
 
 enum AppDependencyConfiguration {
     static func configure() {
@@ -37,7 +37,7 @@ enum AppDependencyConfiguration {
         
         DIContainer.shared.register(NWNetworkServiceProtocol.self) { _ in
             let savedToken = UserDefaults.standard.string(forKey: "access_token")
-            let authToken = savedToken?.isEmpty == false ? savedToken : nil
+            let authToken = savedToken?.isEmpty == false ? savedToken : Config.tempAccessToken
             
             print("🔑 사용할 토큰: \(authToken?.isEmpty == false ? "Bearer \(String(authToken!.prefix(20)))..." : "없음")")
             

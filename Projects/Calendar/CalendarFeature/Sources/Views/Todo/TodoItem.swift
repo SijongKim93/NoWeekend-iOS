@@ -15,6 +15,7 @@ struct TodoItem: Identifiable {
     var isCompleted: Bool
     var category: DesignSystem.TodoCategory?
     var time: String?
+    var scheduleId: String?
 }
 
 struct ScrollOffsetPreferenceKey: PreferenceKey {
@@ -23,4 +24,4 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
         value = nextValue()
     }
 }
-//
+
