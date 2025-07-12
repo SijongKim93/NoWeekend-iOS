@@ -7,11 +7,11 @@
 //
 
 import CalendarDomain
+import Combine
 import DesignSystem
-import Utils
 import DIContainer
 import SwiftUI
-import Combine
+import Utils
 
 public struct CalendarView: View {
     @EnvironmentObject private var coordinator: CalendarCoordinator
@@ -233,7 +233,7 @@ private extension CalendarView {
                 selectedDate: selectedDate
             ))
             
-        case .showError(_):
+        case .showError:
             break
         }
     }

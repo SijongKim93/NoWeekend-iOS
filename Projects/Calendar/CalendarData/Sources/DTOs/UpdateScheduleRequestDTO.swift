@@ -6,14 +6,13 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import Foundation
 import CalendarDomain
+import Foundation
 
-// 요청 DTO - Encodable만 필요
 public struct UpdateScheduleRequestDTO: Encodable {
     public let title: String
-    public let startTime: String  // "HH:mm:ss" 형식
-    public let endTime: String    // "HH:mm:ss" 형식
+    public let startTime: String
+    public let endTime: String
     public let category: String
     public let temperature: Int
     public let allDay: Bool
@@ -38,7 +37,6 @@ public struct UpdateScheduleRequestDTO: Encodable {
     }
 }
 
-// 응답 데이터 DTO - Decodable만 필요
 public struct UpdateScheduleResponseDTO: Decodable {
     public let id: String
     public let title: String
