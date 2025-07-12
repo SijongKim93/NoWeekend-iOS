@@ -7,181 +7,260 @@
 //
 
 import CalendarDomain
+import Combine
 import DesignSystem
 import DIContainer
 import SwiftUI
 import Utils
 public struct CalendarView: View {
-    @Dependency private var calendarUseCase: CalendarUseCaseProtocol
-
-    @State private var selectedDate = Date()
-    @State private var selectedToggle: CalendarNavigationBar.ToggleOption = .week
-    @State private var showDatePicker = false
+    @EnvironmentObject private var coordinator: CalendarCoordinator
+    @StateObject private var store = CalendarStore()
+    
+    @State private var showDatePickerSheet = false
     @State private var showTaskEditSheet = false
-    @State private var selectedTaskIndex: Int?
-    @State private var scrollOffset: CGFloat = 0
-    @State private var isScrolling = false
-    
-    @State private var dailySchedules: [DailySchedule] = []
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    
-    @State private var todoItems = [
-        TodoItem(id: 1, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 2, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 3, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 4, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-        TodoItem(id: 5, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00")
-    ]
-    
-    private var isFloatingButtonExpanded: Bool {
-        scrollOffset == 0 && !isScrolling
-    }
+    @State private var datePickerSelectedDate = Date()
     
     public init() {}
     
     public var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                CalendarNavigationBar(
-                    dateText: formatSelectedDate(selectedDate),
-                    onDateTapped: {
-                        showDatePicker = true
-                    },
-                    onToggleChanged: { toggle in
-                        selectedToggle = toggle
-                    }
-                )
-                
-                CalendarSection(
-                    selectedDate: selectedDate,
-                    selectedToggle: selectedToggle,
-                    onDateTap: { date in
-                        selectedDate = date
-                    },
-                    calendarCellContent: calendarCellContent
-                )
-                
-                if selectedToggle == .week {
-                    TodoScrollSection(
-                        todoItems: $todoItems,
-                        selectedTaskIndex: $selectedTaskIndex,
-                        showTaskEditSheet: $showTaskEditSheet,
-                        scrollOffset: $scrollOffset,
-                        isScrolling: $isScrolling
-                    )
-                    .background(.white)
-                } else {
-                    Spacer()
-                        .background(.white)
-                }
-            }
-            .background(.white)
-            
-            // 플로팅 버튼
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    FloatingAddButton(
-                        isExpanded: isFloatingButtonExpanded,
-                        action: addNewTodo
-                    )
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 33)
-                }
-            }
+            mainContent
+            overlayContent
+            floatingButton
         }
-        .sheet(isPresented: $showDatePicker) {
-            DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
+        .sheet(isPresented: $showDatePickerSheet) {
+            DatePickerWithLabelBottomSheet(selectedDate: $datePickerSelectedDate)
+                .onAppear {
+                    datePickerSelectedDate = store.state.selectedDate
+                }
+                .onDisappear {
+                    if datePickerSelectedDate != store.state.selectedDate {
+                        store.send(.dateSelected(datePickerSelectedDate))
+                    }
+                }
         }
         .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
                 onEditAction: {
+                    if let index = store.state.selectedTaskIndex {
+                        store.send(.taskEditRequested(index))
+                    }
                     showTaskEditSheet = false
                 },
                 onTomorrowAction: {
+                    if let index = store.state.selectedTaskIndex {
+                        store.send(.taskTomorrowRequested(index))
+                    }
                     showTaskEditSheet = false
                 },
                 onDeleteAction: {
-                    if let index = selectedTaskIndex {
-                        todoItems.remove(at: index)
+                    if let index = store.state.selectedTaskIndex {
+                        store.send(.taskDeleteRequested(index))
                     }
-                    selectedTaskIndex = nil
                     showTaskEditSheet = false
                 },
+                isVacationTask: isSelectedTaskVacation(),
                 isPresented: $showTaskEditSheet
             )
-        }
-        .onAppear {
-            scrollOffset = 0
-        }
-    }
-
-    private func loadSchedules() async {
-            isLoading = true
-            errorMessage = nil
-            
-            do {
-                switch selectedToggle {
-                case .week:
-                    dailySchedules = try await calendarUseCase.getWeeklySchedules(for: selectedDate)
-                case .month:
-                    dailySchedules = try await calendarUseCase.getMonthlySchedules(for: selectedDate)
+            .onAppear {
+            }
+            .onDisappear {
+                Task { @MainActor in
+                    store.updateState { state in
+                        state.showTaskEditSheet = false
+                        state.selectedTaskIndex = nil
+                    }
                 }
-            } catch {
-                errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
-                print("일정 로드 실패: \(error)")
-            }
-            
-            isLoading = false
-        }
-        
-        @ViewBuilder
-        private func calendarCellContent(for date: Date) -> some View {
-            let schedulesForDate = getSchedulesForDate(date)
-            
-            if !schedulesForDate.isEmpty {
-                DS.Images.imgToastDefault
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                DS.Images.imgFlour
-                    .resizable()
-                    .scaledToFit()
             }
         }
-        
-        private func getSchedulesForDate(_ date: Date) -> [Schedule] {
-            let dateString = date.toString(format: "yyyy-MM-dd")
-            return dailySchedules
-                .first { $0.date == dateString }?
-                .schedules ?? []
+        .onChange(of: store.state.showTaskEditSheet) { _, newValue in
+            if newValue != showTaskEditSheet {
+                showTaskEditSheet = newValue
+            }
         }
-    
-    private func formatSelectedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy년 M월"
-        return formatter.string(from: date)
-    }
-    
-    private func getTodosForDate(_ date: Date) -> [TodoItem] {
-        todoItems.prefix(2).map { $0 }
-    }
-    
-  private func addNewTodo() {
-        let newTodo = TodoItem(
-            id: todoItems.count + 1,
-            title: "새로운 할 일",
-            isCompleted: false,
-            category: DesignSystem.TodoCategory(name: "개인", color: DS.Colors.TaskItem.green),
-            time: nil
-        )
-        todoItems.append(newTodo)
+        .onReceive(store.effect) { effect in
+            handleEffect(effect)
+        }
+        .task {
+            store.send(.viewDidAppear)
+        }
     }
 }
 
-#Preview {
-    CalendarView()
+// MARK: - View Components
+private extension CalendarView {
+    var mainContent: some View {
+        VStack(spacing: 0) {
+            CalendarNavigationBar(
+                dateText: store.state.currentDateString,
+                onDateTapped: {
+                    showDatePickerSheet = true
+                },
+                onToggleChanged: { toggle in
+                    store.send(.toggleChanged(toggle))
+                }
+            )
+            
+            CalendarSection(
+                selectedDate: store.state.selectedDate,
+                selectedToggle: store.state.selectedToggle,
+                onDateTap: { date in
+                    store.send(.dateSelected(date))
+                },
+                calendarCellContent: store.calendarCellContent
+            )
+            
+            contentSection
+        }
+        .background(.white)
+    }
+    
+    @ViewBuilder
+    var contentSection: some View {
+        if store.state.selectedToggle == .week {
+            if store.state.isLoading {
+                VStack {
+                    ProgressView("일정을 불러오는 중...")
+                        .padding()
+                    Spacer()
+                }
+                .background(.white)
+            } else {
+                TodoScrollSection(
+                    todoItems: Binding(
+                        get: { store.state.todoItems },
+                        set: { newValue in
+                            Task { @MainActor in
+                                store.updateState { $0.todoItems = newValue }
+                            }
+                        }
+                    ),
+                    selectedTaskIndex: Binding(
+                        get: { store.state.selectedTaskIndex },
+                        set: { newValue in
+                            Task { @MainActor in
+                                store.updateState { state in
+                                    state.selectedTaskIndex = newValue
+                                    if newValue != nil {
+                                        state.showTaskEditSheet = true
+                                    }
+                                }
+                            }
+                        }
+                    ),
+                    showTaskEditSheet: Binding(
+                        get: { showTaskEditSheet },
+                        set: { newValue in
+                            showTaskEditSheet = newValue
+                        }
+                    ),
+                    scrollOffset: Binding(
+                        get: { store.state.scrollOffset },
+                        set: { newValue in
+                            store.send(.scrollOffsetChanged(newValue, store.state.isScrolling))
+                        }
+                    ),
+                    isScrolling: Binding(
+                        get: { store.state.isScrolling },
+                        set: { newValue in
+                            store.send(.scrollOffsetChanged(store.state.scrollOffset, newValue))
+                        }
+                    ),
+                    editingTaskIndex: Binding(
+                        get: { store.state.editingTaskIndex },
+                        set: { newValue in
+                            Task { @MainActor in
+                                store.updateState { $0.editingTaskIndex = newValue }
+                            }
+                        }
+                    ),
+                    onTitleChanged: { index, newTitle in
+                        store.send(.taskTitleChanged(index, newTitle))
+                    }
+                )
+                .background(.white)
+            }
+        } else {
+            Spacer()
+                .background(.white)
+        }
+    }
+    
+    @ViewBuilder
+    var overlayContent: some View {
+        if store.state.showCategorySelection {
+            TaskCategorySelectionView(
+                isPresented: Binding(
+                    get: { store.state.showCategorySelection },
+                    set: { _ in store.send(.categorySelectionToggled) }
+                ),
+                onCategorySelected: { category in
+                    store.send(.categorySelected(category))
+                },
+                onDirectInputTapped: {
+                    store.send(.directInputTapped)
+                }
+            )
+            .zIndex(1)
+        }
+    }
+    
+    var floatingButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                FloatingAddButton(
+                    isExpanded: store.state.isFloatingButtonExpanded,
+                    isShowingCategory: store.state.showCategorySelection,
+                    action: {
+                        store.send(.categorySelectionToggled)
+                    },
+                    dismissAction: {
+                        store.send(.categorySelectionToggled)
+                    }
+                )
+                .padding(.trailing, 20)
+                .padding(.bottom, 33)
+            }
+        }
+        .zIndex(4)
+    }
+}
+
+// MARK: - Helper Methods
+private extension CalendarView {
+    func isSelectedTaskVacation() -> Bool {
+        guard let selectedIndex = store.state.selectedTaskIndex,
+              selectedIndex < store.state.todoItems.count else {
+            return false
+        }
+        
+        return store.state.todoItems[selectedIndex].category?.name == "연차"
+    }
+}
+
+// MARK: - Effect Handling
+private extension CalendarView {
+    func handleEffect(_ effect: CalendarEffect) {
+        switch effect {
+        case .navigateToTaskCreate(let selectedDate):
+            coordinator.push(.taskCreate(selectedDate: selectedDate))
+            
+        case .navigateToTaskEdit(let todoId, let title, let category, let scheduleId, let selectedDate):
+            coordinator.push(.taskEdit(
+                todoId: todoId,
+                title: title,
+                category: category,
+                scheduleId: scheduleId,
+                selectedDate: selectedDate
+            ))
+            
+        case .showError(let message):
+            print("❌ Error: \(message)")
+            
+        case .showSuccess(let message):
+            print("✅ Success: \(message)")
+        }
+    }
 }

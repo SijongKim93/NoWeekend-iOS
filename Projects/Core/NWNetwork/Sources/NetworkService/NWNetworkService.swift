@@ -20,9 +20,11 @@ public protocol NWNetworkServiceProtocol {
 public class NWNetworkService: NWNetworkServiceProtocol {
     private let baseURL: String
     private let session: Session
+    private var authToken: String?
     
     public init(baseURL: String = Config.baseURL, authToken: String? = nil) {
         self.baseURL = baseURL
+        self.authToken = authToken
         
         var headers: [String: String] = [
             "Content-Type": "application/json",
@@ -36,6 +38,10 @@ public class NWNetworkService: NWNetworkServiceProtocol {
         let configuration = URLSessionConfiguration.default
         configuration.httpAdditionalHeaders = headers
         self.session = Session(configuration: configuration)
+    }
+    
+    public func updateAuthToken(_ token: String?) {
+        self.authToken = token
     }
     
     public func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
@@ -55,7 +61,19 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     }
     
     public func patch<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
-        try await request(endpoint: endpoint, method: .patch, parameters: parameters)
+        return try await request(endpoint: endpoint, method: .patch, parameters: parameters)
+    }
+    
+    private func getCurrentToken() -> String? {
+        if let savedToken = UserDefaults.standard.string(forKey: "access_token"), !savedToken.isEmpty {
+            return savedToken
+        }
+        
+        if let staticToken = authToken, !staticToken.isEmpty {
+            return staticToken
+        }
+        
+        return Config.tempAccessToken
     }
     
     // MARK: - Main Request Method
@@ -68,151 +86,99 @@ public class NWNetworkService: NWNetworkServiceProtocol {
         let url = baseURL + endpoint
         let startTime = Date()
         
-        logRequestStart(url: url, method: method, expectedType: T.self, parameters: parameters)
-        
-        return try await performRequest(url: url, method: method, parameters: parameters, startTime: startTime)
-    }
-    
-    // MARK: - Request Execution
-    
-    private func performRequest<T: Decodable>(
-        url: String,
-        method: HTTPMethod,
-        parameters: [String: Any]?,
-        startTime: Date
-    ) async throws -> T {
-        return try await withCheckedThrowingContinuation { continuation in
-            session.request(url, method: method, parameters: parameters, encoding: JSONEncoding.default)
-                .validate()
-                .responseData { response in
-                    self.handleResponse(response, startTime: startTime, continuation: continuation)
-                }
-        }
-    }
-    
-    // MARK: - Response Handling
-    
-    private func handleResponse<T: Decodable>(
-        _ response: AFDataResponse<Data>,
-        startTime: Date,
-        continuation: CheckedContinuation<T, Error>
-    ) {
-        let duration = Date().timeIntervalSince(startTime)
-        logResponseInfo(response, duration: duration)
-        
-        switch response.result {
-        case .success(let data):
-            handleSuccessResponse(data: data, continuation: continuation)
-        case .failure(let error):
-            handleErrorResponse(error: error, responseData: response.data, continuation: continuation)
-        }
-    }
-    
-    private func handleSuccessResponse<T: Decodable>(
-        data: Data,
-        continuation: CheckedContinuation<T, Error>
-    ) {
-        do {
-            let decoder = JSONDecoder()
-            let decodedResponse = try decoder.decode(T.self, from: data)
-            print("✅ 디코딩 성공")
-            continuation.resume(returning: decodedResponse)
-        } catch {
-            logDecodingFailure(error)
-            continuation.resume(throwing: NetworkError.decodingError)
-        }
-    }
-    
-    private func handleErrorResponse<T>(
-        error: AFError,
-        responseData: Data?,
-        continuation: CheckedContinuation<T, Error>
-    ) {
-        print("❌ 네트워크 요청 실패:")
-        print("   - Error Type: \(type(of: error))")
-        print("   - Error Description: \(error.localizedDescription)")
-        
-        let networkError = mapAlamofireError(error, responseData: responseData)
-        continuation.resume(throwing: networkError)
-    }
-    
-    // MARK: - Logging Methods
-    
-    private func logRequestStart<T>(
-        url: String,
-        method: HTTPMethod,
-        expectedType: T.Type,
-        parameters: [String: Any]?
-    ) {
         print("🌐 네트워크 요청 시작:")
         print("   - URL: \(url)")
         print("   - Method: \(method.rawValue)")
-        print("   - Expected Response Type: \(expectedType)")
+        print("   - Expected Response Type: \(T.self)")
         
         if let params = parameters {
-            logRequestParameters(params)
-        }
-    }
-    
-    private func logRequestParameters(_ parameters: [String: Any]) {
-        print("   - Parameters:")
-        parameters.forEach { key, value in
-            if shouldMaskParameter(key) {
-                print("     - \(key): \(String(describing: value).prefix(20))...")
-            } else {
-                print("     - \(key): \(value)")
+            print("   - Parameters:")
+            params.forEach { key, value in
+                if key.lowercased().contains("token") || key.lowercased().contains("code") {
+                    print("     - \(key): \(String(describing: value).prefix(20))...")
+                } else {
+                    print("     - \(key): \(value)")
+                }
             }
         }
-    }
-    
-    private func shouldMaskParameter(_ key: String) -> Bool {
-        let sensitiveKeys = ["token", "code", "password", "secret"]
-        return sensitiveKeys.contains { key.lowercased().contains($0) }
-    }
-    
-    private func logResponseInfo(_ response: AFDataResponse<Data>, duration: TimeInterval) {
-        print("🌐 네트워크 응답 완료 (소요시간: \(String(format: "%.2f", duration))초):")
         
-        if let httpResponse = response.response {
-            logHTTPStatus(httpResponse)
+        var headers: HTTPHeaders = [
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        ]
+        
+        // 토큰 우선순위: UserDefaults → 초기화 토큰 → 임시 토큰
+        if let token = getCurrentToken() {
+            headers["Authorization"] = "Bearer \(token)"
         }
         
-        if let data = response.data {
-            logResponseData(data)
-        }
-    }
-    
-    private func logHTTPStatus(_ httpResponse: HTTPURLResponse) {
-        print("   - HTTP Status: \(httpResponse.statusCode)")
-        print("   - Headers:")
-        httpResponse.allHeaderFields.forEach { key, value in
-            print("     - \(key): \(value)")
-        }
-    }
-    
-    private func logResponseData(_ data: Data) {
-        print("   - Response Size: \(data.count) bytes")
-        
-        if let jsonString = prettyPrintJSON(data) {
-            print("   - Response JSON:")
-            print("     \(jsonString)")
-        } else {
-            logRawResponseData(data)
-        }
-    }
-    
-    private func logRawResponseData(_ data: Data) {
-        print("   - Response Data (첫 500자):")
-        if let string = String(data: data, encoding: .utf8) {
-            print("     \(string.prefix(500))")
-        }
-    }
-    
-    private func logDecodingFailure(_ error: Error) {
-        print("❌ 디코딩 실패:")
-        print("   - Error: \(error)")
-        if let decodingError = error as? DecodingError {
-            logDecodingError(decodingError)
+        return try await withCheckedThrowingContinuation { continuation in
+            let encoding: ParameterEncoding = method == .get ? URLEncoding.default : JSONEncoding.default
+            
+            session.request(
+                url,
+                method: method,
+                parameters: parameters,
+                encoding: encoding,
+                headers: headers
+            )
+            .validate()
+            .responseData { response in
+                let endTime = Date()
+                let duration = endTime.timeIntervalSince(startTime)
+                
+                print("🌐 네트워크 응답 완료 (소요시간: \(String(format: "%.2f", duration))초):")
+                
+                // HTTP 상태 코드 로깅
+                if let httpResponse = response.response {
+                    print("   - HTTP Status: \(httpResponse.statusCode)")
+                    print("   - Headers:")
+                    httpResponse.allHeaderFields.forEach { key, value in
+                        print("     - \(key): \(value)")
+                    }
+                }
+                
+                // 응답 데이터 로깅
+                if let data = response.data {
+                    print("   - Response Size: \(data.count) bytes")
+                    
+                    // JSON 응답을 읽기 쉽게 출력
+                    if let jsonString = self.prettyPrintJSON(data) {
+                        print("   - Response JSON:")
+                        print("     \(jsonString)")
+                    } else {
+                        print("   - Response Data (첫 500자):")
+                        if let string = String(data: data, encoding: .utf8) {
+                            print("     \(string.prefix(500))")
+                        }
+                    }
+                }
+                
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let decodedResponse = try decoder.decode(T.self, from: data)
+                        print("✅ 디코딩 성공")
+                        continuation.resume(returning: decodedResponse)
+                    } catch {
+                        print("❌ 디코딩 실패:")
+                        print("   - Error: \(error)")
+                        if let decodingError = error as? DecodingError {
+                            self.logDecodingError(decodingError)
+                        }
+                        continuation.resume(throwing: NetworkError.decodingError)
+                    }
+                    
+                case .failure(let error):
+                    print("❌ 네트워크 요청 실패:")
+                    print("   - Error Type: \(type(of: error))")
+                    print("   - Error Description: \(error.localizedDescription)")
+                    
+                    let networkError = self.mapAlamofireError(error, responseData: response.data)
+                    continuation.resume(throwing: networkError)
+                }
+            }
         }
     }
     
@@ -324,39 +290,27 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     private func logDecodingError(_ error: DecodingError) {
         switch error {
         case .typeMismatch(let type, let context):
-            logTypeMismatchError(type: type, context: context)
+            print("     - Type Mismatch: 예상 \(type)")
+            print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            print("     - Description: \(context.debugDescription)")
+            
         case .valueNotFound(let type, let context):
-            logValueNotFoundError(type: type, context: context)
+            print("     - Value Not Found: \(type)")
+            print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            print("     - Description: \(context.debugDescription)")
+            
         case .keyNotFound(let key, let context):
-            logKeyNotFoundError(key: key, context: context)
+            print("     - Key Not Found: \(key.stringValue)")
+            print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            print("     - Available Keys: \(context.debugDescription)")
+            
         case .dataCorrupted(let context):
-            logDataCorruptedError(context: context)
+            print("     - Data Corrupted")
+            print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            print("     - Description: \(context.debugDescription)")
+            
         @unknown default:
             print("     - Unknown Decoding Error: \(error)")
         }
-    }
-    
-    private func logTypeMismatchError(type: Any.Type, context: DecodingError.Context) {
-        print("     - Type Mismatch: 예상 \(type)")
-        print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-        print("     - Description: \(context.debugDescription)")
-    }
-    
-    private func logValueNotFoundError(type: Any.Type, context: DecodingError.Context) {
-        print("     - Value Not Found: \(type)")
-        print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-        print("     - Description: \(context.debugDescription)")
-    }
-    
-    private func logKeyNotFoundError(key: CodingKey, context: DecodingError.Context) {
-        print("     - Key Not Found: \(key.stringValue)")
-        print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-        print("     - Available Keys: \(context.debugDescription)")
-    }
-    
-    private func logDataCorruptedError(context: DecodingError.Context) {
-        print("     - Data Corrupted")
-        print("     - Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
-        print("     - Description: \(context.debugDescription)")
     }
 }

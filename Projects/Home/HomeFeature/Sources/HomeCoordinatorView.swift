@@ -40,3 +40,7 @@ public struct HomeCoordinatorView: View {
         }
     }
 }
+
+#Preview {
+    HomeCoordinatorView()
+}

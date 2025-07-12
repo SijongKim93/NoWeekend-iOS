@@ -16,6 +16,26 @@ let project = Project.make(
                 .Shared.utils
             ],
             settings: .frameworkSettings
+        ),
+        // 홈 모듈 독립 실행을 위한 데모 앱
+        .app(
+            name: "HomeDemoApp",
+            bundleId: "com.noweekend.home.demo",
+            infoPlist: .extendingDefault(with: [
+                "CFBundleDisplayName": "Home Demo",
+                "UILaunchStoryboardName": "LaunchScreen",
+                "UISupportedInterfaceOrientations": .array([
+                    .string("UIInterfaceOrientationPortrait")
+                ])
+            ]),
+            sources: ["Demo/Sources/**"],
+            resources: ["Demo/Resources/**"],
+            dependencies: [
+                .Home.feature,
+                .Home.data,
+                .Bridge.dataBridge
+            ],
+            settings: .demoAppSettings
         )
     ]
 )

@@ -63,8 +63,8 @@ public struct TabBarView: View {
                 }
                 .tag(Tab.home)
 
-            // 캘린더 탭
-            CalendarView()
+            // 캘린더 탭 
+            CalendarCoordinatorView()
                 .tabItem {
                     (selectedTab == .calendar ? Tab.calendar.iconOn : Tab.calendar.iconOff)
                     Text(Tab.calendar.title)
