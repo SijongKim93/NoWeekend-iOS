@@ -55,7 +55,7 @@ public struct WeekCalendarView<Content: View>: View {
                 Text(weekday)
                     .font(.body3)
                     .foregroundColor(DS.Colors.Neutral.gray700)
-                    .frame(width: 41, height: 41)
+                    .frame(height: 41)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -80,12 +80,14 @@ public struct WeekCalendarView<Content: View>: View {
                                 .foregroundColor(calendar.isDateInToday(date) ? DS.Colors.Toast._700 : DS.Colors.Neutral.gray900)
                         }
                         .frame(height: 41)
+                        
+                        cellContent(date)
+                            .frame(height: 41)
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 20)
     }
     
     private var weekdaySymbols: [String] {
