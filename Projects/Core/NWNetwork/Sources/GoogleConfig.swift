@@ -10,10 +10,10 @@ import Foundation
 
 public struct GoogleConfig {
     public static var clientID: String {
-        return Config.googleClientID
+        Config.googleClientID
     }
     
     public static var serverClientID: String {
-        return Config.googleServerClientID
+        Config.googleServerClientID
     }
 }

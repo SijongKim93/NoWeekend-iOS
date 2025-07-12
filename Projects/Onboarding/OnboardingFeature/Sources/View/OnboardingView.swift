@@ -6,13 +6,12 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
-import DIContainer
 import DesignSystem
+import DIContainer
+import SwiftUI
 
 public struct OnboardingView: View {
     @ObservedObject private var store: OnboardingStore
-    
     
     public init() {
         self.store = DIContainer.shared.resolve(OnboardingStore.self)
@@ -103,7 +102,10 @@ public struct OnboardingView: View {
                     displayDays: store.state.displayRemainingDays,
                     displayHours: store.state.displayRemainingHours
                 )
+            }
+            .padding(.vertical, 32)
                 
+            VStack {
                 NWRemainingDaysInputSection(
                     remainingDays: Binding(
                         get: { store.state.remainingDays },
@@ -115,9 +117,10 @@ public struct OnboardingView: View {
                         set: { store.send(.updateHasHalfDay($0)) }
                     )
                 )
-                
-                Spacer()
             }
+            
+            Spacer()
+    
         }
         .padding(.horizontal, 24)
     }

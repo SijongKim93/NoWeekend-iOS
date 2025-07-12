@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct OnboardingProfile {
     public let nickname: String
     public let birthDate: String

@@ -83,7 +83,6 @@ public class ValidateBirthDateUseCase: ValidateBirthDateUseCaseInterface {
     }
 }
 
-
 public class ValidateRemainingDaysUseCase: ValidateRemainingDaysUseCaseInterface {
     public init() {}
     
