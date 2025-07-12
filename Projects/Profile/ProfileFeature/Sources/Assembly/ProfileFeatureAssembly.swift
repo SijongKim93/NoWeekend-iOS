@@ -2,7 +2,7 @@
 //  ProfileFeatureAssembly.swift
 //  ProfileFeature
 //
-//  Created by 이지훈 on 7/4/25.
+//  Created by SijongKim on 7/4/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
@@ -26,19 +26,16 @@ public struct ProfileFeatureAssembly: Assembly {
         }
         .inObjectScope(.container)
         
-        // MARK: - Profile Network Service
         container.register(ProfileNetworkServiceInterface.self) { resolver in
             let baseNetworkService = resolver.resolve(NWNetworkServiceProtocol.self)!
             return ProfileNetworkService(networkService: baseNetworkService)
         }.inObjectScope(.container)
         
-        // MARK: - Profile Repository
         container.register(ProfileRepositoryInterface.self) { resolver in
             let profileNetworkService = resolver.resolve(ProfileNetworkServiceInterface.self)!
             return ProfileRepository(networkService: profileNetworkService)
         }.inObjectScope(.container)
         
-        // MARK: - Use Cases
         container.register(GetUserProfileUseCaseProtocol.self) { resolver in
             let repository = resolver.resolve(ProfileRepositoryInterface.self)!
             return GetUserProfileUseCase(repository: repository)
@@ -64,16 +61,19 @@ public struct ProfileFeatureAssembly: Assembly {
             return UpdateVacationLeaveUseCase(repository: repository)
         }.inObjectScope(.graph)
         
-        // MARK: - Stores
         container.register(ProfileStore.self) { resolver in
             let getUserProfileUseCase = resolver.resolve(GetUserProfileUseCaseProtocol.self)!
-            let updateUserProfileUseCase = resolver.resolve(UpdateUserProfileUseCaseProtocol.self)!
-            
-            return ProfileStore(
-                getUserProfileUseCase: getUserProfileUseCase,
-                updateUserProfileUseCase: updateUserProfileUseCase
-            )
+            return ProfileStore(getUserProfileUseCase: getUserProfileUseCase)
         }.inObjectScope(.graph)
-    
+        
+        container.register(ProfileEditStore.self) { resolver in
+            let updateUserProfileUseCase = resolver.resolve(UpdateUserProfileUseCaseProtocol.self)!
+            return ProfileEditStore(updateUserProfileUseCase: updateUserProfileUseCase)
+        }.inObjectScope(.graph)
+        
+        container.register(VacationStore.self) { resolver in
+            let updateVacationLeaveUseCase = resolver.resolve(UpdateVacationLeaveUseCaseProtocol.self)!
+            return VacationStore(updateVacationLeaveUseCase: updateVacationLeaveUseCase)
+        }.inObjectScope(.graph)
     }
 }

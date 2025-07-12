@@ -13,77 +13,49 @@ import Combine
 
 public struct ProfileEditView: View {
     @EnvironmentObject private var coordinator: ProfileCoordinator
-    @ObservedObject private var store: ProfileStore
+    @ObservedObject private var profileStore: ProfileStore
+    @ObservedObject private var editStore: ProfileEditStore
     
     @State private var cancellables = Set<AnyCancellable>()
     
     public init() {
-        self.store = DIContainer.shared.resolve(ProfileStore.self)
-    }
-    
-    // 테스트용 생성자
-    public init(store: ProfileStore) {
-        self.store = store
+        self.profileStore = DIContainer.shared.resolve(ProfileStore.self)
+        self.editStore = DIContainer.shared.resolve(ProfileEditStore.self)
     }
     
     public var body: some View {
         VStack(spacing: 0) {
-            CustomNavigationBar.conditionalBack(
-                title: "계정 설정",
-                showBackButton: true,
+            CustomNavigationBar(
+                type: .backWithLabelAndSave("계정 설정"),
                 onBackTapped: {
                     coordinator.pop()
+                },
+                onSaveTapped: {
+                    editStore.saveProfile()
                 }
             )
             .padding(.bottom, 48)
             
-            if store.state.isLoading {
-                loadingView
-            } else {
-                profileEditForm
-            }
+            profileEditForm
             
             Spacer()
-            
-            saveButton
-                .padding(.horizontal, 24)
-                .padding(.bottom, 34)
         }
         .navigationBarHidden(true)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .onAppear {
-            print("📱 ProfileEditView 화면 표시")
             setupEffectSubscription()
-            store.loadInitialData()
+            loadProfileData()
         }
-        .onDisappear {
-            print("👋 ProfileEditView 화면 종료")
-        }
-        .alert("오류", isPresented: .constant(store.state.generalError != nil)) {
+        .alert("오류", isPresented: .constant(editStore.state.generalError != nil)) {
             Button("확인") {
-                store.clearErrors()
+                editStore.clearErrors()
             }
         } message: {
-            if let error = store.state.generalError {
+            if let error = editStore.state.generalError {
                 Text(error)
             }
         }
-    }
-    
-    // MARK: - Views
-    
-    private var loadingView: some View {
-        VStack {
-            ProgressView()
-                .scaleEffect(1.5)
-            
-            Text("프로필 정보를 불러오는 중...")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .padding(.top, 16)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private var profileEditForm: some View {
@@ -94,30 +66,18 @@ public struct ProfileEditView: View {
             VStack(spacing: 24) {
                 NWNicknameInputSection(
                     nickname: Binding(
-                        get: {
-                            print("🔍 닉네임 상태 조회: \(store.state.nickname)")
-                            return store.state.nickname
-                        },
-                        set: { newValue in
-                            print("✏️ 닉네임 업데이트: \(newValue)")
-                            store.updateNickname(newValue)
-                        }
+                        get: { editStore.state.nickname },
+                        set: { editStore.updateNickname($0) }
                     ),
-                    nicknameError: store.state.nicknameError
+                    nicknameError: editStore.state.nicknameError
                 )
                 
                 NWBirthDateInputSection(
                     birthDate: Binding(
-                        get: {
-                            print("🔍 생년월일 상태 조회: \(store.state.birthDate)")
-                            return store.state.birthDate
-                        },
-                        set: { newValue in
-                            print("📅 생년월일 업데이트: \(newValue)")
-                            store.updateBirthDate(newValue)
-                        }
+                        get: { editStore.state.birthDate },
+                        set: { editStore.updateBirthDate($0) }
                     ),
-                    birthDateError: store.state.birthDateError
+                    birthDateError: editStore.state.birthDateError
                 )
             }
             .padding(.top, 40)
@@ -125,44 +85,56 @@ public struct ProfileEditView: View {
         }
     }
     
-    private var saveButton: some View {
-        NWButton(
-            title: store.state.isSaving ? "저장 중..." : "저장",
-            variant: .black,
-            isEnabled: store.state.isFormValid
-        ) {
-            print("💾 저장 버튼 클릭")
-            store.saveProfile()
+    // MARK: - Helper Methods
+    
+    private func loadProfileData() {
+        if let profile = profileStore.state.userProfile {
+            editStore.initializeWith(profile: profile)
+        } else {
+            profileStore.loadInitialData()
         }
     }
     
-    // MARK: - Effect Subscription
-    
     private func setupEffectSubscription() {
-        print("🔗 Effect 구독 설정")
-        
-        store.effect
+        // Profile Store Effect 구독
+        profileStore.effect
             .receive(on: DispatchQueue.main)
             .sink { effect in
-                handleEffect(effect)
+                switch effect {
+                case .showErrorMessage(let message):
+                    print("❌ Profile Error: \(message)")
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Profile Store 상태 변화 감지
+        profileStore.$state
+            .map(\.userProfile)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .sink { profile in
+                editStore.initializeWith(profile: profile)
+            }
+            .store(in: &cancellables)
+        
+        // Edit Store Effect 구독
+        editStore.effect
+            .receive(on: DispatchQueue.main)
+            .sink { effect in
+                handleEditEffect(effect)
             }
             .store(in: &cancellables)
     }
     
-    private func handleEffect(_ effect: ProfileEditEffect) {
-        print("⚡ Effect 수신: \(effect)")
-        
+    private func handleEditEffect(_ effect: ProfileEditEffect) {
         switch effect {
         case .showSuccessMessage(let message):
             print("✅ Success: \(message)")
-            // TODO: 실제 앱에서는 토스트 메시지 표시
             
         case .showErrorMessage(let message):
             print("❌ Error: \(message)")
-            // TODO: 실제 앱에서는 에러 토스트 메시지 표시
             
         case .navigateBack:
-            print("🔙 뒤로가기 네비게이션")
             coordinator.pop()
         }
     }

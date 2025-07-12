@@ -61,7 +61,6 @@ private struct InfoDetailSettingSection: View {
             
             SettingDivider()
             
-            // 오른쪽 텍스트 및 아이콘 상태에 맞춰 수정해야함
             SettingRow.withIconAndRightText(
                 title: "로그아웃",
                 rightText: "구글 계정",
@@ -82,4 +81,9 @@ private struct InfoDetailBottomSection: View {
     var body: some View {
         Text("InfoDetailBottom")
     }
+}
+
+
+#Preview {
+    ProfileInfoDetailView()
 }
