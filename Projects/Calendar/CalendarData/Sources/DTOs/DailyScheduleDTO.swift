@@ -11,6 +11,7 @@ import CalendarDomain
 
 public struct DailyScheduleDTO: Decodable {
     public let date: String
+    public let dailyTemperature: Int
     public let schedules: [ScheduleDTO]
 }
 
@@ -18,6 +19,7 @@ extension DailyScheduleDTO {
     public func toDomain() -> DailySchedule {
         return DailySchedule(
             date: date,
+            dailyTemperature: dailyTemperature,
             schedules: schedules.map { $0.toDomain() }
         )
     }
