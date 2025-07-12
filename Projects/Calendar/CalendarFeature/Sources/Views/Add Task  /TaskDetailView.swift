@@ -13,48 +13,68 @@ public struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     let selectedCategory: TaskCreateCategory
+    private let isEditMode: Bool
     
-    @State private var startDate = Date()
-    @State private var endDate = Date()
-    @State private var isAllDay = false
-    @State private var temperatureText: String = "5"
+    @Binding private var startDate: Date
+    @Binding private var endDate: Date
+    @Binding private var isAllDay: Bool
+    @Binding private var temperature: Int
+    
+    @State private var temperatureText: String = "50"
     @State private var selectedVacationType: VacationType = .halfDay
     @State private var isStartDateExpanded = false
     @State private var isEndDateExpanded = false
     @State private var isStartTimeExpanded = false
     @State private var isEndTimeExpanded = false
     
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.M.d (E)"
-        formatter.locale = Locale(identifier: "ko_KR")
-        return formatter
-    }()
-    
-    private let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "a h:mm"
-        formatter.locale = Locale(identifier: "ko_KR")
-        return formatter
-    }()
-    
-    public init(selectedCategory: TaskCreateCategory) {
+    public init(
+        selectedCategory: TaskCreateCategory,
+        startDate: Binding<Date>,
+        endDate: Binding<Date>,
+        isAllDay: Binding<Bool>,
+        temperature: Binding<Int>,
+        isEditMode: Bool = false
+    ) {
         self.selectedCategory = selectedCategory
+        self._startDate = startDate
+        self._endDate = endDate
+        self._isAllDay = isAllDay
+        self._temperature = temperature
+        self.isEditMode = isEditMode
     }
     
     public var body: some View {
         VStack(spacing: 0) {
-            navigationBar
+            TaskDetailNavigationBar(onBackTapped: { dismiss() }, onSaveTapped: saveDetails)
             
             ScrollView {
                 VStack(spacing: 30) {
                     if selectedCategory == .vacation {
-                        vacationSection
+                        VacationDetailSection(
+                            selectedVacationType: $selectedVacationType,
+                            startDate: $startDate,
+                            endDate: $endDate,
+                            isAllDay: $isAllDay,
+                            isStartDateExpanded: $isStartDateExpanded,
+                            isEndDateExpanded: $isEndDateExpanded,
+                            updateVacationDates: updateVacationDates
+                        )
                     } else {
-                        dateSection
+                        GeneralDetailSection(
+                            startDate: $startDate,
+                            endDate: $endDate,
+                            isAllDay: $isAllDay,
+                            isStartDateExpanded: $isStartDateExpanded,
+                            isEndDateExpanded: $isEndDateExpanded,
+                            isStartTimeExpanded: $isStartTimeExpanded,
+                            isEndTimeExpanded: $isEndTimeExpanded
+                        )
                     }
                     
-                    temperatureSection
+                    TemperatureInputSection(
+                        temperature: $temperature,
+                        temperatureText: $temperatureText
+                    )
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
@@ -64,220 +84,196 @@ public struct TaskDetailView: View {
         }
         .background(DS.Colors.Background.normal)
         .navigationBarHidden(true)
+        .onAppear(perform: setupInitialValues)
     }
     
-    private var navigationBar: some View {
+    private func setupInitialValues() {
+        temperatureText = String(temperature)
+        
+        if selectedCategory == .vacation {
+            isAllDay = true
+            let calendar = Calendar.current
+            startDate = calendar.startOfDay(for: startDate)
+            endDate = calendar.startOfDay(for: endDate)
+        }
+    }
+    
+    private func updateVacationDates(type: VacationType) {
+        let calendar = Calendar.current
+        
+        switch type {
+        case .fullDay:
+            isAllDay = true
+            startDate = calendar.startOfDay(for: startDate)
+            endDate = calendar.startOfDay(for: endDate)
+            
+        case .halfDay, .morningHalf:
+            isAllDay = false
+            startDate = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: startDate) ?? startDate
+            endDate = calendar.date(bySettingHour: 13, minute: 0, second: 0, of: startDate) ?? endDate
+            
+        case .afternoonHalf:
+            isAllDay = false
+            startDate = calendar.date(bySettingHour: 13, minute: 0, second: 0, of: startDate) ?? startDate
+            endDate = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: startDate) ?? endDate
+        }
+    }
+    
+    private func saveDetails() {
+        let action = isEditMode ? "수정" : "저장"
+        if selectedCategory == .vacation {
+            print("연차 세부사항 \(action) - 연차 유형: \(selectedVacationType.displayName)")
+        } else {
+            print("일반 세부사항 \(action) - 하루 종일: \(isAllDay)")
+        }
+        dismiss()
+    }
+}
+
+// MARK: - Supporting Views
+
+struct TaskDetailNavigationBar: View {
+    let onBackTapped: () -> Void
+    let onSaveTapped: () -> Void
+    
+    var body: some View {
         CustomNavigationBar(
             type: .backWithLabelAndSave("세부사항"),
-            onBackTapped: {
-                dismiss()
-            },
-            onSaveTapped: {
-                saveDetails()
-            }
+            onBackTapped: onBackTapped,
+            onSaveTapped: onSaveTapped
         )
     }
+}
+
+struct VacationDetailSection: View {
+    @Binding var selectedVacationType: VacationType
+    @Binding var startDate: Date
+    @Binding var endDate: Date
+    @Binding var isAllDay: Bool
+    @Binding var isStartDateExpanded: Bool
+    @Binding var isEndDateExpanded: Bool
+    let updateVacationDates: (VacationType) -> Void
     
-    private var vacationSection: some View {
+    var body: some View {
         VStack(spacing: 24) {
-            HStack {
-                Text("연차 유형")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Text.netural)
-                
-                Spacer()
-                
-                Menu {
-                    ForEach(VacationType.allCases, id: \.self) { type in
-                        Button(action: {
-                            selectedVacationType = type
-                        }) {
-                            HStack {
-                                Text(type.displayName)
-                                if selectedVacationType == type {
-                                    Spacer()
-                                    DS.Images.icnChecked
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 0) {
-                        Text(selectedVacationType.displayName)
-                            .font(.body1)
-                            .foregroundColor(DS.Colors.Text.netural)
-                        
-                        DS.Images.icnChevronDown
-                            .foregroundColor(DS.Colors.Neutral.gray500)
-                    }
-                }
-            }
-            datePickerSection
-        }
-    }
-    
-    private var dateSection: some View {
-        VStack(spacing: 24) {
-            HStack {
-                Text("하루 종일")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Text.netural)
-                                
-                Spacer()
-                
-                Toggle("", isOn: $isAllDay)
-                    .labelsHidden()
-            }
+            VacationTypeSelector(
+                selectedVacationType: $selectedVacationType,
+                updateVacationDates: updateVacationDates
+            )
             
-            datePickerSection
+            DatePickerSection(
+                startDate: $startDate,
+                endDate: $endDate,
+                isAllDay: $isAllDay,
+                isStartDateExpanded: $isStartDateExpanded,
+                isEndDateExpanded: $isEndDateExpanded,
+                isStartTimeExpanded: .constant(false),
+                isEndTimeExpanded: .constant(false),
+                showTimeControls: false
+            )
         }
     }
+}
+
+struct GeneralDetailSection: View {
+    @Binding var startDate: Date
+    @Binding var endDate: Date
+    @Binding var isAllDay: Bool
+    @Binding var isStartDateExpanded: Bool
+    @Binding var isEndDateExpanded: Bool
+    @Binding var isStartTimeExpanded: Bool
+    @Binding var isEndTimeExpanded: Bool
     
-    private var datePickerSection: some View {
+    var body: some View {
         VStack(spacing: 24) {
-            VStack(spacing: 16) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isStartDateExpanded.toggle()
-                        isEndDateExpanded = false
-                        isStartTimeExpanded = false
-                        isEndTimeExpanded = false
-                    }
-                }) {
-                    HStack {
-                        Text("시작")
-                            .font(.body1)
-                            .foregroundColor(DS.Colors.Text.netural)
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 20) {
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(dateFormatter.string(from: startDate))
-                                    .font(.body1)
-                                    .foregroundColor(DS.Colors.Text.netural)
-                                    .overlay(
-                                        Rectangle()
-                                            .fill(isStartDateExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
-                                            .frame(height: isStartDateExpanded ? 2 : 1)
-                                            .offset(y: 8),
-                                        alignment: .bottom
-                                    )
-                            }
-                            
-                            if !isAllDay && selectedCategory != .vacation {
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        isStartTimeExpanded.toggle()
-                                        isStartDateExpanded = false
-                                        isEndDateExpanded = false
-                                        isEndTimeExpanded = false
-                                    }
-                                }) {
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text(timeFormatter.string(from: startDate))
-                                            .font(.body1)
-                                            .foregroundColor(DS.Colors.Text.netural)
-                                            .overlay(
-                                                Rectangle()
-                                                    .fill(isStartTimeExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
-                                                    .frame(height: isStartTimeExpanded ? 2 : 1)
-                                                    .offset(y: 8),
-                                                alignment: .bottom
-                                            )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                if isStartDateExpanded {
-                    DatePicker("", selection: $startDate, displayedComponents: [.date])
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-                }
-                
-                if isStartTimeExpanded {
-                    DatePicker("", selection: $startDate, displayedComponents: [.hourAndMinute])
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-                }
-            }
+            AllDayToggle(isAllDay: $isAllDay, startDate: $startDate, endDate: $endDate)
             
-            VStack(spacing: 16) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isEndDateExpanded.toggle()
-                        isStartDateExpanded = false
-                        isStartTimeExpanded = false
-                        isEndTimeExpanded = false
-                    }
-                }) {
-                    HStack {
-                        Text("종료")
-                            .font(.body1)
-                            .foregroundColor(DS.Colors.Text.netural)
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 20) {
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(dateFormatter.string(from: endDate))
-                                    .font(.body1)
-                                    .foregroundColor(DS.Colors.Text.netural)
-                                    .overlay(
-                                        Rectangle()
-                                            .fill(isEndDateExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
-                                            .frame(height: isEndDateExpanded ? 2 : 1)
-                                            .offset(y: 8),
-                                        alignment: .bottom
-                                    )
-                            }
-                            
-                            if !isAllDay && selectedCategory != .vacation {
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        isEndTimeExpanded.toggle()
-                                        isStartDateExpanded = false
-                                        isEndDateExpanded = false
-                                        isStartTimeExpanded = false
-                                    }
-                                }) {
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text(timeFormatter.string(from: endDate))
-                                            .font(.body1)
-                                            .foregroundColor(DS.Colors.Text.netural)
-                                            .overlay(
-                                                Rectangle()
-                                                    .fill(isEndTimeExpanded ? DS.Colors.Neutral.black : DS.Colors.Border.border01)
-                                                    .frame(height: isEndTimeExpanded ? 2 : 1)
-                                                    .offset(y: 8),
-                                                alignment: .bottom
-                                            )
-                                    }
-                                }
+            DatePickerSection(
+                startDate: $startDate,
+                endDate: $endDate,
+                isAllDay: $isAllDay,
+                isStartDateExpanded: $isStartDateExpanded,
+                isEndDateExpanded: $isEndDateExpanded,
+                isStartTimeExpanded: $isStartTimeExpanded,
+                isEndTimeExpanded: $isEndTimeExpanded,
+                showTimeControls: true
+            )
+        }
+    }
+}
+
+struct VacationTypeSelector: View {
+    @Binding var selectedVacationType: VacationType
+    let updateVacationDates: (VacationType) -> Void
+    
+    var body: some View {
+        HStack {
+            Text("연차 유형")
+                .font(.body1)
+                .foregroundColor(DS.Colors.Text.netural)
+            
+            Spacer()
+            
+            Menu {
+                ForEach(VacationType.allCases, id: \.self) { type in
+                    Button(action: {
+                        selectedVacationType = type
+                        updateVacationDates(type)
+                    }) {
+                        HStack {
+                            Text(type.displayName)
+                            if selectedVacationType == type {
+                                Spacer()
+                                DS.Images.icnChecked
                             }
                         }
                     }
                 }
-                
-                if isEndDateExpanded {
-                    DatePicker("", selection: $endDate, displayedComponents: [.date])
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-                }
-                
-                if isEndTimeExpanded {
-                    DatePicker("", selection: $endDate, displayedComponents: [.hourAndMinute])
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
+            } label: {
+                HStack(spacing: 0) {
+                    Text(selectedVacationType.displayName)
+                        .font(.body1)
+                        .foregroundColor(DS.Colors.Text.netural)
+                    
+                    DS.Images.icnChevronDown
+                        .foregroundColor(DS.Colors.Neutral.gray500)
                 }
             }
         }
     }
+}
+
+struct AllDayToggle: View {
+    @Binding var isAllDay: Bool
+    @Binding var startDate: Date
+    @Binding var endDate: Date
     
-    private var temperatureSection: some View {
+    var body: some View {
+        HStack {
+            Text("하루 종일")
+                .font(.body1)
+                .foregroundColor(DS.Colors.Text.netural)
+                            
+            Spacer()
+            
+            Toggle("", isOn: $isAllDay)
+                .labelsHidden()
+                .onChange(of: isAllDay) { _, newValue in
+                    if newValue {
+                        let calendar = Calendar.current
+                        startDate = calendar.startOfDay(for: startDate)
+                        endDate = calendar.startOfDay(for: endDate)
+                    }
+                }
+        }
+    }
+}
+
+struct TemperatureInputSection: View {
+    @Binding var temperature: Int
+    @Binding var temperatureText: String
+    
+    var body: some View {
         VStack(spacing: 8) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -294,21 +290,14 @@ public struct TaskDetailView: View {
                 
                 HStack(spacing: 4) {
                     VStack(spacing: 8) {
-                        TextField("5", text: $temperatureText)
+                        TextField("50", text: $temperatureText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.leading)
                             .frame(width: 70)
                             .font(.body1)
                             .foregroundColor(DS.Colors.Text.netural)
                             .onChange(of: temperatureText) { _, newValue in
-                                let filtered = newValue.filter { $0.isNumber }
-                                if let number = Int(filtered), number <= 100 {
-                                    temperatureText = filtered
-                                } else if filtered.isEmpty {
-                                    temperatureText = ""
-                                } else {
-                                    temperatureText = "100"
-                                }
+                                updateTemperature(newValue)
                             }
                         
                         Rectangle()
@@ -324,16 +313,27 @@ public struct TaskDetailView: View {
         }
     }
     
-    private func saveDetails() {
-        if selectedCategory == .vacation {
-            print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
+    private func updateTemperature(_ newValue: String) {
+        let filtered = newValue.filter { $0.isNumber }
+        if let number = Int(filtered), number <= 100 {
+            temperatureText = filtered
+            temperature = number
+        } else if filtered.isEmpty {
+            temperatureText = ""
+            temperature = 0
         } else {
-            print("일반 세부사항 저장 - 하루 종일: \(isAllDay)")
+            temperatureText = "100"
+            temperature = 100
         }
-        dismiss()
     }
 }
 
 #Preview {
-    TaskDetailView(selectedCategory: .company)
+    TaskDetailView(
+        selectedCategory: .company,
+        startDate: .constant(Date()),
+        endDate: .constant(Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()),
+        isAllDay: .constant(false),
+        temperature: .constant(50)
+    )
 }
