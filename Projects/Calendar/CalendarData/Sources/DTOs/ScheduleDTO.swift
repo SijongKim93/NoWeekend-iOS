@@ -6,8 +6,8 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import Foundation
 import CalendarDomain
+import Foundation
 
 public struct ScheduleDTO: Decodable {
     public let id: String
@@ -30,7 +30,7 @@ extension ScheduleDTO {
             title: title,
             startTime: dateFormatter.date(from: startTime) ?? Date(),
             endTime: dateFormatter.date(from: endTime) ?? Date(),
-            category: ScheduleCategory(rawValue: category) ?? .other,
+            category: ScheduleCategory(rawValue: category) ?? .etc,
             temperature: temperature,
             allDay: allDay,
             alarmOption: AlarmOption(rawValue: alarmOption) ?? .none,

@@ -46,6 +46,7 @@ jobs:
               public static let baseURL = "${{ secrets.BASE_URL }}"
               public static let googleClientID = "${{ secrets.GOOGLE_CLIENT_KEY }}"
               public static let googleServerClientID = "${{ secrets.GOOGLE_SERVICE_CLIENT_ID }}"
+              public static let tempAccessToken = "${{ secrets.TEMP_ACCESS_TOKEN }}"
           }
           EOF
 

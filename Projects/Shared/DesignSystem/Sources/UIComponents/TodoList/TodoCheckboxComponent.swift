@@ -20,17 +20,19 @@ public struct TodoCategory {
 
 public struct TodoItem: Identifiable {
     public let id: Int
-    public let title: String
+    public var title: String
     public var isCompleted: Bool
     public let category: TodoCategory?
     public let time: String?
+    public let scheduleId: String?
     
-    public init(id: Int, title: String, isCompleted: Bool, category: TodoCategory?, time: String?) {
+    public init(id: Int, title: String, isCompleted: Bool, category: TodoCategory?, time: String?, scheduleId: String? = nil) {
         self.id = id
         self.title = title
         self.isCompleted = isCompleted
         self.category = category
         self.time = time
+        self.scheduleId = scheduleId
     }
 }
 
@@ -39,7 +41,11 @@ public struct TodoCheckboxComponent: View {
     public let onToggle: () -> Void
     public let onMoreTapped: (() -> Void)?
     
-    public init(todoItem: TodoItem, onToggle: @escaping () -> Void, onMoreTapped: (() -> Void)? = nil) {
+    public init(
+        todoItem: TodoItem,
+        onToggle: @escaping () -> Void,
+        onMoreTapped: (() -> Void)? = nil
+    ) {
         self.todoItem = todoItem
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
@@ -54,11 +60,12 @@ public struct TodoCheckboxComponent: View {
         onMoreTapped: (() -> Void)? = nil
     ) {
         self.todoItem = TodoItem(
-            id: 0, // 임시 ID
+            id: 0,
             title: title,
             isCompleted: isCompleted,
             category: category,
-            time: time
+            time: time,
+            scheduleId: nil
         )
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
@@ -87,6 +94,7 @@ public struct TodoCheckboxComponent: View {
                     .font(.body2)
                     .foregroundColor(DS.Colors.Neutral.gray900)
                     .lineLimit(1)
+                
                 if todoItem.category != nil {
                     HStack(spacing: 8) {
                         if let category = todoItem.category {
@@ -117,6 +125,7 @@ public struct TodoCheckboxComponent: View {
                     .resizable()
                     .frame(width: 32, height: 32)
             }
+            .buttonStyle(PlainButtonStyle())
         }
         .padding(.vertical, 12)
         .padding(.leading, 24)
@@ -131,46 +140,16 @@ public struct TodoCheckboxComponent: View {
         TodoCheckboxComponent(
             isCompleted: false,
             title: "기본 개인 할일",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            todoItem: TodoItem(
-                id: 1,
-                title: "TodoItem으로 생성된 할일",
-                isCompleted: false,
-                category: TodoCategory(name: "회사", color: DS.Colors.TaskItem.purple),
-                time: "오전 10:00"
-            ),
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "시간이 있는 할일입니다 이것은 길어질 수 있는 텍스트입니다",
-            time: "오전 10:00",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "시간 없는 할일",
-            onToggle: { }
-        )
-        
-        TodoCheckboxComponent(
-            isCompleted: false,
-            title: "회사 업무",
-            category: TodoCategory(name: "회사", color: DS.Colors.TaskItem.purple),
-            time: "오후 2:00",
-            onToggle: { }
+            onToggle: { print("체크박스 클릭") },
+            onMoreTapped: { print("더보기 클릭") }
         )
         
         TodoCheckboxComponent(
             isCompleted: true,
             title: "완료된 할일",
-            time: "오전 9:00",
-            onToggle: { }
+            category: TodoCategory(name: "연차", color: DS.Colors.TaskItem.purple),
+            onToggle: { print("체크박스 클릭") },
+            onMoreTapped: { print("더보기 클릭") }
         )
     }
     .background(Color.gray.opacity(0.1))

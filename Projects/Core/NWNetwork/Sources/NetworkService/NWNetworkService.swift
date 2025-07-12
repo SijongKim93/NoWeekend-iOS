@@ -20,9 +20,11 @@ public protocol NWNetworkServiceProtocol {
 public class NWNetworkService: NWNetworkServiceProtocol {
     private let baseURL: String
     private let session: Session
+    private var authToken: String?
     
     public init(baseURL: String = Config.baseURL, authToken: String? = nil) {
         self.baseURL = baseURL
+        self.authToken = authToken
         
         var headers: [String: String] = [
             "Content-Type": "application/json",
@@ -36,6 +38,10 @@ public class NWNetworkService: NWNetworkServiceProtocol {
         let configuration = URLSessionConfiguration.default
         configuration.httpAdditionalHeaders = headers
         self.session = Session(configuration: configuration)
+    }
+    
+    public func updateAuthToken(_ token: String?) {
+        self.authToken = token
     }
     
     public func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
@@ -56,6 +62,17 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     
     public func patch<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T {
         return try await request(endpoint: endpoint, method: .patch, parameters: parameters)
+      
+    private func getCurrentToken() -> String? {
+        if let savedToken = UserDefaults.standard.string(forKey: "access_token"), !savedToken.isEmpty {
+            return savedToken
+        }
+        
+        if let staticToken = authToken, !staticToken.isEmpty {
+            return staticToken
+        }
+        
+        return Config.tempAccessToken
     }
     
     private func request<T: Decodable>(
@@ -82,12 +99,25 @@ public class NWNetworkService: NWNetworkServiceProtocol {
             }
         }
         
+        var headers: HTTPHeaders = [
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        ]
+        
+        // 토큰 우선순위: UserDefaults → 초기화 토큰 → 임시 토큰
+        if let token = getCurrentToken() {
+            headers["Authorization"] = "Bearer \(token)"
+        }
+        
         return try await withCheckedThrowingContinuation { continuation in
+            let encoding: ParameterEncoding = method == .get ? URLEncoding.default : JSONEncoding.default
+            
             session.request(
                 url,
                 method: method,
                 parameters: parameters,
-                encoding: JSONEncoding.default
+                encoding: encoding,
+                headers: headers
             )
             .validate()
             .responseData { response in
@@ -144,6 +174,27 @@ public class NWNetworkService: NWNetworkServiceProtocol {
                     
                     let networkError = self.mapAlamofireError(error, responseData: response.data)
                     continuation.resume(throwing: networkError)
+                switch response.result {
+                case .success(let data):
+                    // JSON 디코딩
+                    do {
+                        let decoder = JSONDecoder()
+                        let result = try decoder.decode(T.self, from: data)
+                        continuation.resume(returning: result)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                    
+                case .failure(let error):
+                    print("❌ API 응답 실패: [\(method.rawValue)] \(endpoint)")
+                    print("   Error: \(error)")
+                    if let statusCode = response.response?.statusCode {
+                        print("   Status Code: \(statusCode)")
+                    }
+                    if let data = response.data, let errorString = String(data: data, encoding: .utf8) {
+                        print("   Response: \(errorString)")
+                    }
+                    continuation.resume(throwing: error)
                 }
             }
         }
