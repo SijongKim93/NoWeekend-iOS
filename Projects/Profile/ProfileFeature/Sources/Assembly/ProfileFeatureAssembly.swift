@@ -75,5 +75,15 @@ public struct ProfileFeatureAssembly: Assembly {
             let updateVacationLeaveUseCase = resolver.resolve(UpdateVacationLeaveUseCaseProtocol.self)!
             return VacationStore(updateVacationLeaveUseCase: updateVacationLeaveUseCase)
         }.inObjectScope(.graph)
+        
+        container.register(TagsStore.self) { resolver in
+            let getUserTagsUseCase = resolver.resolve(GetUserTagsUseCaseProtocol.self)!
+            let updateUserTagsUseCase = resolver.resolve(UpdateUserTagsUseCaseProtocol.self)!
+            
+            return TagsStore(
+                getUserTagsUseCase: getUserTagsUseCase,
+                updateUserTagsUseCase: updateUserTagsUseCase
+            )
+        }.inObjectScope(.graph)
     }
 }

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ProfileDomain
 
 public protocol ProfileNetworkServiceInterface {
     func getUserProfile() async throws -> UserProfileDTO
@@ -14,4 +15,5 @@ public protocol ProfileNetworkServiceInterface {
     func getUserTags() async throws -> UserTagsResponseDTO
     func updateUserTags(_ request: UserTagsUpdateRequestDTO) async throws -> UserTagsResponseDTO
     func updateVacationLeave(_ request: VacationLeaveDTO) async throws -> VacationLeaveDTO
+    func getAITagRecommendation(selectedTags: [String]) async throws -> AIRecommendationResponse
 }

@@ -89,6 +89,24 @@ public final class ProfileNetworkService: ProfileNetworkServiceInterface {
         
         return data
     }
+    
+    public func getAITagRecommendation(selectedTags: [String]) async throws -> AIRecommendationResponse {
+            var queryItems: [URLQueryItem] = []
+            
+            for (index, tag) in selectedTags.enumerated() {
+                queryItems.append(URLQueryItem(name: "selectedTags[\(index)]", value: tag))
+            }
+            
+            var urlComponents = URLComponents(string: "/recommend/todo/new-only")!
+            urlComponents.queryItems = queryItems
+            
+            let response: AIRecommendationResponse = try await networkService.get(
+                endpoint: urlComponents.url?.absoluteString ?? "/recommend/todo/new-only",
+                parameters: nil
+            )
+            
+            return response
+        }
 }
 
 extension Encodable {
