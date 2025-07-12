@@ -47,13 +47,15 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         
-        let isoFormatter = ISO8601DateFormatter()
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.timeZone = TimeZone.current
         
         let requestDTO = CreateScheduleRequestDTO(
             title: request.title,
             date: dateFormatter.string(from: request.date),
-            startTime: isoFormatter.string(from: request.startTime),
-            endTime: isoFormatter.string(from: request.endTime),
+            startTime: timeFormatter.string(from: request.startTime),
+            endTime: timeFormatter.string(from: request.endTime),
             category: request.category.rawValue,
             temperature: request.temperature,
             allDay: request.allDay,
@@ -71,16 +73,26 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
             parameters: parameters
         )
         
-        return response.toDomain()
+        guard response.result == "SUCCESS", let data = response.data else {
+            let errorMessage = response.error?.message ?? "일정 생성 실패"
+            print("❌ 일정 생성 실패: \(errorMessage)")
+            throw NetworkError.serverError(errorMessage)
+        }
+        
+        let schedule = data.toDomain()
+        print("✅ 일정 생성 성공: \(schedule.title)")
+        return schedule
     }
     
     public func updateSchedule(id: String, request: UpdateScheduleRequest) async throws -> Schedule {
-        let isoFormatter = ISO8601DateFormatter()
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        timeFormatter.timeZone = TimeZone.current
         
         let requestDTO = UpdateScheduleRequestDTO(
             title: request.title,
-            startTime: isoFormatter.string(from: request.startTime),
-            endTime: isoFormatter.string(from: request.endTime),
+            startTime: timeFormatter.string(from: request.startTime),
+            endTime: timeFormatter.string(from: request.endTime),
             category: request.category.rawValue,
             temperature: request.temperature,
             allDay: request.allDay,
@@ -100,10 +112,13 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         
         guard response.result == "SUCCESS", let data = response.data else {
             let errorMessage = response.error?.message ?? "일정 수정 실패"
+            print("❌ 일정 수정 실패: \(errorMessage)")
             throw NetworkError.serverError(errorMessage)
         }
         
-        return data.toDomain()
+        let schedule = data.toDomain()
+        print("✅ 일정 수정 성공: \(schedule.title)")
+        return schedule
     }
     
     public func deleteSchedule(id: String) async throws {
@@ -115,6 +130,5 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
             let errorMessage = response.error?.message ?? "일정 삭제 실패"
             throw NetworkError.serverError(errorMessage)
         }
-        
     }
 }
