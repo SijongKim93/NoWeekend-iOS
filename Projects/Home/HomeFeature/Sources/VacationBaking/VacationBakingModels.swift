@@ -66,7 +66,7 @@ enum VacationType: String, CaseIterable {
     case activeVacation = "즉흥 자유형"
     case rest = "휴식"
     case selfImprovement = "자기계발"
-    case housework = "아이 활동"
+    case housework = "야외 활동"
     case eating = "집콕"
     case meal = "음식"
     case watching = "관광"
@@ -113,4 +113,4 @@ enum VacationBakingStatus: Equatable {
             return false
         }
     }
-} 
+}

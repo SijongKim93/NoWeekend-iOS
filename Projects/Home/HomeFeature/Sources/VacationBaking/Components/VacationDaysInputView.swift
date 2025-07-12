@@ -23,7 +23,7 @@ struct VacationDaysInputView: View {
                 NWTextField.userInputTextField(
                     text: $inputText,
                     suffixText: "일",
-                    placeholder: "0",
+                    placeholder: "1일부터 15일 이내로 입력",
                     errorMessage: $errorMessage,
                     keyboardType: .numberPad
                 )
@@ -43,24 +43,25 @@ struct VacationDaysInputView: View {
     
     private func validateInput(_ newValue: String) {
         // 숫자만 입력 가능하도록 필터링
+        // numberPad이지만 복사 붙여넣기로 텍스트 들어갈 경우에 대한 예외처리를 위함
         let filtered = newValue.filter { $0.isNumber }
         if filtered != newValue {
             inputText = filtered
         }
         
-        if let days = Int(filtered) {
-            if days == 0 {
-                errorMessage = "1일 부터 기입해주세요."
+        if let day = Int(filtered) {
+            if day == 0 {
+                errorMessage = "1일부터 기입해주세요."
                 onDaysChanged(0)
-            } else if days > remainingAnnualLeave {
-                errorMessage = "남은 연차에 맞춰 휴가 일수를 작성해 주세요."
-                onDaysChanged(days)
+            } else if day > 15 {
+                errorMessage = "최대 15일 이내까지 추천받을 수 있어요."
+                onDaysChanged(day)
             } else {
                 errorMessage = nil
-                onDaysChanged(days)
+                onDaysChanged(day)
             }
-        } else if filtered.isEmpty {
-            errorMessage = nil
+        } else if !newValue.isEmpty && filtered.isEmpty {
+            errorMessage = "숫자만 입력해주세요"
             onDaysChanged(0)
         }
     }

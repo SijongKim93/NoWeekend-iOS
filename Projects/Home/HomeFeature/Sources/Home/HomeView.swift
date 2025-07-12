@@ -31,8 +31,13 @@ public struct HomeView: View {
                     MainTopView(
                         vacationBakingStatus: store.state.vacationBakingStatus,
                         onVacationBakingTapped: {
-                            if store.state.vacationBakingStatus.isButtonEnabled {
-                                coordinator.push(.vacationBaking)
+                            switch store.state.vacationBakingStatus {
+                            case .notStarted:
+                                coordinator.push(.bakingVacation)
+                            case .completed:
+                                coordinator.push(.recommendVaction)
+                            case .processing:
+                                break
                             }
                         }
                     )

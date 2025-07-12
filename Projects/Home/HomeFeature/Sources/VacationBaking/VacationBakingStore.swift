@@ -88,7 +88,7 @@ final class VacationBakingStore: ObservableObject {
     private func updateNextButtonState() {
         switch state.currentStep {
         case .vacationDaysInput:
-            state.isNextButtonEnabled = state.vacationDays > 0
+            state.isNextButtonEnabled = 0 < state.vacationDays && state.vacationDays < 16
             
         case .vacationTypeSelection:
             state.isNextButtonEnabled = state.selectedVacationTypes.count == 4

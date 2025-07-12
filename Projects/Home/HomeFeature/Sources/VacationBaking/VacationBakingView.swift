@@ -16,7 +16,7 @@ struct VacationBakingView: View {
     let remainingAnnualLeave: Int
     let onCompleted: (() -> Void)?
     
-    init(remainingAnnualLeave: Int = 10, onCompleted: (() -> Void)? = nil) {
+    init(remainingAnnualLeave: Int, onCompleted: (() -> Void)? = nil) {
         self.remainingAnnualLeave = remainingAnnualLeave
         self.onCompleted = onCompleted
     }
@@ -32,10 +32,17 @@ struct VacationBakingView: View {
             
             VStack(spacing: 0) {
                 // 타이틀 영역
-                VacationBakingTitleView(
-                    title: store.state.currentStep.title,
-                    subtitle: store.state.currentStep.subtitle(remainingDays: remainingAnnualLeave)
-                )
+                VStack(spacing: 8) {
+                    Text(store.state.currentStep.title)
+                        .font(.heading3)
+                        .foregroundColor(DS.Colors.Text.netural)
+                        .multilineTextAlignment(.center)
+                    
+                    Text(store.state.currentStep.subtitle(remainingDays: remainingAnnualLeave))
+                        .font(.body2)
+                        .foregroundColor(DS.Colors.Text.body)
+                        .multilineTextAlignment(.center)
+                }
                 .padding(.top, 32)
                 .padding(.bottom, 48)
                 
@@ -97,5 +104,5 @@ struct VacationBakingView: View {
 }
 
 #Preview {
-    VacationBakingView()
-} 
+    VacationBakingView(remainingAnnualLeave: 10, onCompleted: nil)
+}
