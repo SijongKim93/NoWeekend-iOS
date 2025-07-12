@@ -14,70 +14,6 @@ import SwiftUI
 import Utils
 import Combine
 
-// MARK: - Intent (사용자 액션)
-public enum CalendarIntent {
-    case viewDidAppear
-    case toggleChanged(CalendarNavigationBar.ToggleOption)
-    case dateSelected(Date)
-    case datePicker(isPresented: Bool, previousDate: Date?)
-    case categorySelected(TaskCategory)
-    case directInputTapped
-    case taskEditRequested(Int)
-    case taskDeleteRequested(Int)
-    case taskTitleChanged(Int, String)
-    case categorySelectionToggled
-    case scrollOffsetChanged(CGFloat, Bool)
-    case floatingButtonTapped
-}
-
-// MARK: - State (UI 상태)
-public struct CalendarState: Equatable {
-    var selectedDate = Date()
-    var selectedToggle: CalendarNavigationBar.ToggleOption = .week
-    var dailySchedules: [DailySchedule] = []
-    var todoItems: [DesignSystem.TodoItem] = []
-    
-    var showDatePicker = false
-    var showTaskEditSheet = false
-    var showCategorySelection = false
-    var scrollOffset: CGFloat = 0
-    var isScrolling = false
-    
-    var selectedTaskIndex: Int?
-    var editingTaskIndex: Int?
-    
-    var isLoading = false
-    var errorMessage: String?
-    
-    // Computed Properties
-    var isFloatingButtonExpanded: Bool {
-        scrollOffset == 0 && !isScrolling
-    }
-    
-    var currentDateString: String {
-        selectedDate.toString(format: "yyyy년 M월")
-    }
-    
-    public static func == (lhs: CalendarState, rhs: CalendarState) -> Bool {
-        lhs.selectedDate == rhs.selectedDate &&
-        lhs.selectedToggle == rhs.selectedToggle &&
-        lhs.dailySchedules.count == rhs.dailySchedules.count &&
-        lhs.todoItems.count == rhs.todoItems.count &&
-        lhs.showDatePicker == rhs.showDatePicker &&
-        lhs.showTaskEditSheet == rhs.showTaskEditSheet &&
-        lhs.showCategorySelection == rhs.showCategorySelection &&
-        lhs.isLoading == rhs.isLoading
-    }
-}
-
-// MARK: - Effect (부수 효과)
-public enum CalendarEffect {
-    case navigateToTaskCreate(Date)
-    case navigateToTaskEdit(Int, String, String?, String?, Date)
-    case showError(String)
-}
-
-// MARK: - Store (MVI 컨테이너)
 public final class CalendarStore: ObservableObject {
     @Dependency private var calendarUseCase: CalendarUseCaseProtocol
     
@@ -90,14 +26,12 @@ public final class CalendarStore: ObservableObject {
     
     public init() {}
     
-    // MARK: - Intent Handler
     public func send(_ intent: CalendarIntent) {
         Task { @MainActor in
             await handle(intent)
         }
     }
     
-    // MARK: - State Mutation (Internal use only)
     @MainActor
     internal func updateState(_ update: (inout CalendarState) -> Void) {
         update(&state)
@@ -108,39 +42,24 @@ public final class CalendarStore: ObservableObject {
         switch intent {
         case .viewDidAppear:
             await handleViewDidAppear()
-            
         case .toggleChanged(let toggle):
             await handleToggleChanged(toggle)
-            
         case .dateSelected(let date):
             await handleDateSelected(date)
-            
-        case .datePicker(let isPresented, let previousDate):
-            handleDatePicker(isPresented: isPresented, previousDate: previousDate)
-            
         case .categorySelected(let category):
             handleCategorySelected(category)
-            
         case .directInputTapped:
             handleDirectInputTapped()
-            
         case .taskEditRequested(let index):
             handleTaskEditRequested(index)
-            
         case .taskDeleteRequested(let index):
             await handleTaskDeleteRequested(index)
-            
         case .taskTitleChanged(let index, let newTitle):
             await handleTaskTitleChanged(index: index, newTitle: newTitle)
-            
         case .categorySelectionToggled:
             handleCategorySelectionToggled()
-            
         case .scrollOffsetChanged(let offset, let isScrolling):
             handleScrollOffsetChanged(offset: offset, isScrolling: isScrolling)
-            
-        case .floatingButtonTapped:
-            handleFloatingButtonTapped()
         }
     }
 }
@@ -166,19 +85,6 @@ private extension CalendarStore {
         state.selectedDate = date
         await loadSchedules()
         updateTodoItemsForSelectedDate()
-    }
-    
-    @MainActor
-    func handleDatePicker(isPresented: Bool, previousDate: Date?) {
-        state.showDatePicker = isPresented
-        
-        if !isPresented, let previous = previousDate,
-           !Calendar.current.isDate(state.selectedDate, equalTo: previous, toGranularity: .month) {
-            Task { @MainActor in
-                await loadSchedules()
-                updateTodoItemsForSelectedDate()
-            }
-        }
     }
     
     @MainActor
@@ -247,7 +153,6 @@ private extension CalendarStore {
     func handleTaskTitleChanged(index: Int, newTitle: String) async {
         guard index < state.todoItems.count else { return }
         state.todoItems[index].title = newTitle
-        // TODO: API 호출
     }
     
     @MainActor
@@ -262,19 +167,6 @@ private extension CalendarStore {
         state.scrollOffset = offset
         state.isScrolling = isScrolling
     }
-    
-    @MainActor
-    func handleFloatingButtonTapped() {
-        if state.showCategorySelection {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                state.showCategorySelection = false
-            }
-        } else {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                state.showCategorySelection = true
-            }
-        }
-    }
 }
 
 // MARK: - Business Logic
@@ -282,7 +174,6 @@ private extension CalendarStore {
     @MainActor
     func loadSchedules() async {
         state.isLoading = true
-        state.errorMessage = nil
         
         do {
             let schedules = try await fetchSchedules()
@@ -290,7 +181,6 @@ private extension CalendarStore {
             state.isLoading = false
             updateTodoItemsForSelectedDate()
         } catch {
-            state.errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
             state.todoItems = []
             state.isLoading = false
         }
@@ -369,12 +259,7 @@ private extension CalendarStore {
         )
     }
     
-    func createTodoFromCategory(
-        id: Int,
-        title: String,
-        category: TaskCategory,
-        time: String? = nil
-    ) -> DesignSystem.TodoItem {
+    func createTodoFromCategory(id: Int, title: String, category: TaskCategory, time: String? = nil) -> DesignSystem.TodoItem {
         DesignSystem.TodoItem(
             id: id,
             title: title,
@@ -393,12 +278,8 @@ extension CalendarStore {
         let schedulesForDate = getSchedulesForDate(date)
         
         if !schedulesForDate.isEmpty {
-            let daySchedule = getDaySchedule(for: date)
-            let temperature = daySchedule?.dailyTemperature ?? 0
-            let imageToShow = (temperature == 0 && !schedulesForDate.isEmpty) ?
-                DS.Images.imgToastDefault : temperatureImage(temperature)
-            
-            imageToShow
+            let avgTemperature = calculateAverageTemperature(for: schedulesForDate)
+            temperatureImage(avgTemperature)
                 .resizable()
                 .scaledToFit()
         } else {
@@ -408,22 +289,30 @@ extension CalendarStore {
         }
     }
     
-    private func getDaySchedule(for date: Date) -> DailySchedule? {
+    private func getSchedulesForDate(_ date: Date) -> [Schedule] {
         let dateString = date.toString(format: "yyyy-MM-dd")
-        return state.dailySchedules.first { $0.date == dateString }
+        
+        if let daySchedule = state.dailySchedules.first(where: { $0.date == dateString }) {
+            return daySchedule.schedules
+        }
+        
+        return []
     }
     
-    private func getSchedulesForDate(_ date: Date) -> [Schedule] {
-        return getDaySchedule(for: date)?.schedules ?? []
+    private func calculateAverageTemperature(for schedules: [Schedule]) -> Int {
+        guard !schedules.isEmpty else { return 0 }
+        
+        let totalTemperature = schedules.reduce(0) { $0 + $1.temperature }
+        return totalTemperature / schedules.count
     }
     
     private func temperatureImage(_ temperature: Int) -> Image {
         switch temperature {
-        case 0...20: return DS.Images.imgFlour
-        case 21...40: return DS.Images.imgToastNone
-        case 41...60: return DS.Images.imgToastDefault
-        case 61...80: return DS.Images.imgToastEven
-        case 81...100: return DS.Images.imgToastBurn
+        case 0...20: return DS.Images.imgToastNone
+        case 21...40: return DS.Images.imgToastDefault
+        case 41...60: return DS.Images.imgToastEven
+        case 61...80: return DS.Images.imgToastBurn
+        case 81...100: return DS.Images.imgToastVacation
         default: return DS.Images.imgFlour
         }
     }

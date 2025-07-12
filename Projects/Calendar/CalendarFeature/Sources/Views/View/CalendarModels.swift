@@ -12,9 +12,66 @@ import DesignSystem
 import SwiftUI
 import Utils
 
+// MARK: - Intent (사용자 액션)
+public enum CalendarIntent {
+    case viewDidAppear
+    case toggleChanged(CalendarNavigationBar.ToggleOption)
+    case dateSelected(Date)
+    case categorySelected(TaskCategory)
+    case directInputTapped
+    case taskEditRequested(Int)
+    case taskDeleteRequested(Int)
+    case taskTitleChanged(Int, String)
+    case categorySelectionToggled
+    case scrollOffsetChanged(CGFloat, Bool)
+}
+
+// MARK: - State (UI 상태)
+public struct CalendarState: Equatable {
+    var selectedDate = Date()
+    var selectedToggle: CalendarNavigationBar.ToggleOption = .week
+    var dailySchedules: [DailySchedule] = []
+    var todoItems: [DesignSystem.TodoItem] = []
+    
+    var showDatePicker = false
+    var showTaskEditSheet = false
+    var showCategorySelection = false
+    var scrollOffset: CGFloat = 0
+    var isScrolling = false
+    
+    var selectedTaskIndex: Int?
+    var editingTaskIndex: Int?
+    var isLoading = false
+    
+    var isFloatingButtonExpanded: Bool {
+        scrollOffset == 0 && !isScrolling
+    }
+    
+    var currentDateString: String {
+        selectedDate.toString(format: "yyyy년 M월")
+    }
+    
+    public static func == (lhs: CalendarState, rhs: CalendarState) -> Bool {
+        lhs.selectedDate == rhs.selectedDate &&
+        lhs.selectedToggle == rhs.selectedToggle &&
+        lhs.dailySchedules.count == rhs.dailySchedules.count &&
+        lhs.todoItems.count == rhs.todoItems.count &&
+        lhs.showDatePicker == rhs.showDatePicker &&
+        lhs.showTaskEditSheet == rhs.showTaskEditSheet &&
+        lhs.showCategorySelection == rhs.showCategorySelection &&
+        lhs.isLoading == rhs.isLoading
+    }
+}
+
+// MARK: - Effect 
+public enum CalendarEffect {
+    case navigateToTaskCreate(Date)
+    case navigateToTaskEdit(Int, String, String?, String?, Date)
+    case showError(String)
+}
+
 // MARK: - Domain Extensions
 extension DailySchedule {
-    /// 해당 날짜의 평균 온도 계산
     var dailyTemperature: Int {
         guard !schedules.isEmpty else { return 0 }
         let totalTemperature = schedules.reduce(0) { $0 + $1.temperature }
@@ -23,7 +80,6 @@ extension DailySchedule {
 }
 
 extension ScheduleCategory {
-    /// DesignSystem 컬러 매핑
     var designSystemColor: Color {
         switch self {
         case .company: return DS.Colors.TaskItem.green
@@ -33,4 +89,3 @@ extension ScheduleCategory {
         }
     }
 }
-

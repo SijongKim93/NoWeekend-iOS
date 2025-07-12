@@ -13,11 +13,14 @@ public struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     let selectedCategory: TaskCreateCategory
+    private let isEditMode: Bool
     
-    @State private var startDate = Date()
-    @State private var endDate = Date()
-    @State private var isAllDay = false
-    @State private var temperatureText: String = "5"
+    @Binding private var startDate: Date
+    @Binding private var endDate: Date
+    @Binding private var isAllDay: Bool
+    @Binding private var temperature: Int
+    
+    @State private var temperatureText: String = "50"
     @State private var selectedVacationType: VacationType = .halfDay
     @State private var isStartDateExpanded = false
     @State private var isEndDateExpanded = false
@@ -38,8 +41,20 @@ public struct TaskDetailView: View {
         return formatter
     }()
     
-    public init(selectedCategory: TaskCreateCategory) {
+    public init(
+        selectedCategory: TaskCreateCategory,
+        startDate: Binding<Date>,
+        endDate: Binding<Date>,
+        isAllDay: Binding<Bool>,
+        temperature: Binding<Int>,
+        isEditMode: Bool = false
+    ) {
         self.selectedCategory = selectedCategory
+        self._startDate = startDate
+        self._endDate = endDate
+        self._isAllDay = isAllDay
+        self._temperature = temperature
+        self.isEditMode = isEditMode
     }
     
     public var body: some View {
@@ -64,6 +79,9 @@ public struct TaskDetailView: View {
         }
         .background(DS.Colors.Background.normal)
         .navigationBarHidden(true)
+        .onAppear {
+            setupInitialValues()
+        }
     }
     
     private var navigationBar: some View {
@@ -91,6 +109,7 @@ public struct TaskDetailView: View {
                     ForEach(VacationType.allCases, id: \.self) { type in
                         Button(action: {
                             selectedVacationType = type
+                            updateVacationDates(type: type)
                         }) {
                             HStack {
                                 Text(type.displayName)
@@ -127,6 +146,14 @@ public struct TaskDetailView: View {
                 
                 Toggle("", isOn: $isAllDay)
                     .labelsHidden()
+                    .onChange(of: isAllDay) { _, newValue in
+                        if newValue {
+                            // 하루 종일로 설정시 시간을 00:00:00으로 설정
+                            let calendar = Calendar.current
+                            startDate = calendar.startOfDay(for: startDate)
+                            endDate = calendar.startOfDay(for: endDate)
+                        }
+                    }
             }
             
             datePickerSection
@@ -196,12 +223,24 @@ public struct TaskDetailView: View {
                     DatePicker("", selection: $startDate, displayedComponents: [.date])
                         .datePickerStyle(.wheel)
                         .labelsHidden()
+                        .onChange(of: startDate) { _, newValue in
+                            // 종료일이 시작일보다 이전이면 조정
+                            if endDate < newValue {
+                                endDate = Calendar.current.date(byAdding: .hour, value: 1, to: newValue) ?? newValue
+                            }
+                        }
                 }
                 
                 if isStartTimeExpanded {
                     DatePicker("", selection: $startDate, displayedComponents: [.hourAndMinute])
                         .datePickerStyle(.wheel)
                         .labelsHidden()
+                        .onChange(of: startDate) { _, newValue in
+                            // 종료시간이 시작시간보다 이전이면 조정
+                            if endDate <= newValue {
+                                endDate = Calendar.current.date(byAdding: .hour, value: 1, to: newValue) ?? newValue
+                            }
+                        }
                 }
             }
             
@@ -294,7 +333,7 @@ public struct TaskDetailView: View {
                 
                 HStack(spacing: 4) {
                     VStack(spacing: 8) {
-                        TextField("5", text: $temperatureText)
+                        TextField("50", text: $temperatureText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.leading)
                             .frame(width: 70)
@@ -304,10 +343,13 @@ public struct TaskDetailView: View {
                                 let filtered = newValue.filter { $0.isNumber }
                                 if let number = Int(filtered), number <= 100 {
                                     temperatureText = filtered
+                                    temperature = number
                                 } else if filtered.isEmpty {
                                     temperatureText = ""
+                                    temperature = 0
                                 } else {
                                     temperatureText = "100"
+                                    temperature = 100
                                 }
                             }
                         
@@ -324,16 +366,68 @@ public struct TaskDetailView: View {
         }
     }
     
-    private func saveDetails() {
+    // MARK: - Private Methods
+    
+    private func setupInitialValues() {
+        temperatureText = String(temperature)
+        
+        // 연차 카테고리인 경우 하루 종일로 기본 설정
         if selectedCategory == .vacation {
-            print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
-        } else {
-            print("일반 세부사항 저장 - 하루 종일: \(isAllDay)")
+            isAllDay = true
+            let calendar = Calendar.current
+            startDate = calendar.startOfDay(for: startDate)
+            endDate = calendar.startOfDay(for: endDate)
         }
+    }
+    
+    private func updateVacationDates(type: VacationType) {
+        let calendar = Calendar.current
+        
+        switch type {
+        case .fullDay:
+            isAllDay = true
+            startDate = calendar.startOfDay(for: startDate)
+            endDate = calendar.startOfDay(for: endDate)
+            
+        case .halfDay, .morningHalf:
+            isAllDay = false
+            // 오전 9시부터 오후 1시까지
+            startDate = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: startDate) ?? startDate
+            endDate = calendar.date(bySettingHour: 13, minute: 0, second: 0, of: startDate) ?? endDate
+            
+        case .afternoonHalf:
+            isAllDay = false
+            // 오후 1시부터 오후 6시까지
+            startDate = calendar.date(bySettingHour: 13, minute: 0, second: 0, of: startDate) ?? startDate
+            endDate = calendar.date(bySettingHour: 18, minute: 0, second: 0, of: startDate) ?? endDate
+        }
+    }
+    
+    private func saveDetails() {
+        if isEditMode {
+            if selectedCategory == .vacation {
+                print("연차 세부사항 수정 - 연차 유형: \(selectedVacationType.displayName)")
+            } else {
+                print("일반 세부사항 수정 - 하루 종일: \(isAllDay)")
+            }
+        } else {
+            if selectedCategory == .vacation {
+                print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
+            } else {
+                print("일반 세부사항 저장 - 하루 종일: \(isAllDay)")
+            }
+        }
+        
         dismiss()
     }
 }
 
 #Preview {
-    TaskDetailView(selectedCategory: .company)
+    TaskDetailView(
+        selectedCategory: .company,
+        startDate: .constant(Date()),
+        endDate: .constant(Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()),
+        isAllDay: .constant(false),
+        temperature: .constant(50)
+    )
 }
