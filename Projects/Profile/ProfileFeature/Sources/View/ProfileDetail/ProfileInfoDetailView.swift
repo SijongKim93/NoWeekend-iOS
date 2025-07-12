@@ -80,6 +80,6 @@ private struct InfoDetailSettingSection: View {
 
 private struct InfoDetailBottomSection: View {
     var body: some View {
-        
+        Text("InfoDetailBottom")
     }
 }

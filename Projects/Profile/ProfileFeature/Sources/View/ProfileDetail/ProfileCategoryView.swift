@@ -10,6 +10,6 @@ import SwiftUI
 
 struct ProfileCategoryView: View {
     var body: some View {
-        
+        Text("ProfileCategoryView")
     }
 }
