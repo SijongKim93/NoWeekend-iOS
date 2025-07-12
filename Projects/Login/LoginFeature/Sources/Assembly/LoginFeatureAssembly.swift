@@ -22,8 +22,7 @@ public struct LoginFeatureAssembly: Assembly {
             let authRepository = resolver.resolve(AuthRepositoryInterface.self)!
             let appleAuthService = resolver.resolve(AppleAuthServiceInterface.self)!
             return AppleLoginUseCase(
-                authRepository: authRepository,
-                appleAuthService: appleAuthService
+                appleAuthService: appleAuthService, authRepository: authRepository
             )
         }.inObjectScope(.graph)
         

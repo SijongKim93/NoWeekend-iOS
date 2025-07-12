@@ -2,7 +2,7 @@
 //  ProfileCoordinatorView.swift
 //  ProfileFeature
 //
-//  Created by 이지훈 on 7/3/25.
+//  Created by SiJongKim on 7/11/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
@@ -11,19 +11,21 @@ import SwiftUI
 public struct ProfileCoordinatorView: View {
     @StateObject private var coordinator = ProfileCoordinator()
     
-    public init() {
-        print("👤 ProfileCoordinatorView 초기화")
-    }
+    public init() {}
     
     public var body: some View {
         NavigationStack(path: $coordinator.path) {
-            coordinator.view(.main)
+            coordinator.view(.home)
+                .navigationBarHidden(true)
                 .navigationDestination(for: ProfileRouter.Screen.self) { screen in
                     coordinator.view(screen)
+                        .environmentObject(coordinator)
+                        .navigationBarHidden(true)
                 }
                 .sheet(item: $coordinator.sheet) { sheet in
                     NavigationView {
                         coordinator.presentView(sheet)
+                            .environmentObject(coordinator)
                             .navigationBarTitleDisplayMode(.inline)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
@@ -36,7 +38,10 @@ public struct ProfileCoordinatorView: View {
                 }
                 .fullScreenCover(item: $coordinator.fullScreenCover) { cover in
                     coordinator.fullCoverView(cover)
+                        .environmentObject(coordinator)
                 }
         }
+        .environmentObject(coordinator)
+        .navigationBarHidden(true)
     }
 }

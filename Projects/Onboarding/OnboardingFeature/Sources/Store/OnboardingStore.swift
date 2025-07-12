@@ -6,10 +6,9 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
 import Combine
 import OnboardingDomain
-
+import SwiftUI
 
 public class OnboardingStore: ObservableObject {
     
@@ -96,7 +95,7 @@ public class OnboardingStore: ObservableObject {
                 .stepValidationRequested
             ]
             
-        case .updateHasHalfDay(_), .toggleTag(_):
+        case .updateHasHalfDay, .toggleTag:
             return [.stepValidationRequested]
             
         case .validateCurrentStep:
@@ -111,7 +110,6 @@ public class OnboardingStore: ObservableObject {
     private func processAction(_ action: OnboardingAction) {
         
         state = reducer.reduce(state, action)
-        
         
         handleSideEffects(for: action)
     }

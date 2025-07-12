@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct WithdrawalResponseDTO: Decodable {
     public let message: String?
     

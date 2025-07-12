@@ -112,7 +112,7 @@ public extension NWTagSelectionView {
         onTagToggle: @escaping (String) -> Void,
         onSelectionLimitReached: (() -> Void)? = nil
     ) -> NWTagSelectionView {
-        return NWTagSelectionView(
+        NWTagSelectionView(
             tags: tags,
             selectedTags: selectedTags,
             maxSelectionCount: maxSelectionCount,

@@ -102,13 +102,13 @@ public struct OnboardingIntentMapper {
             let previousStep = max(0, currentState.currentStep - 1)
             return [.stepChanged(previousStep)]
             
-        case .updateNickname(_):
+        case .updateNickname:
             return []
             
-        case .updateBirthDate(_):
+        case .updateBirthDate:
             return []
             
-        case .updateRemainingDays(_):
+        case .updateRemainingDays:
             return []
             
         case .updateHasHalfDay(let hasHalfDay):

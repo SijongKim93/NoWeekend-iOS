@@ -83,7 +83,7 @@ public final class LoginStore: ObservableObject {
         state.userEmail = user.email
         state.isLoading = false
         
-        //키체인 변경 예정
+        // 키체인 변경 예정
         UserDefaults.standard.set(user.accessToken, forKey: "access_token")
         
         if user.isExistingUser {

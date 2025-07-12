@@ -12,7 +12,6 @@ import DesignSystem
 import DIContainer
 import SwiftUI
 import Utils
-
 public struct CalendarView: View {
     @EnvironmentObject private var coordinator: CalendarCoordinator
     @StateObject private var store = CalendarStore()

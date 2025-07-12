@@ -14,4 +14,3 @@ public protocol OnboardingRepositoryInterface {
     func saveTags(_ tags: OnboardingTags) async throws
 }
 
-
