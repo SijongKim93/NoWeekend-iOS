@@ -14,6 +14,7 @@ import SwiftUI
 
 public struct CalendarView: View {
     @Dependency private var calendarUseCase: CalendarUseCaseProtocol
+    @EnvironmentObject private var coordinator: CalendarCoordinator
 
     @State private var selectedDate = Date()
     @State private var selectedToggle: CalendarNavigationBar.ToggleOption = .week
@@ -27,12 +28,11 @@ public struct CalendarView: View {
     
     @State private var selectedTaskIndex: Int?
     @State private var editingTaskIndex: Int?
-    @State private var todoItems = TodoItem.mockData
+    @State private var todoItems: [TodoItem] = []
     
     @State private var isLoading = false
-    @State private var isDeletingSchedule = false
-    @State private var isUpdatingSchedule = false
     @State private var errorMessage: String?
+    @State private var previousSelectedDate: Date?
     
     private var isFloatingButtonExpanded: Bool {
         scrollOffset == 0 && !isScrolling
@@ -48,6 +48,9 @@ public struct CalendarView: View {
         }
         .sheet(isPresented: $showDatePicker) {
             DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
+                .onAppear {
+                    previousSelectedDate = selectedDate
+                }
         }
         .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
@@ -56,6 +59,24 @@ public struct CalendarView: View {
                 onDeleteAction: handleDeleteAction,
                 isPresented: $showTaskEditSheet
             )
+        }
+        .onChange(of: selectedDate) { oldValue, newValue in
+            if let previous = previousSelectedDate,
+               !Calendar.current.isDate(newValue, equalTo: previous, toGranularity: .month) {
+                Task {
+                    await loadSchedules()
+                    await MainActor.run {
+                        updateTodoItemsForSelectedDate()
+                    }
+                }
+            } else if !Calendar.current.isDate(newValue, inSameDayAs: oldValue) {
+                Task {
+                    await MainActor.run {
+                        updateTodoItemsForSelectedDate()
+                    }
+                }
+            }
+            previousSelectedDate = nil
         }
         .task {
             await initializeView()
@@ -68,7 +89,7 @@ private extension CalendarView {
     var mainContent: some View {
         VStack(spacing: 0) {
             CalendarNavigationBar(
-                dateText: formatSelectedDate(selectedDate),
+                dateText: selectedDate.toString(format: "yyyy년 M월"),
                 onDateTapped: { showDatePicker = true },
                 onToggleChanged: handleToggleChange
             )
@@ -88,20 +109,29 @@ private extension CalendarView {
     @ViewBuilder
     var contentSection: some View {
         if selectedToggle == .week {
-            TodoScrollSection(
-                todoItems: $todoItems,
-                selectedTaskIndex: $selectedTaskIndex,
-                showTaskEditSheet: $showTaskEditSheet,
-                scrollOffset: $scrollOffset,
-                isScrolling: $isScrolling,
-                editingTaskIndex: $editingTaskIndex,
-                onTitleChanged: { index, newTitle in
-                    Task {
-                        await updateTodoTitle(index: index, newTitle: newTitle)
-                    }
+            if isLoading {
+                VStack {
+                    ProgressView("일정을 불러오는 중...")
+                        .padding()
+                    Spacer()
                 }
-            )
-            .background(.white)
+                .background(.white)
+            } else {
+                TodoScrollSection(
+                    todoItems: $todoItems,
+                    selectedTaskIndex: $selectedTaskIndex,
+                    showTaskEditSheet: $showTaskEditSheet,
+                    scrollOffset: $scrollOffset,
+                    isScrolling: $isScrolling,
+                    editingTaskIndex: $editingTaskIndex,
+                    onTitleChanged: { index, newTitle in
+                        Task {
+                            await updateTodoTitle(index: index, newTitle: newTitle)
+                        }
+                    }
+                )
+                .background(.white)
+            }
         } else {
             Spacer()
                 .background(.white)
@@ -113,7 +143,8 @@ private extension CalendarView {
         if showCategorySelection {
             TaskCategorySelectionView(
                 isPresented: $showCategorySelection,
-                onCategorySelected: handleCategorySelection
+                onCategorySelected: handleCategorySelection,
+                onDirectInputTapped: handleDirectInput
             )
             .zIndex(1)
         }
@@ -142,17 +173,26 @@ private extension CalendarView {
 private extension CalendarView {
     func handleToggleChange(_ toggle: CalendarNavigationBar.ToggleOption) {
         selectedToggle = toggle
-        Task { await loadSchedules() }
+        Task {
+            await loadSchedules()
+            await MainActor.run {
+                updateTodoItemsForSelectedDate()
+            }
+        }
     }
     
     func handleDateTap(_ date: Date) {
         selectedDate = date
-        Task { await loadSchedules() }
+        Task {
+            await loadSchedules()
+            await MainActor.run {
+                updateTodoItemsForSelectedDate()
+            }
+        }
     }
     
     func handleTaskEdit() {
         showTaskEditSheet = false
-        
         if let index = selectedTaskIndex {
             editingTaskIndex = index
         }
@@ -165,19 +205,14 @@ private extension CalendarView {
     
     func handleDeleteAction() {
         showTaskEditSheet = false
-        
         if let index = selectedTaskIndex {
             todoItems.remove(at: index)
             selectedTaskIndex = nil
         }
-        
-        if let schedule = getFirstAvailableSchedule() {
-            Task { await deleteSchedule(id: schedule.id) }
-        }
     }
     
     func handleCategorySelection(_ category: TaskCategory) {
-        let newTodo = TodoItem.create(
+        let newTodo = TodoItem.createFromCategory(
             id: todoItems.count + 1,
             title: category.name,
             category: category
@@ -188,8 +223,12 @@ private extension CalendarView {
         }
         
         editingTaskIndex = todoItems.count - 1
-        
         showCategorySelection = false
+    }
+    
+    func handleDirectInput() {
+        showCategorySelection = false
+        coordinator.push(.taskCreate)
     }
     
     func showCategorySelectionWithAnimation() {
@@ -210,73 +249,113 @@ private extension CalendarView {
     func initializeView() async {
         scrollOffset = 0
         await loadSchedules()
+        await MainActor.run {
+            updateTodoItemsForSelectedDate()
+        }
     }
     
     func loadSchedules() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            dailySchedules = try await fetchSchedules()
-            logScheduleData()
-        } catch {
-            handleScheduleLoadError(error)
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
         }
         
-        isLoading = false
+        do {
+            let schedules = try await fetchSchedules()
+            await MainActor.run {
+                dailySchedules = schedules
+                isLoading = false
+                updateTodoItemsForSelectedDate()
+            }
+        } catch {
+            await MainActor.run {
+                handleScheduleLoadError(error)
+                isLoading = false
+            }
+        }
     }
     
     func fetchSchedules() async throws -> [DailySchedule] {
         switch selectedToggle {
         case .week:
-            return try await calendarUseCase.getWeeklySchedules(for: selectedDate)
+            let (startDate, endDate) = calculateWeekRange(for: selectedDate)
+            return try await calendarUseCase.getSchedulesForDateRange(startDate: startDate, endDate: endDate)
         case .month:
-            return try await calendarUseCase.getMonthlySchedules(for: selectedDate)
+            let (startDate, endDate) = calculateMonthRange(for: selectedDate)
+            return try await calendarUseCase.getSchedulesForDateRange(startDate: startDate, endDate: endDate)
+        }
+    }
+    
+    private func calculateWeekRange(for date: Date) -> (Date, Date) {
+        let calendar = Calendar.current
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: date) else {
+            return (date, date)
+        }
+        return (weekInterval.start, calendar.date(byAdding: .day, value: -1, to: weekInterval.end) ?? weekInterval.end)
+    }
+    
+    private func calculateMonthRange(for date: Date) -> (Date, Date) {
+        let calendar = Calendar.current
+        guard let monthInterval = calendar.dateInterval(of: .month, for: date) else {
+            return (date, date)
+        }
+        
+        let firstDayOfMonth = monthInterval.start
+        let lastDayOfMonth = calendar.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
+        
+        // 첫째 주의 시작 (월요일)
+        guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: firstDayOfMonth)?.start else {
+            return (firstDayOfMonth, lastDayOfMonth)
+        }
+        
+        // 마지막 주의 끝 (일요일)
+        guard let lastWeekInterval = calendar.dateInterval(of: .weekOfYear, for: lastDayOfMonth),
+              let lastWeekEnd = calendar.date(byAdding: .day, value: -1, to: lastWeekInterval.end) else {
+            return (firstWeekStart, lastDayOfMonth)
+        }
+        
+        return (firstWeekStart, lastWeekEnd)
+    }
+    
+    func updateTodoItemsForSelectedDate() {
+        let selectedDateString = selectedDate.toString(format: "yyyy-MM-dd")
+        
+        if let daySchedule = dailySchedules.first(where: { $0.date == selectedDateString }) {
+            let todoItemsFromAPI = daySchedule.schedules.enumerated().map { index, schedule in
+                TodoItem.createFromSchedule(id: index + 1, schedule: schedule)
+            }
+            todoItems = todoItemsFromAPI
+        } else {
+            todoItems = []
         }
     }
     
     func updateTodoTitle(index: Int, newTitle: String) async {
         guard index < todoItems.count else { return }
+        todoItems[index].title = newTitle
         
-        let originalTitle = todoItems[index].title
-        todoItems[index].title = newTitle        
+        // TODO: 실제 일정 업데이트 API 호출
     }
     
-    func deleteSchedule(id: String) async {
-        isDeletingSchedule = true
-        
-        do {
-            // TODO: 실제 삭제 로직 구현
-            await loadSchedules()
-        } catch {
-            print("일정 삭제 실패: \(error)")
-        }
-        
-        isDeletingSchedule = false
-    }
-    
-    func getScheduleIdForTodo(at index: Int) -> String? {
-        return getFirstAvailableSchedule()?.id
-    }
-    
-    func getScheduleForTodo(at index: Int) -> Schedule? {
-        return getFirstAvailableSchedule()
+    func handleScheduleLoadError(_ error: Error) {
+        errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
+        todoItems = []
     }
 }
 
 // MARK: - Helper Functions
 private extension CalendarView {
-    func getFirstAvailableSchedule() -> Schedule? {
-        let allSchedules = dailySchedules.flatMap { $0.schedules }
-        return allSchedules.first
-    }
-    
     @ViewBuilder
     func calendarCellContent(for date: Date) -> some View {
         let schedulesForDate = getSchedulesForDate(date)
+        let daySchedule = getDaySchedule(for: date)
         
         if !schedulesForDate.isEmpty {
-            DS.Images.imgToastDefault
+            let temperature = daySchedule?.dailyTemperature ?? 0
+            let imageToShow = (temperature == 0 && !schedulesForDate.isEmpty) ?
+                DS.Images.imgToastDefault : temperatureImage(temperature)
+            
+            imageToShow
                 .resizable()
                 .scaledToFit()
         } else {
@@ -286,44 +365,46 @@ private extension CalendarView {
         }
     }
     
-    func getSchedulesForDate(_ date: Date) -> [Schedule] {
+    func getDaySchedule(for date: Date) -> DailySchedule? {
         let dateString = date.toString(format: "yyyy-MM-dd")
-        return dailySchedules
-            .first { $0.date == dateString }?
-            .schedules ?? []
+        return dailySchedules.first { $0.date == dateString }
     }
     
-    func formatSelectedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy년 M월"
-        return formatter.string(from: date)
+    func getSchedulesForDate(_ date: Date) -> [Schedule] {
+        return getDaySchedule(for: date)?.schedules ?? []
     }
     
-    func logScheduleData() {
-        let totalSchedules = dailySchedules.flatMap { $0.schedules }.count
-        print("📅 로드된 일정 수: \(totalSchedules)개")
-    }
-    
-    func handleScheduleLoadError(_ error: Error) {
-        errorMessage = "일정을 불러오는데 실패했습니다: \(error.localizedDescription)"
-        print("일정 로드 실패: \(error)")
+    // TODO: 온도 얼만데!
+    func temperatureImage(_ temperature: Int) -> Image {
+        switch temperature {
+        case 0...20: return DS.Images.imgFlour
+        case 21...40: return DS.Images.imgToastNone
+        case 41...60: return DS.Images.imgToastDefault
+        case 61...80: return DS.Images.imgToastEven
+        case 81...100: return DS.Images.imgToastBurn
+        default: return DS.Images.imgFlour
+        }
     }
 }
 
 // MARK: - TodoItem Extensions
 private extension TodoItem {
-    static var mockData: [TodoItem] {
-        [
-            TodoItem(id: 1, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-            TodoItem(id: 2, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-            TodoItem(id: 3, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-            TodoItem(id: 4, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00"),
-            TodoItem(id: 5, title: "할 일 제목이 들어갑니다.", isCompleted: false, category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.orange), time: "오전 10:00")
-        ]
+    static func createFromSchedule(id: Int, schedule: Schedule) -> TodoItem {
+        let category = DesignSystem.TodoCategory(
+            name: schedule.category.displayName,
+            color: schedule.category.designSystemColor
+        )
+        
+        return TodoItem(
+            id: id,
+            title: schedule.title,
+            isCompleted: schedule.completed,
+            category: category,
+            time: schedule.allDay ? "하루 종일" : schedule.startTime.toString(format: "a h:mm")
+        )
     }
     
-    static func create(id: Int, title: String, category: TaskCategory, time: String? = nil) -> TodoItem {
+    static func createFromCategory(id: Int, title: String, category: TaskCategory, time: String? = nil) -> TodoItem {
         TodoItem(
             id: id,
             title: title,
@@ -334,6 +415,19 @@ private extension TodoItem {
     }
 }
 
+// MARK: - ScheduleCategory Extension
+private extension ScheduleCategory {
+    var designSystemColor: Color {
+        switch self {
+        case .company: return DS.Colors.TaskItem.green
+        case .personal: return DS.Colors.TaskItem.orange
+        case .health, .education, .travel: return DS.Colors.TaskItem.purple
+        case .social: return DS.Colors.TaskItem.orange
+        case .other: return DS.Colors.TaskItem.etc
+        }
+    }
+}
+
 #Preview {
-    CalendarView()
+    CalendarCoordinatorView()
 }

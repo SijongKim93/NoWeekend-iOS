@@ -46,6 +46,7 @@ public struct TaskDetailView: View {
         VStack(spacing: 0) {
             navigationBar
             
+            ScrollView {
                 VStack(spacing: 30) {
                     if selectedCategory == .vacation {
                         vacationSection
@@ -57,7 +58,7 @@ public struct TaskDetailView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
-            
+            }
             
             Spacer()
         }
@@ -114,6 +115,7 @@ public struct TaskDetailView: View {
             datePickerSection
         }
     }
+    
     private var dateSection: some View {
         VStack(spacing: 24) {
             HStack {
@@ -220,7 +222,6 @@ public struct TaskDetailView: View {
                         Spacer()
                         
                         HStack(spacing: 20) {
-                            // 날짜 섹션
                             VStack(alignment: .trailing, spacing: 4) {
                                 Text(dateFormatter.string(from: endDate))
                                     .font(.body1)
@@ -234,7 +235,6 @@ public struct TaskDetailView: View {
                                     )
                             }
                             
-                            // 시간 섹션 (조건부 표시)
                             if !isAllDay && selectedCategory != .vacation {
                                 Button(action: {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -323,6 +323,7 @@ public struct TaskDetailView: View {
             }
         }
     }
+    
     private func saveDetails() {
         if selectedCategory == .vacation {
             print("연차 세부사항 저장 - 연차 유형: \(selectedVacationType.displayName)")
@@ -333,9 +334,6 @@ public struct TaskDetailView: View {
     }
 }
 
-
 #Preview {
-    NavigationView {
-        TaskDetailView(selectedCategory: .company)
-    }
+    TaskDetailView(selectedCategory: .company)
 }
