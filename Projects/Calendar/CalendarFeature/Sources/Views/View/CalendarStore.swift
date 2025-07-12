@@ -52,6 +52,8 @@ public final class CalendarStore: ObservableObject {
             handleDirectInputTapped()
         case .taskEditRequested(let index):
             handleTaskEditRequested(index)
+        case .taskTomorrowRequested(let index):
+            await handleTaskTomorrowRequested(index)
         case .taskDeleteRequested(let index):
             await handleTaskDeleteRequested(index)
         case .taskTitleChanged(let index, let newTitle):
@@ -123,6 +125,41 @@ private extension CalendarStore {
             todoItem.scheduleId,
             state.selectedDate
         ))
+    }
+    
+    @MainActor
+    func handleTaskTomorrowRequested(_ index: Int) async {
+        state.showTaskEditSheet = false
+        
+        guard index < state.todoItems.count else { return }
+        let todoItem = state.todoItems[index]
+        
+        guard todoItem.category?.name != "연차" else { return }
+        
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: state.selectedDate) ?? state.selectedDate
+        
+        do {
+            let tomorrowStartTime = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+            let tomorrowEndTime = Calendar.current.date(byAdding: .hour, value: 1, to: tomorrowStartTime) ?? tomorrowStartTime
+            
+            let scheduleCategory = mapCategoryNameToScheduleCategory(todoItem.category?.name ?? "기타")
+            
+            _ = try await calendarUseCase.createSchedule(
+                title: todoItem.title,
+                date: tomorrow,
+                startTime: tomorrowStartTime,
+                endTime: tomorrowEndTime,
+                category: scheduleCategory,
+                temperature: 50,
+                allDay: false,
+                alarmOption: .none
+            )
+            
+            effectSubject.send(.showSuccess("내일 할 일로 추가되었습니다"))
+            
+        } catch {
+            effectSubject.send(.showError("내일 할 일 추가에 실패했습니다"))
+        }
     }
     
     @MainActor
@@ -238,6 +275,21 @@ private extension CalendarStore {
         }
         
         return (firstWeekStart, lastWeekEnd)
+    }
+    
+    func mapCategoryNameToScheduleCategory(_ categoryName: String) -> ScheduleCategory {
+        switch categoryName {
+        case "회사":
+            return .company
+        case "개인":
+            return .personal
+        case "연차":
+            return .leave
+        case "기타":
+            return .etc
+        default:
+            return .etc
+        }
     }
 }
 

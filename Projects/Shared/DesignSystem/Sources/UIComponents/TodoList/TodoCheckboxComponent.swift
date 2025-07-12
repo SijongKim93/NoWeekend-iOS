@@ -1,5 +1,5 @@
 //
-//  TodoCheckboxComponent.swift
+//  TodoCheckboxComponent.swift - onMoreTapped 수정
 //  Shared
 //
 //  Created by 이지훈 on 6/22/25.
@@ -24,7 +24,7 @@ public struct TodoItem: Identifiable {
     public var isCompleted: Bool
     public let category: TodoCategory?
     public let time: String?
-    public var scheduleId: String? // API의 실제 일정 ID
+    public let scheduleId: String?  // 🔥 추가: API에서 온 일정의 ID
     
     public init(id: Int, title: String, isCompleted: Bool, category: TodoCategory?, time: String?, scheduleId: String? = nil) {
         self.id = id
@@ -32,7 +32,7 @@ public struct TodoItem: Identifiable {
         self.isCompleted = isCompleted
         self.category = category
         self.time = time
-        self.scheduleId = scheduleId // scheduleId 파라미터 추가
+        self.scheduleId = scheduleId
     }
 }
 
@@ -66,7 +66,6 @@ public struct TodoCheckboxComponent: View {
         title: String,
         category: TodoCategory? = TodoCategory(name: "개인", color: DS.Colors.TaskItem.orange),
         time: String? = nil,
-        scheduleId: String? = nil, // scheduleId 파라미터 추가
         onToggle: @escaping () -> Void,
         onMoreTapped: (() -> Void)? = nil,
         onTitleChanged: ((String) -> Void)? = nil,
@@ -78,7 +77,7 @@ public struct TodoCheckboxComponent: View {
             isCompleted: isCompleted,
             category: category,
             time: time,
-            scheduleId: scheduleId // scheduleId 전달
+            scheduleId: nil
         )
         self.onToggle = onToggle
         self.onMoreTapped = onMoreTapped
@@ -130,13 +129,16 @@ public struct TodoCheckboxComponent: View {
             
             Spacer()
             
+            // 🔥 더보기 버튼 - 정확한 동작 보장
             Button(action: {
+                print("🟡 More button tapped for todo: \(todoItem.title)")
                 onMoreTapped?()
             }) {
                 DS.Images.icnThreeDots
                     .resizable()
                     .frame(width: 32, height: 32)
             }
+            .buttonStyle(PlainButtonStyle()) // 🔥 버튼 스타일 명시
         }
         .padding(.vertical, 12)
         .padding(.leading, 24)
@@ -195,4 +197,28 @@ private extension TodoCheckboxComponent {
         isEditing = false
         isTextFieldFocused = false
     }
+}
+
+#Preview {
+    VStack(spacing: 16) {
+        TodoCheckboxComponent(
+            isCompleted: false,
+            title: "기본 개인 할일",
+            onToggle: { },
+            onTitleChanged: { newTitle in
+                print("제목 변경: \(newTitle)")
+            }
+        )
+        
+        TodoCheckboxComponent(
+            isCompleted: false,
+            title: "편집 모드 할일",
+            onToggle: { },
+            onTitleChanged: { newTitle in
+                print("제목 변경: \(newTitle)")
+            },
+            isEditingMode: true
+        )
+    }
+    .background(Color.gray.opacity(0.1))
 }

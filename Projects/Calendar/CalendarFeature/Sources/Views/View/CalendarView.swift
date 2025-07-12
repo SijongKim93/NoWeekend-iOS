@@ -16,7 +16,10 @@ import Utils
 public struct CalendarView: View {
     @EnvironmentObject private var coordinator: CalendarCoordinator
     @StateObject private var store = CalendarStore()
-    @State private var previousSelectedDate: Date?
+    
+    @State private var showDatePickerSheet = false
+    @State private var showTaskEditSheet = false
+    @State private var datePickerSelectedDate = Date()
     
     public init() {}
     
@@ -26,47 +29,64 @@ public struct CalendarView: View {
             overlayContent
             floatingButton
         }
-        .sheet(isPresented: Binding(
-            get: { store.state.showDatePicker },
-            set: { store.send(.dateSelected($0 ? store.state.selectedDate : store.state.selectedDate)) }
-        )) {
-            DatePickerWithLabelBottomSheet(selectedDate: Binding(
-                get: { store.state.selectedDate },
-                set: { store.send(.dateSelected($0)) }
-            ))
-            .onAppear {
-                previousSelectedDate = store.state.selectedDate
-            }
+        .sheet(isPresented: $showDatePickerSheet) {
+            DatePickerWithLabelBottomSheet(selectedDate: $datePickerSelectedDate)
+                .onAppear {
+                    print("🔵 DatePicker sheet appeared")
+                    datePickerSelectedDate = store.state.selectedDate
+                }
+                .onDisappear {
+                    print("🔵 DatePicker sheet disappeared")
+                    if datePickerSelectedDate != store.state.selectedDate {
+                        store.send(.dateSelected(datePickerSelectedDate))
+                    }
+                }
         }
-        .sheet(isPresented: Binding(
-            get: { store.state.showTaskEditSheet },
-            set: { _ in }
-        )) {
+        .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
                 onEditAction: {
+                    print("🟡 Edit action triggered")
                     if let index = store.state.selectedTaskIndex {
                         store.send(.taskEditRequested(index))
                     }
+                    showTaskEditSheet = false
                 },
                 onTomorrowAction: {
-                    Task { @MainActor in
-                        store.updateState { $0.showTaskEditSheet = false }
+                    print("🟡 Tomorrow action triggered")
+                    if let index = store.state.selectedTaskIndex {
+                        store.send(.taskTomorrowRequested(index))
                     }
+                    showTaskEditSheet = false
                 },
                 onDeleteAction: {
+                    print("🟡 Delete action triggered")
                     if let index = store.state.selectedTaskIndex {
                         store.send(.taskDeleteRequested(index))
                     }
+                    showTaskEditSheet = false
                 },
-                isPresented: Binding(
-                    get: { store.state.showTaskEditSheet },
-                    set: { newValue in
-                        Task { @MainActor in
-                            store.updateState { $0.showTaskEditSheet = newValue }
-                        }
-                    }
-                )
+                isVacationTask: isSelectedTaskVacation(),
+                isPresented: $showTaskEditSheet
             )
+            .onAppear {
+                print("🟡 TaskEdit sheet appeared")
+            }
+            .onDisappear {
+                print("🟡 TaskEdit sheet disappeared")
+                // 🔥 Store 상태도 동기화
+                Task { @MainActor in
+                    store.updateState { state in
+                        state.showTaskEditSheet = false
+                        state.selectedTaskIndex = nil
+                    }
+                }
+            }
+        }
+        .onChange(of: store.state.showTaskEditSheet) { _, newValue in
+            print("🟢 Store showTaskEditSheet changed to: \(newValue)")
+            if newValue != showTaskEditSheet {
+                showTaskEditSheet = newValue
+            }
         }
         .onReceive(store.effect) { effect in
             handleEffect(effect)
@@ -84,9 +104,8 @@ private extension CalendarView {
             CalendarNavigationBar(
                 dateText: store.state.currentDateString,
                 onDateTapped: {
-                    Task { @MainActor in
-                        store.updateState { $0.showDatePicker = true }
-                    }
+                    print("🔵 Navigation bar date tapped - showing DatePicker sheet")
+                    showDatePickerSheet = true
                 },
                 onToggleChanged: { toggle in
                     store.send(.toggleChanged(toggle))
@@ -97,6 +116,7 @@ private extension CalendarView {
                 selectedDate: store.state.selectedDate,
                 selectedToggle: store.state.selectedToggle,
                 onDateTap: { date in
+                    print("🟢 Calendar cell tapped: \(date) - direct date selection")
                     store.send(.dateSelected(date))
                 },
                 calendarCellContent: store.calendarCellContent
@@ -131,16 +151,21 @@ private extension CalendarView {
                         get: { store.state.selectedTaskIndex },
                         set: { newValue in
                             Task { @MainActor in
-                                store.updateState { $0.selectedTaskIndex = newValue }
+                                store.updateState { state in
+                                    state.selectedTaskIndex = newValue
+                                    if newValue != nil {
+                                        print("🟡 Task selected at index: \(newValue!) - showing TaskEdit sheet")
+                                        state.showTaskEditSheet = true
+                                    }
+                                }
                             }
                         }
                     ),
                     showTaskEditSheet: Binding(
-                        get: { store.state.showTaskEditSheet },
+                        get: { showTaskEditSheet },
                         set: { newValue in
-                            Task { @MainActor in
-                                store.updateState { $0.showTaskEditSheet = newValue }
-                            }
+                            print("🟡 TodoScrollSection trying to set showTaskEditSheet to: \(newValue)")
+                            showTaskEditSheet = newValue
                         }
                     ),
                     scrollOffset: Binding(
@@ -217,6 +242,18 @@ private extension CalendarView {
     }
 }
 
+// MARK: - Helper Methods
+private extension CalendarView {
+    func isSelectedTaskVacation() -> Bool {
+        guard let selectedIndex = store.state.selectedTaskIndex,
+              selectedIndex < store.state.todoItems.count else {
+            return false
+        }
+        
+        return store.state.todoItems[selectedIndex].category?.name == "연차"
+    }
+}
+
 // MARK: - Effect Handling
 private extension CalendarView {
     func handleEffect(_ effect: CalendarEffect) {
@@ -233,8 +270,11 @@ private extension CalendarView {
                 selectedDate: selectedDate
             ))
             
-        case .showError:
-            break
+        case .showError(let message):
+            print("❌ Error: \(message)")
+            
+        case .showSuccess(let message):
+            print("✅ Success: \(message)")
         }
     }
 }
