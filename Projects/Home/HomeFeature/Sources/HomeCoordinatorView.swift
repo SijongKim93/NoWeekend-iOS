@@ -18,8 +18,10 @@ public struct HomeCoordinatorView: View {
     public var body: some View {
         NavigationStack(path: $coordinator.path) {
             coordinator.view(.main)
+                .environmentObject(coordinator)
                 .navigationDestination(for: HomeRouter.Screen.self) { screen in
                     coordinator.view(screen)
+                        .environmentObject(coordinator)
                 }
                 .sheet(item: $coordinator.sheet) { sheet in
                     NavigationView {

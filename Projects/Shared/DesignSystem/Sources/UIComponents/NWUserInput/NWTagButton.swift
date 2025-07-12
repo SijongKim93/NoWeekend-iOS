@@ -43,6 +43,7 @@ public struct NWTagButton: View {
     private let isDisabled: Bool
     private let style: Style
     private let size: Size
+    private let fillsAvailableWidth: Bool
     private let action: () -> Void
     
     public init(
@@ -51,6 +52,7 @@ public struct NWTagButton: View {
         isDisabled: Bool = false,
         style: Style = .outlined,
         size: Size = .medium,
+        fillsAvailableWidth: Bool = false,
         action: @escaping () -> Void
     ) {
         self.title = title
@@ -58,6 +60,7 @@ public struct NWTagButton: View {
         self.isDisabled = isDisabled
         self.style = style
         self.size = size
+        self.fillsAvailableWidth = fillsAvailableWidth
         self.action = action
     }
     
@@ -68,6 +71,7 @@ public struct NWTagButton: View {
                 .foregroundColor(textColor)
                 .padding(.horizontal, size.padding.horizontal)
                 .padding(.vertical, size.padding.vertical)
+                .frame(maxWidth: fillsAvailableWidth ? .infinity : nil)
                 .background(backgroundColor)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)

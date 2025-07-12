@@ -11,6 +11,7 @@ import DesignSystem
 
 public struct HomeView: View {
     @StateObject private var store = HomeStore()
+    @EnvironmentObject private var coordinator: HomeCoordinator
     
     @State private var currentLongCardPage: Int = 0
     @State private var currentShortCardPage: Int = 0
@@ -27,8 +28,20 @@ public struct HomeView: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    MainTopView()
-                        .zIndex(1)
+                    MainTopView(
+                        vacationBakingStatus: store.state.vacationBakingStatus,
+                        onVacationBakingTapped: {
+                            switch store.state.vacationBakingStatus {
+                            case .notStarted:
+                                coordinator.push(.bakingVacation)
+                            case .completed:
+                                coordinator.push(.recommendVaction)
+                            case .processing:
+                                break
+                            }
+                        }
+                    )
+                    .zIndex(1)
                     
                     VStack {
                         Spacer(minLength: 48)
@@ -60,6 +73,12 @@ public struct HomeView: View {
         }
         .onAppear {
             store.send(.viewDidLoad)
+            coordinator.onVacationBakingCompleted = {
+                store.send(.vacationBakingCompleted)
+            }
+        }
+        .onChange(of: store.state.remainingAnnualLeave) { oldValue, newValue in
+            coordinator.remainingAnnualLeave = newValue
         }
     }
 }
