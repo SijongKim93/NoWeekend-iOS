@@ -21,8 +21,8 @@ final class VacationBakingStore: ObservableObject {
         case .viewDidLoad:
             handleViewDidLoad()
             
-        case .vacationDaysChanged(let days):
-            handleVacationDaysChanged(days)
+        case .vacationDaysInputChanged(let inputText):
+            handleVacationDaysInputChanged(inputText)
             
         case .vacationTypeToggled(let type):
             handleVacationTypeToggled(type)
@@ -43,9 +43,35 @@ final class VacationBakingStore: ObservableObject {
         updateNextButtonState()
     }
     
-    private func handleVacationDaysChanged(_ days: Int) {
+    private func handleVacationDaysInputChanged(_ inputText: String) {
+        let (days, errorMessage) = validateVacationDaysInput(inputText)
         state.vacationDays = days
+        state.errorMessage = errorMessage
         updateNextButtonState()
+    }
+    
+    private func validateVacationDaysInput(_ inputText: String) -> (days: Int, errorMessage: String?) {
+        let filtered = inputText.filter { $0.isNumber }
+        
+        // 숫자가 아닌 문자가 포함된 경우
+        if !inputText.isEmpty && filtered.isEmpty {
+            return (0, "숫자만 입력해주세요")
+        }
+        
+        // 숫자 변환 및 유효성 검사
+        guard let day = Int(filtered) else {
+            return (0, nil)
+        }
+        
+        // 범위 검사
+        switch day {
+        case 0:
+            return (0, "1일부터 기입해주세요.")
+        case 1...15:
+            return (day, nil)
+        default:
+            return (day, "최대 15일 이내까지 추천받을 수 있어요.")
+        }
     }
     
     private func handleVacationTypeToggled(_ type: VacationType) {
