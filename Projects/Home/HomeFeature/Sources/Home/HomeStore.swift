@@ -26,11 +26,21 @@ final class HomeStore: ObservableObject {
             
         case .refreshData:
             handleRefreshData()
+            
+        case .vacationBakingCompleted:
+            handleVacationBakingCompleted()
+            
+        case .vacationBakingProcessed:
+            handleVacationBakingProcessed()
+            
+        case .remainingAnnualLeaveLoaded(let days):
+            handleRemainingAnnualLeaveLoaded(days)
         }
     }
     
     private func handleViewDidLoad() {
         // 초기 데이터 로딩 로직
+        // TODO: UseCase를 통해 사용자 정보 로딩
     }
     
     private func handleVacationCardTapped(_ cardType: VacationCardType) {
@@ -46,5 +56,22 @@ final class HomeStore: ObservableObject {
             self.state.isLoading = false
             self.effect.send(.hideLoading)
         }
+    }
+    
+    private func handleVacationBakingCompleted() {
+        state.vacationBakingStatus = .processing
+        
+        // 서버 API 호출 시뮬레이션
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.send(.vacationBakingProcessed)
+        }
+    }
+    
+    private func handleVacationBakingProcessed() {
+        state.vacationBakingStatus = .completed
+    }
+    
+    private func handleRemainingAnnualLeaveLoaded(_ days: Int) {
+        state.remainingAnnualLeave = days
     }
 } 
