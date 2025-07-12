@@ -1,6 +1,6 @@
 //
-//  ProfileEditView.swift
-//  Mypage
+//  ProfileEditView.swift (DIContainer 연동)
+//  ProfileFeature
 //
 //  Created by SiJongKim on 7/4/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
@@ -8,31 +8,26 @@
 
 import SwiftUI
 import DesignSystem
+import DIContainer
+import Combine
 
-struct ProfileEditView: View {
+public struct ProfileEditView: View {
     @EnvironmentObject private var coordinator: ProfileCoordinator
+    @ObservedObject private var store: ProfileStore
     
-    @State private var nickname: String = ""
-    @State private var birthDate: String = ""
-    @State private var nicknameError: String? = nil
-    @State private var birthDateError: String? = nil
+    @State private var cancellables = Set<AnyCancellable>()
     
-    @State private var isLoading: Bool = false
-    @State private var showSaveSuccess: Bool = false
-    
-    let onLoad: () -> (nickname: String, birthDate: String)
-    let onSave: (String, String) -> Void
-    
-    init(
-        onLoad: @escaping () -> (nickname: String, birthDate: String),
-        onSave: @escaping (String, String) -> Void
-    ) {
-        self.onLoad = onLoad
-        self.onSave = onSave
+    public init() {
+        self.store = DIContainer.shared.resolve(ProfileStore.self)
     }
     
-    var body: some View {
-        VStack {
+    // 테스트용 생성자
+    public init(store: ProfileStore) {
+        self.store = store
+    }
+    
+    public var body: some View {
+        VStack(spacing: 0) {
             CustomNavigationBar.conditionalBack(
                 title: "계정 설정",
                 showBackButton: true,
@@ -42,45 +37,133 @@ struct ProfileEditView: View {
             )
             .padding(.bottom, 48)
             
-            NWUserInputView(
-                title: "정보를 작성해 주세요."
-            ) {
-                VStack(spacing: 24) {
-                    NWNicknameInputSection(
-                        nickname: Binding(
-                            get: { nickname },
-                            set: { newValue in
-                                let filteredValue = String(newValue.prefix(7))
-                                nickname = filteredValue
-                                validateNickname(filteredValue)
-                            }
-                        ),
-                        nicknameError: nicknameError
-                    )
-                    
-                    NWBirthDateInputSection(
-                        birthDate: Binding(
-                            get: { store.state.birthDate },
-                            set: { newValue in
-                                let filtered = newValue.filter { $0.isNumber }
-                                store.send(.updateBirthDate(filtered))
-                            }
-                        ),
-                        birthDateError: store.state.birthDateError
-                    )
-                }
+            if store.state.isLoading {
+                loadingView
+            } else {
+                profileEditForm
             }
-            .padding(.bottom, 48)
+            
+            Spacer()
+            
+            saveButton
+                .padding(.horizontal, 24)
+                .padding(.bottom, 34)
+        }
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .tabBar)
+        .onAppear {
+            print("📱 ProfileEditView 화면 표시")
+            setupEffectSubscription()
+            store.loadInitialData()
+        }
+        .onDisappear {
+            print("👋 ProfileEditView 화면 종료")
+        }
+        .alert("오류", isPresented: .constant(store.state.generalError != nil)) {
+            Button("확인") {
+                store.clearErrors()
+            }
+        } message: {
+            if let error = store.state.generalError {
+                Text(error)
+            }
         }
     }
     
-    private func validateNickname(_ value: String) {
-        if value.isEmpty {
-            nicknameError = "닉네임을 입력해주세요"
-        } else if value.count > 6 {
-            nicknameError = "닉네임은 6글자 이하로 입력해주세요"
-        } else {
-            nicknameError = nil
+    // MARK: - Views
+    
+    private var loadingView: some View {
+        VStack {
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("프로필 정보를 불러오는 중...")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .padding(.top, 16)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var profileEditForm: some View {
+        NWUserInputView(
+            title: "정보를 작성해 주세요",
+            subtitle: "언제든 변경할 수 있어요"
+        ) {
+            VStack(spacing: 24) {
+                NWNicknameInputSection(
+                    nickname: Binding(
+                        get: {
+                            print("🔍 닉네임 상태 조회: \(store.state.nickname)")
+                            return store.state.nickname
+                        },
+                        set: { newValue in
+                            print("✏️ 닉네임 업데이트: \(newValue)")
+                            store.updateNickname(newValue)
+                        }
+                    ),
+                    nicknameError: store.state.nicknameError
+                )
+                
+                NWBirthDateInputSection(
+                    birthDate: Binding(
+                        get: {
+                            print("🔍 생년월일 상태 조회: \(store.state.birthDate)")
+                            return store.state.birthDate
+                        },
+                        set: { newValue in
+                            print("📅 생년월일 업데이트: \(newValue)")
+                            store.updateBirthDate(newValue)
+                        }
+                    ),
+                    birthDateError: store.state.birthDateError
+                )
+            }
+            .padding(.top, 40)
+            .padding(.horizontal, 24)
+        }
+    }
+    
+    private var saveButton: some View {
+        NWButton(
+            title: store.state.isSaving ? "저장 중..." : "저장",
+            variant: .black,
+            isEnabled: store.state.isFormValid
+        ) {
+            print("💾 저장 버튼 클릭")
+            store.saveProfile()
+        }
+    }
+    
+    // MARK: - Effect Subscription
+    
+    private func setupEffectSubscription() {
+        print("🔗 Effect 구독 설정")
+        
+        store.effect
+            .receive(on: DispatchQueue.main)
+            .sink { effect in
+                handleEffect(effect)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleEffect(_ effect: ProfileEditEffect) {
+        print("⚡ Effect 수신: \(effect)")
+        
+        switch effect {
+        case .showSuccessMessage(let message):
+            print("✅ Success: \(message)")
+            // TODO: 실제 앱에서는 토스트 메시지 표시
+            
+        case .showErrorMessage(let message):
+            print("❌ Error: \(message)")
+            // TODO: 실제 앱에서는 에러 토스트 메시지 표시
+            
+        case .navigateBack:
+            print("🔙 뒤로가기 네비게이션")
+            coordinator.pop()
         }
     }
 }

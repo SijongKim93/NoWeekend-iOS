@@ -32,16 +32,7 @@ public final class ProfileCoordinator: ObservableObject, Coordinatorable {
         case .home:
             return AnyView(ProfileView())
         case .edit:
-            return AnyView(
-                ProfileEditView(
-                    onLoad: { [weak self] in
-                        self?.loadProfileData() ?? (nickname: "", birthDate: "")
-                    },
-                    onSave: { [weak self] nickname, birthDate in
-                        self?.saveProfileData(nickname: nickname, birthDate: birthDate)
-                    }
-                )
-            )
+            return AnyView(ProfileEditView())
         case .infoEdit:
             return AnyView(ProfileInfoDetailView())
         case .tags:
