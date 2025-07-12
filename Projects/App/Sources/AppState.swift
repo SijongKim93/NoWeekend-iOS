@@ -9,6 +9,7 @@ import Combine
 import DIContainer
 import Foundation
 import LoginFeature
+import NWNetwork
 import OnboardingDomain
 
 @MainActor
@@ -22,7 +23,16 @@ public class AppState {
     
     public init() {
         print("🌐 AppState 초기화")
+        setupTempTokenIfNeeded()
         setupLoginBinding()
+    }
+    
+    private func setupTempTokenIfNeeded() {
+        let savedToken = UserDefaults.standard.string(forKey: "access_token")
+        if savedToken?.isEmpty != false {
+            print("🔑 임시 토큰을 UserDefaults에 저장")
+            UserDefaults.standard.set(nil, forKey: "access_token")
+        }
     }
     
     private func setupLoginBinding() {

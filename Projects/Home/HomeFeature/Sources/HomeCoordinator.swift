@@ -9,19 +9,19 @@
 import Coordinator
 import SwiftUI
 
-public final class HomeCoordinator: ObservableObject, Coordinatorable {
-    public typealias Screen = HomeRouter.Screen
-    public typealias SheetScreen = HomeRouter.Sheet
-    public typealias FullScreen = HomeRouter.FullScreen
+final class HomeCoordinator: ObservableObject, Coordinatorable {
+    typealias Screen = HomeRouter.Screen
+    typealias SheetScreen = HomeRouter.Sheet
+    typealias FullScreen = HomeRouter.FullScreen
     
-    @Published public var path: NavigationPath = NavigationPath()
-    @Published public var sheet: SheetScreen?
-    @Published public var fullScreenCover: FullScreen?
+    @Published var path: NavigationPath = NavigationPath()
+    @Published var sheet: SheetScreen?
+    @Published var fullScreenCover: FullScreen?
     
-    public init() {}
+    init() {}
     
     @ViewBuilder
-    public func view(_ screen: Screen) -> some View {
+    func view(_ screen: Screen) -> some View {
         switch screen {
         case .main:
             HomeView()
@@ -29,28 +29,28 @@ public final class HomeCoordinator: ObservableObject, Coordinatorable {
     }
     
     @ViewBuilder
-    public func presentView(_ sheet: SheetScreen) -> some View {
+    func presentView(_ sheet: SheetScreen) -> some View {
         EmptyView()
     }
     
     @ViewBuilder
-    public func fullCoverView(_ cover: FullScreen) -> some View {
+    func fullCoverView(_ cover: FullScreen) -> some View {
         EmptyView()
     }
 }
 
-public enum HomeRouter {
-    public enum Screen: Hashable {
+enum HomeRouter {
+    enum Screen: Hashable {
         case main
     }
     
-    public enum Sheet: String, Identifiable {
+    enum Sheet: String, Identifiable {
         case dummy
-        public var id: String { self.rawValue }
+        var id: String { self.rawValue }
     }
     
-    public enum FullScreen: String, Identifiable {
+    enum FullScreen: String, Identifiable {
         case dummy
-        public var id: String { self.rawValue }
+        var id: String { self.rawValue }
     }
 }

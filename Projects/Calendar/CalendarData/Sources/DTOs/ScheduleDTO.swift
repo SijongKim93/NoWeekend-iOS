@@ -30,7 +30,7 @@ extension ScheduleDTO {
             title: title,
             startTime: dateFormatter.date(from: startTime) ?? Date(),
             endTime: dateFormatter.date(from: endTime) ?? Date(),
-            category: ScheduleCategory(rawValue: category) ?? .other,
+            category: ScheduleCategory(rawValue: category) ?? .etc,
             temperature: temperature,
             allDay: allDay,
             alarmOption: AlarmOption(rawValue: alarmOption) ?? .none,
