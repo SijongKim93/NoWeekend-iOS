@@ -19,8 +19,11 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
     @Published var fullScreenCover: FullScreen?
     
     var onVacationBakingCompleted: (() -> Void)?
-    var remainingAnnualLeave: Int = 0
+    var remainingAnnualLeave: Int = 10
     
+    var recommendText: String = "도쿄에 다코야키 먹으러 가요 타키 먹으러가야키 먹으러가야키 먹으러가야키 먹으러가요"
+    var recommendDate: String = "12/28(수) ~ 12/31(금)"
+
     init() {}
     
     @ViewBuilder
@@ -28,13 +31,15 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
         switch screen {
         case .main:
             HomeView()
-        case .vacationBaking:
+        case .bakingVacation:
             VacationBakingView(
                 remainingAnnualLeave: remainingAnnualLeave,
                 onCompleted: {
                     self.onVacationBakingCompleted?()
                 }
             )
+        case .recommendVaction:
+            ShowToastView(toastText: recommendText, dateText: recommendDate)
         }
     }
     
@@ -52,7 +57,8 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
 enum HomeRouter {
     enum Screen: Hashable {
         case main
-        case vacationBaking
+        case bakingVacation
+        case recommendVaction
     }
     
     enum Sheet: String, Identifiable {

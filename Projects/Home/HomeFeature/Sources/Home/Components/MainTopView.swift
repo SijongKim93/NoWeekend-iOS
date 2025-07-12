@@ -41,7 +41,8 @@ struct MainTopView: View {
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
             
-            DS.Images.imageMain
+            let mainImage = vacationBakingStatus == .processing ? DS.Images.imgMainToasting : DS.Images.imageMain
+            mainImage
                 .resizable()
                 .frame(width: 140, height: 140)
                 .padding(.vertical, 16)
@@ -53,7 +54,7 @@ struct MainTopView: View {
                     .frame(width: 200, height: 60)
                     .background(
                         RoundedRectangle(cornerRadius: 30)
-                            .fill(vacationBakingStatus.isButtonEnabled ? DS.Colors.Toast._600 : DS.Colors.Background.alternative01)
+                            .fill(vacationBakingStatus.isButtonEnabled ? DS.Colors.Toast._600 : DS.Colors.Neutral.gray700)
                     )
             }
             .disabled(!vacationBakingStatus.isButtonEnabled)
