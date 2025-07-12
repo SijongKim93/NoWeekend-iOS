@@ -23,7 +23,7 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
     }
     
     public func getMonthlySchedules(for date: Date) async throws -> [DailySchedule] {
-        let (startDate, endDate) = calculateMonthRange(for: date)
+        let (startDate, endDate) = calculateMonthViewRange(for: date)
         return try await getSchedulesForDateRange(startDate: startDate, endDate: endDate)
     }
     
@@ -88,6 +88,7 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         try await calendarRepository.deleteSchedule(id: id)
     }
     
+    
     private func calculateWeekRange(for date: Date) -> (Date, Date) {
         guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: date) else {
             return (date, date)
@@ -95,10 +96,23 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         return (weekInterval.start, calendar.date(byAdding: .day, value: -1, to: weekInterval.end) ?? weekInterval.end)
     }
     
-    private func calculateMonthRange(for date: Date) -> (Date, Date) {
+    private func calculateMonthViewRange(for date: Date) -> (Date, Date) {
         guard let monthInterval = calendar.dateInterval(of: .month, for: date) else {
             return (date, date)
         }
-        return (monthInterval.start, calendar.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end)
+        
+        let firstDayOfMonth = monthInterval.start
+        let lastDayOfMonth = calendar.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
+        
+        guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: firstDayOfMonth)?.start else {
+            return (firstDayOfMonth, lastDayOfMonth)
+        }
+        
+        guard let lastWeekInterval = calendar.dateInterval(of: .weekOfYear, for: lastDayOfMonth),
+              let lastWeekEnd = calendar.date(byAdding: .day, value: -1, to: lastWeekInterval.end) else {
+            return (firstWeekStart, lastDayOfMonth)
+        }
+        
+        return (firstWeekStart, lastWeekEnd)
     }
 }

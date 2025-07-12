@@ -22,6 +22,7 @@ public struct TaskCategory {
 public struct TaskCategorySelectionView: View {
     @Binding var isPresented: Bool
     let onCategorySelected: (TaskCategory) -> Void
+    let onDirectInputTapped: () -> Void
     
     @State private var opacity: Double = 0
     @State private var scale: Double = 0.8
@@ -34,10 +35,12 @@ public struct TaskCategorySelectionView: View {
     
     public init(
         isPresented: Binding<Bool>,
-        onCategorySelected: @escaping (TaskCategory) -> Void
+        onCategorySelected: @escaping (TaskCategory) -> Void,
+        onDirectInputTapped: @escaping () -> Void // 새로 추가된 매개변수
     ) {
         self._isPresented = isPresented
         self.onCategorySelected = onCategorySelected
+        self.onDirectInputTapped = onDirectInputTapped
     }
     
     public var body: some View {
@@ -70,6 +73,8 @@ public struct TaskCategorySelectionView: View {
                             .frame(height: 1)
                         
                         Button(action: {
+                            // 직접 입력 버튼 액션 수정
+                            onDirectInputTapped()
                             dismissWithAnimation()
                         }) {
                             HStack {
@@ -155,6 +160,9 @@ struct CategoryRowCenter: View {
         isPresented: .constant(true),
         onCategorySelected: { category in
             print("선택된 카테고리: \(category.name)")
+        },
+        onDirectInputTapped: {
+            print("직접 입력 버튼 탭됨")
         }
     )
 }

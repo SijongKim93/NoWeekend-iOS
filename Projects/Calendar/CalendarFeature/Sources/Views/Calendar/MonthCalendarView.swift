@@ -68,7 +68,6 @@ struct MonthCalendarView: View {
         }
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
-
     }
     
     private var weekdayHeader: some View {
@@ -84,7 +83,7 @@ struct MonthCalendarView: View {
     }
     
     private var monthGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 8) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 8) {
             ForEach(datesInMonth, id: \.self) { date in
                 monthCell(for: date)
             }
@@ -95,14 +94,20 @@ struct MonthCalendarView: View {
     private func monthCell(for date: Date) -> some View {
         let isCurrentMonth = calendar.isDate(date, equalTo: selectedDate, toGranularity: .month)
         let isToday = calendar.isDateInToday(date)
-        var isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
+        let isSelected = calendar.isDate(date, inSameDayAs: selectedDate)
         
         if isCurrentMonth {
             Button(action: {
                 onDateTap(date)
             }) {
-                VStack(spacing: 0) {
+                VStack(spacing: 1) {
                     ZStack {
+                        if isToday {
+                            Circle()
+                                .fill(DS.Colors.Toast._100)
+                                .frame(width: 32, height: 32)
+                        }
+                        
                         Text("\(calendar.component(.day, from: date))")
                             .font(.subtitle1)
                             .foregroundStyle(isToday ? DS.Colors.Toast._700 : DS.Colors.Text.netural)
@@ -110,16 +115,15 @@ struct MonthCalendarView: View {
                     .frame(height: 41)
                     
                     calendarCellContent(date)
-                        .frame(width: 41, height: 41)
+                        .frame(height: 41)
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 82)
+            .frame(height: 90)
         } else {
-            // 다른 달 날짜는 표시하지 않음
             Color.clear
                 .frame(maxWidth: .infinity)
-                .frame(height: 84)
+                .frame(height: 90)
         }
     }
 }
