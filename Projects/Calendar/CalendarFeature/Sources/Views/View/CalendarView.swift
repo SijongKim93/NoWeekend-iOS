@@ -32,6 +32,7 @@ public struct CalendarView: View {
     
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var previousSelectedDate: Date?
     
     private var isFloatingButtonExpanded: Bool {
         scrollOffset == 0 && !isScrolling
@@ -47,6 +48,9 @@ public struct CalendarView: View {
         }
         .sheet(isPresented: $showDatePicker) {
             DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
+                .onAppear {
+                    previousSelectedDate = selectedDate
+                }
         }
         .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
@@ -55,6 +59,24 @@ public struct CalendarView: View {
                 onDeleteAction: handleDeleteAction,
                 isPresented: $showTaskEditSheet
             )
+        }
+        .onChange(of: selectedDate) { oldValue, newValue in
+            if let previous = previousSelectedDate,
+               !Calendar.current.isDate(newValue, equalTo: previous, toGranularity: .month) {
+                Task {
+                    await loadSchedules()
+                    await MainActor.run {
+                        updateTodoItemsForSelectedDate()
+                    }
+                }
+            } else if !Calendar.current.isDate(newValue, inSameDayAs: oldValue) {
+                Task {
+                    await MainActor.run {
+                        updateTodoItemsForSelectedDate()
+                    }
+                }
+            }
+            previousSelectedDate = nil
         }
         .task {
             await initializeView()
@@ -329,7 +351,11 @@ private extension CalendarView {
         let daySchedule = getDaySchedule(for: date)
         
         if !schedulesForDate.isEmpty {
-            temperatureImage(daySchedule?.dailyTemperature ?? 0)
+            let temperature = daySchedule?.dailyTemperature ?? 0
+            let imageToShow = (temperature == 0 && !schedulesForDate.isEmpty) ?
+                DS.Images.imgToastDefault : temperatureImage(temperature)
+            
+            imageToShow
                 .resizable()
                 .scaledToFit()
         } else {
@@ -348,13 +374,8 @@ private extension CalendarView {
         return getDaySchedule(for: date)?.schedules ?? []
     }
     
+    // TODO: 온도 얼만데!
     func temperatureImage(_ temperature: Int) -> Image {
-        // 온도가 0이고 일정이 있으면 기본 토스트 이미지 사용
-        let schedulesCount = getDaySchedule(for: selectedDate)?.schedules.count ?? 0
-        if temperature == 0 && schedulesCount > 0 {
-            return DS.Images.imgToastDefault
-        }
-        
         switch temperature {
         case 0...20: return DS.Images.imgFlour
         case 21...40: return DS.Images.imgToastNone
