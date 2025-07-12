@@ -34,7 +34,6 @@ public enum JSONFiles {
     public static let h: Int = _document["h"]
     public static let ip: Int = _document["ip"]
     public static let layers: [[String: Any]] = _document["layers"]
-    public static let markers: [String] = _document["markers"]
     public static let meta: [String: Any] = _document["meta"]
     public static let nm: String = _document["nm"]
     public static let op: Int = _document["op"]
