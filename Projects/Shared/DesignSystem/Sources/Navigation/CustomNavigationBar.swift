@@ -46,7 +46,6 @@ public struct CustomNavigationBar: View {
     }
 }
 
-
 private extension CustomNavigationBar {
     var navigationContent: some View {
         HStack {
@@ -172,7 +171,6 @@ public extension CustomNavigationBar {
             onBackTapped: { print("뒤로가기 tapped") }
         )
         .previewNavigationBarBackground()
-        
         
         // Back with Label
         CustomNavigationBar(

@@ -6,9 +6,9 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import Combine
 import Foundation
 import ProfileDomain
-import Combine
 
 public final class VacationStore: ObservableObject {
     

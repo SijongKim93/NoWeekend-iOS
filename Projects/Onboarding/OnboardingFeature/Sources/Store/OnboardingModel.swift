@@ -6,9 +6,9 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
 import Combine
 import OnboardingDomain
+import SwiftUI
 
 // MARK: - Model (State)
 public struct OnboardingState: Equatable {
@@ -24,9 +24,9 @@ public struct OnboardingState: Equatable {
     public var selectedTags: Set<String> = []
     
     // MARK: - Validation State
-    public var nicknameError: String? = nil
-    public var birthDateError: String? = nil
-    public var remainingDaysError: String? = nil
+    public var nicknameError: String?
+    public var birthDateError: String?
+    public var remainingDaysError: String?
     
     // MARK: - UI State
     public var isLoading: Bool = false
@@ -37,19 +37,19 @@ public struct OnboardingState: Equatable {
     
     // MARK: - Computed Properties
     public var isLastStep: Bool {
-        return currentStep >= Self.totalSteps - 1
+        currentStep >= Self.totalSteps - 1
     }
     
     public var displayRemainingDays: String {
-        return remainingDays.isEmpty ? "0" : remainingDays
+        remainingDays.isEmpty ? "0" : remainingDays
     }
     
     public var displayRemainingHours: String {
-        return remainingHours.isEmpty ? "0" : remainingHours
+        remainingHours.isEmpty ? "0" : remainingHours
     }
     
     public var hasVacationError: Bool {
-        return remainingDaysError != nil
+        remainingDaysError != nil
     }
     
     public var isCurrentStepValid: Bool {

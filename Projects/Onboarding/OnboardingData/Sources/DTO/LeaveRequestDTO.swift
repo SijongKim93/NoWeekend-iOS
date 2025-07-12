@@ -18,7 +18,7 @@ public struct LeaveRequestDTO {
     }
     
     public var toDictionary: [String: Any] {
-        return [
+        [
             "days": days,
             "hours": hours
         ]

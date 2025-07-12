@@ -6,8 +6,8 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
 import DesignSystem
+import SwiftUI
 
 public struct SettingSection<Content: View>: View {
     let title: String
@@ -145,7 +145,6 @@ public extension SettingRow {
         SettingRow(title: title, titleFont: titleFont, rightText: rightText, rightTextColor: rightTextColor, rightIcon: rightIcon, hasChevron: true, action: action
         )
     }
-
     
     // 컬러 텍스트 + 화살표 (개인, 업무 등)
     static func withColorText(title: String, titleFont: Font = .body1, rightText: String, color: Color, action: @escaping () -> Void) -> SettingRow {

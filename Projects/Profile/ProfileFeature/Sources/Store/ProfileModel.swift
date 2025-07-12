@@ -89,7 +89,6 @@ public struct TagsState: Equatable {
     public init() {}
 }
 
-
 public enum ProfileAction {
     case loadUserProfile
     case userProfileLoaded(UserProfile)

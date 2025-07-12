@@ -6,10 +6,9 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import Combine
 import Foundation
 import ProfileDomain
-import Combine
-
 
 public final class ProfileEditStore: ObservableObject {
     
@@ -167,7 +166,7 @@ public final class ProfileEditStore: ObservableObject {
     }
     
     private func formatBirthDateForAPI(_ birthDate: String) -> String {
-        return birthDate
+        birthDate
     }
     
     func initializeWith(profile: UserProfile) {

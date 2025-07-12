@@ -18,7 +18,7 @@ public struct ProfileRequestDTO {
     }
     
     public var toDictionary: [String: Any] {
-        return [
+        [
             "nickname": nickname,
             "birthDate": birthDate
         ]

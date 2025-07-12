@@ -1,7 +1,7 @@
-import SwiftUI
-import ProfileDomain
 import DesignSystem
 import DIContainer
+import ProfileDomain
+import SwiftUI
 
 public struct ProfileView: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
@@ -28,12 +28,11 @@ public struct ProfileView: View {
     
 }
 
-
 private struct ProfileHeaderSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
     
     var body: some View {
-        HStack(alignment:.center) {
+        HStack(alignment: .center) {
             Text("김시종이")
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
@@ -55,7 +54,6 @@ private struct ProfileHeaderSection: View {
         
     }
 }
-
 
 private struct ProfileVacationSection: View {
 
@@ -94,11 +92,11 @@ private struct ProfileVacationSection: View {
                 VStack(spacing: 4) {
                     Text("사용한 연차")
                         .font(.body2)
-                        .foregroundColor(DS.Colors.Text.netural)//netural
+                        .foregroundColor(DS.Colors.Text.netural)// netural
                     
                     Text("3")
                         .font(.heading5)
-                        .foregroundColor(DS.Colors.Text.netural)//netural
+                        .foregroundColor(DS.Colors.Text.netural)// netural
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -127,7 +125,7 @@ private struct ProfileSettingSection: View {
                         titleFont: .body1,
                         rightText: "개인",
                         color: DS.Colors.TaskItem.orange
-                    ) //선택한 카테고리값 적용해야함
+                    ) // 선택한 카테고리값 적용해야함
                     
                     SettingDivider()
                     
@@ -156,8 +154,6 @@ private struct ProfileSettingSection: View {
         }
     }
 }
-
-
 
 #Preview {
     ProfileView()

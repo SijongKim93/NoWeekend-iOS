@@ -8,9 +8,9 @@
 
 import DIContainer
 import Foundation
-import ProfileDomain
-import ProfileData
 import NWNetwork
+import ProfileData
+import ProfileDomain
 import Swinject
 
 public struct ProfileFeatureAssembly: Assembly {
@@ -20,7 +20,7 @@ public struct ProfileFeatureAssembly: Assembly {
         print("🔧 ProfileFeatureAssembly 등록 시작")
         
         // MARK: - Base Network Service
-        container.register(NWNetworkServiceProtocol.self) { resolver in
+        container.register(NWNetworkServiceProtocol.self) { _ in
             let token = UserDefaults.standard.string(forKey: "access_token")
             return NWNetworkService(authToken: token)
         }

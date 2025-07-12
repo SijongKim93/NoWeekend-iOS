@@ -11,7 +11,7 @@ import ProfileDomain
 
 extension UserProfileDTO {
     public func toDomain() -> UserProfile {
-        return UserProfile(
+        UserProfile(
             id: id,
             email: email,
             name: name,
@@ -33,13 +33,13 @@ extension UserProfileDTO {
 
 extension UserLocationDTO {
     public func toDomain() -> UserLocation {
-        return UserLocation(latitude: latitude, longitude: longitude)
+        UserLocation(latitude: latitude, longitude: longitude)
     }
 }
 
 extension UserTagDTO {
     public func toDomain() -> UserTag {
-        return UserTag(
+        UserTag(
             id: id,
             content: content,
             userId: userId,
@@ -50,7 +50,7 @@ extension UserTagDTO {
 
 extension UserTagsResponseDTO {
     public func toDomain() -> UserTagsResponse {
-        return UserTagsResponse(
+        UserTagsResponse(
             selectedBasicTags: selectedBasicTags.map { $0.toDomain() },
             unselectedBasicTags: unselectedBasicTags.map { $0.toDomain() },
             selectedCustomTags: selectedCustomTags.map { $0.toDomain() },
@@ -61,13 +61,13 @@ extension UserTagsResponseDTO {
 
 extension VacationLeaveDTO {
     public func toDomain() -> VacationLeave {
-        return VacationLeave(days: days, hours: hours)
+        VacationLeave(days: days, hours: hours)
     }
 }
 
 extension UserProfileUpdateRequest {
     public func toDTO() -> UserProfileUpdateRequestDTO {
-        return UserProfileUpdateRequestDTO(
+        UserProfileUpdateRequestDTO(
             nickname: nickname,
             birthDate: birthDate
         )
@@ -76,7 +76,7 @@ extension UserProfileUpdateRequest {
 
 extension UserTagsUpdateRequest {
     public func toDTO() -> UserTagsUpdateRequestDTO {
-        return UserTagsUpdateRequestDTO(
+        UserTagsUpdateRequestDTO(
             addScheduleTags: addScheduleTags,
             deleteScheduleTags: deleteScheduleTags
         )
@@ -85,6 +85,6 @@ extension UserTagsUpdateRequest {
 
 extension VacationLeave {
     public func toDTO() -> VacationLeaveDTO {
-        return VacationLeaveDTO(days: days, hours: hours)
+        VacationLeaveDTO(days: days, hours: hours)
     }
 }

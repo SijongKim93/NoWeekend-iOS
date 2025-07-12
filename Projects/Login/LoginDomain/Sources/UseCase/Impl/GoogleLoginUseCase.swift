@@ -116,7 +116,6 @@ public final class GoogleLoginUseCase: GoogleLoginUseCaseInterface {
                         throw LoginError.nameNotAvailable
                     }
                     
-                    
                     let newUser = try await authRepository.loginWithGoogle(
                         authorizationCode: secondSignInResult.authorizationCode,
                         name: profileName

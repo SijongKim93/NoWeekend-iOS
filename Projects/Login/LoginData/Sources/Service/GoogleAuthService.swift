@@ -92,8 +92,6 @@ public final class GoogleAuthService: GoogleAuthServiceInterface {
         let clientID = GoogleConfig.clientID
         let serverClientID = GoogleConfig.serverClientID
         
-        
-        
         let config = GIDConfiguration(
             clientID: clientID,
             serverClientID: serverClientID

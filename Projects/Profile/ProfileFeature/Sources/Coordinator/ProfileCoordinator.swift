@@ -11,7 +11,6 @@ import Coordinator
 import SwiftUI
 
 public final class ProfileCoordinator: ObservableObject, Coordinatorable {
-    
 
     public typealias Screen = ProfileRouter.Screen
     public typealias SheetScreen = ProfileRouter.Sheet
@@ -56,14 +55,14 @@ public final class ProfileCoordinator: ObservableObject, Coordinatorable {
     public func fullCoverView(_ cover: FullScreen) -> AnyView {
         switch cover {
         case .webView(let url):
-            return AnyView(ProfileVacationView()) //예시 수정해야함
+            return AnyView(ProfileVacationView()) // 예시 수정해야함
         }
     }
     
     // MARK: - Business Logic
     private func loadProfileData() -> (nickname: String, birthDate: String) {
         // 실제 구현에서는 Repository나 UseCase를 통해 데이터 로드
-        return (nickname: "김시종이", birthDate: "1990-01-01")
+        (nickname: "김시종이", birthDate: "1990-01-01")
     }
     
     private func saveProfileData(nickname: String, birthDate: String) {

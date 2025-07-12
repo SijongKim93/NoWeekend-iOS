@@ -32,7 +32,7 @@ public struct AIRecommendationData: Codable {
     }
     
     public var recommendedTags: [String] {
-        return [
+        [
             firstRecommendTag.content,
             secondRecommendTag.content,
             thirdRecommendTag.content

@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct UserTag: Equatable {
     public let id: String
     public let content: String

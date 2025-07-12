@@ -7,8 +7,8 @@
 
 import DIContainer
 import Foundation
-import OnboardingDomain
 import NWNetwork
+import OnboardingDomain
 
 public enum OnboardingDataModule {
     public static func registerRepositories() {

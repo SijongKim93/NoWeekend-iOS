@@ -60,7 +60,6 @@ public struct UserProfile: Equatable {
     }
 }
 
-
 public struct UserProfileUpdateRequest: Equatable {
     public let nickname: String
     public let birthDate: String
@@ -70,7 +69,6 @@ public struct UserProfileUpdateRequest: Equatable {
         self.birthDate = birthDate
     }
 }
-
 
 public enum Gender: String, CaseIterable, Equatable {
     case male = "MALE"

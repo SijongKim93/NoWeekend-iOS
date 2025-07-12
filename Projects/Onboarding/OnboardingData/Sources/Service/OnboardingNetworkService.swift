@@ -7,8 +7,8 @@
 //
 
 import Foundation
-import OnboardingDomain
 import NWNetwork
+import OnboardingDomain
 
 public class OnboardingNetworkService: OnboardingNetworkServiceInterface {
     private let networkService: NWNetworkServiceProtocol

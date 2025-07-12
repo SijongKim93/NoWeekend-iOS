@@ -6,10 +6,10 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
+import Combine
 import DesignSystem
 import DIContainer
-import Combine
+import SwiftUI
 
 public struct ProfileEditView: View {
     @EnvironmentObject private var coordinator: ProfileCoordinator

@@ -7,8 +7,8 @@
 //
 import DIContainer
 import Foundation
-import Swinject
 import OnboardingDomain
+import Swinject
 
 public class OnboardingFeatureAssembly: Assembly {
     
