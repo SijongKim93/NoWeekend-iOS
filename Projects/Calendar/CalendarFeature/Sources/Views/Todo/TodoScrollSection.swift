@@ -10,11 +10,14 @@ import DesignSystem
 import SwiftUI
 
 struct TodoScrollSection: View {
-    @Binding var todoItems: [TodoItem]
+    @Binding var todoItems: [DesignSystem.TodoItem]
     @Binding var selectedTaskIndex: Int?
     @Binding var showTaskEditSheet: Bool
     @Binding var scrollOffset: CGFloat
     @Binding var isScrolling: Bool
+    @Binding var editingTaskIndex: Int?
+    
+    var onTitleChanged: ((Int, String) -> Void)?
     
     private var incompleteTodoCount: Int {
         todoItems.filter { !$0.isCompleted }.count
@@ -26,10 +29,8 @@ struct TodoScrollSection: View {
                 Rectangle()
                     .fill(Color.clear)
                     .frame(height: 1)
-                    .id("topIndicator")
                     .onAppear {
                         scrollOffset = 0
-                        
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             if scrollOffset == 0 {
                                 isScrolling = false
@@ -41,7 +42,6 @@ struct TodoScrollSection: View {
                     }
                 
                 todoSection
-                
             }
         }
         .onAppear {
@@ -65,7 +65,6 @@ struct TodoScrollSection: View {
     
     private var todoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 할일 헤더
             HStack {
                 HStack(spacing: 0) {
                     Text("할 일 ")
@@ -97,13 +96,7 @@ struct TodoScrollSection: View {
             LazyVStack(spacing: 0) {
                 ForEach(Array(todoItems.enumerated()), id: \.element.id) { index, todo in
                     TodoCheckboxComponent(
-                        todoItem: DesignSystem.TodoItem(
-                            id: todo.id,
-                            title: todo.title,
-                            isCompleted: todo.isCompleted,
-                            category: todo.category,
-                            time: todo.time
-                        ),
+                        todoItem: todo,
                         onToggle: {
                             todoItems[index].isCompleted.toggle()
                         },

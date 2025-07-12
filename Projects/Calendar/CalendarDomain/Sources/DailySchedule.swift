@@ -10,10 +10,12 @@ import Foundation
 
 public struct DailySchedule: Equatable {
     public let date: String
+    public let dailyTemperature: Int
     public let schedules: [Schedule]
     
-    public init(date: String, schedules: [Schedule]) {
+    public init(date: String, dailyTemperature: Int, schedules: [Schedule]) {
         self.date = date
+        self.dailyTemperature = dailyTemperature
         self.schedules = schedules
     }
 }
