@@ -53,8 +53,9 @@ struct VacationBakingView: View {
                         VacationDaysInputView(
                             vacationDays: store.state.vacationDays,
                             remainingAnnualLeave: remainingAnnualLeave,
-                            onDaysChanged: { days in
-                                store.send(.vacationDaysChanged(days))
+                            errorMessage: store.state.errorMessage,
+                            onDaysChanged: { inputText in
+                                store.send(.vacationDaysInputChanged(inputText))
                             }
                         )
                         

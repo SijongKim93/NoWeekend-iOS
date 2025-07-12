@@ -16,13 +16,14 @@ struct VacationBakingState: Equatable {
     var selectedVacationTypes: Set<VacationType> = []
     var isNextButtonEnabled: Bool = false
     var isCompleted: Bool = false
+    var errorMessage: String? = nil
 }
 
 // MARK: - VacationBaking Intent
 
 enum VacationBakingIntent {
     case viewDidLoad
-    case vacationDaysChanged(Int)
+    case vacationDaysInputChanged(String)
     case vacationTypeToggled(VacationType)
     case nextButtonTapped
     case backButtonTapped
