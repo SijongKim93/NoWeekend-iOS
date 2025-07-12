@@ -5,15 +5,15 @@
 //  Created by 이지훈 on 7/3/25.
 //
 
+import CalendarFeature
+import DataBridge
+import DIContainer
 import Foundation
 import HomeFeature
-import ProfileFeature
-import CalendarFeature
-import OnboardingFeature
-import DataBridge
-import NWNetwork
-import DIContainer
 import LoginFeature
+import NWNetwork
+import OnboardingFeature
+import ProfileFeature
 
 enum AppDependencyConfiguration {
     static func configure() {
