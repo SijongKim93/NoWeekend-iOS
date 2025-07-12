@@ -6,8 +6,8 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import Foundation
 import CalendarDomain
+import Foundation
 
 // 요청 DTO - Encodable만 필요
 public struct CreateScheduleRequestDTO: Encodable {

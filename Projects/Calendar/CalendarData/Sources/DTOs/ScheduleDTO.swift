@@ -6,8 +6,8 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import Foundation
 import CalendarDomain
+import Foundation
 
 public struct ScheduleDTO: Decodable {
     public let id: String

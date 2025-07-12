@@ -6,8 +6,8 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import Foundation
 import CalendarDomain
+import Foundation
 
 public struct DailyScheduleDTO: Decodable {
     public let date: String
@@ -17,7 +17,7 @@ public struct DailyScheduleDTO: Decodable {
 
 extension DailyScheduleDTO {
     public func toDomain() -> DailySchedule {
-        return DailySchedule(
+        DailySchedule(
             date: date,
             dailyTemperature: dailyTemperature,
             schedules: schedules.map { $0.toDomain() }
