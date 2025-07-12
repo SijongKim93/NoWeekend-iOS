@@ -60,18 +60,15 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     }
     
     private func getCurrentToken() -> String? {
-        // 1. UserDefaults에서 저장된 토큰 확인
         if let savedToken = UserDefaults.standard.string(forKey: "access_token"), !savedToken.isEmpty {
             return savedToken
         }
         
-        // 2. 초기화 시 전달받은 토큰 사용
         if let staticToken = authToken, !staticToken.isEmpty {
             return staticToken
         }
         
-        // 3. 마지막으로 임시 토큰 사용
-        return Config.tempAccessToken
+        return nil
     }
     
     private func request<T: Decodable>(

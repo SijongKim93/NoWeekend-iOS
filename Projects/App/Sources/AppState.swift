@@ -31,7 +31,7 @@ public class AppState {
         let savedToken = UserDefaults.standard.string(forKey: "access_token")
         if savedToken?.isEmpty != false {
             print("🔑 임시 토큰을 UserDefaults에 저장")
-            UserDefaults.standard.set(Config.tempAccessToken, forKey: "access_token")
+            UserDefaults.standard.set(nil, forKey: "access_token")
         }
     }
     
