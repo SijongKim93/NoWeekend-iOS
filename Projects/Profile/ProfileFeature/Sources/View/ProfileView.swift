@@ -1,12 +1,15 @@
 import SwiftUI
 import ProfileDomain
 import DesignSystem
+import DIContainer
 
 public struct ProfileView: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
-    var isToggle: Bool = false
+    @ObservedObject private var store: ProfileStore
     
-    public init() {}
+    public init() {
+        self.store = DIContainer.shared.resolve(ProfileStore.self)
+    }
     
     public var body: some View {
         VStack {
@@ -15,6 +18,11 @@ public struct ProfileView: View {
             ProfileSettingSection()
             
             Spacer()
+        }
+        .onAppear {
+            if store.state.userProfile == nil {
+                store.loadInitialData()
+            }
         }
     }
     
