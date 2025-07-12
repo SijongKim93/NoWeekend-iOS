@@ -58,6 +58,38 @@ public struct VacationState: Equatable {
     public init() {}
 }
 
+public struct TagsState: Equatable {
+    public var isLoading: Bool = false
+    public var userTagsResponse: UserTagsResponse?
+    
+    public var selectedBasicTags: Set<String> = []
+    public var selectedCustomTags: Set<String> = []
+    
+    public var allBasicTags: [UserTag] = []
+    public var allCustomTags: [UserTag] = []
+    
+    public var generalError: String?
+    
+    public var isSaving: Bool = false
+    public var saveSuccess: Bool = false
+    
+    public var isFormValid: Bool {
+        !isSaving && (!selectedBasicTags.isEmpty || !selectedCustomTags.isEmpty)
+    }
+    
+    public var hasChanges: Bool {
+        guard let response = userTagsResponse else { return false }
+        
+        let originalBasicTags = Set(response.selectedBasicTags.map { $0.content })
+        let originalCustomTags = Set(response.selectedCustomTags.map { $0.content })
+        
+        return selectedBasicTags != originalBasicTags || selectedCustomTags != originalCustomTags
+    }
+    
+    public init() {}
+}
+
+
 public enum ProfileAction {
     case loadUserProfile
     case userProfileLoaded(UserProfile)
@@ -88,6 +120,24 @@ public enum VacationAction {
     case resetState
 }
 
+public enum TagsAction {
+    case loadUserTags
+    case userTagsLoaded(UserTagsResponse)
+    case loadUserTagsFailed(Error)
+    
+    case toggleBasicTag(String)
+    case toggleCustomTag(String)
+    case addCustomTag(String)
+    case removeCustomTag(String)
+    
+    case saveTags
+    case tagsSaved(UserTagsResponse)
+    case tagsSaveFailed(Error)
+    
+    case clearErrors
+    case resetState
+}
+
 public enum ProfileEffect {
     case showErrorMessage(String)
 }
@@ -102,4 +152,11 @@ public enum VacationEffect {
     case showSuccessMessage(String)
     case showErrorMessage(String)
     case navigateBack
+}
+
+public enum TagsEffect {
+    case showSuccessMessage(String)
+    case showErrorMessage(String)
+    case navigateBack
+    case showTagAddDialog
 }
