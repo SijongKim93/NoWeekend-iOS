@@ -37,7 +37,7 @@ enum AppDependencyConfiguration {
         
         DIContainer.shared.register(NWNetworkServiceProtocol.self) { _ in
             let savedToken = UserDefaults.standard.string(forKey: "access_token")
-            let authToken = savedToken?.isEmpty == false ? savedToken : nil
+            let authToken = savedToken?.isEmpty == false ? savedToken : Config.tempAccessToken
             
             print("🔑 사용할 토큰: \(authToken?.isEmpty == false ? "Bearer \(String(authToken!.prefix(20)))..." : "없음")")
             

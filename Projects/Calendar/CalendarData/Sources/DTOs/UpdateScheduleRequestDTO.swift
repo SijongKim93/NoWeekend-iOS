@@ -9,10 +9,11 @@
 import Foundation
 import CalendarDomain
 
-public struct UpdateScheduleRequestDTO: Codable {
+// 요청 DTO - Encodable만 필요
+public struct UpdateScheduleRequestDTO: Encodable {
     public let title: String
-    public let startTime: String  // ISO8601 형식
-    public let endTime: String    // ISO8601 형식
+    public let startTime: String  // "HH:mm:ss" 형식
+    public let endTime: String    // "HH:mm:ss" 형식
     public let category: String
     public let temperature: Int
     public let allDay: Bool
@@ -37,7 +38,8 @@ public struct UpdateScheduleRequestDTO: Codable {
     }
 }
 
-public struct UpdateScheduleResponseDTO: Codable {
+// 응답 데이터 DTO - Decodable만 필요
+public struct UpdateScheduleResponseDTO: Decodable {
     public let id: String
     public let title: String
     public let startTime: String
@@ -47,28 +49,39 @@ public struct UpdateScheduleResponseDTO: Codable {
     public let allDay: Bool
     public let alarmOption: String
     public let completed: Bool
-}
-
-public struct UpdateScheduleAPIResponseDTO: Decodable {
-    public let result: String
-    public let data: UpdateScheduleResponseDTO?
-    public let error: APIError?
-}
-
-extension UpdateScheduleResponseDTO {
+    
     public func toDomain() -> Schedule {
-        let dateFormatter = ISO8601DateFormatter()
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        
+        let backupFormatter = DateFormatter()
+        backupFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        backupFormatter.timeZone = TimeZone.current
+        
+        let startDate = isoFormatter.date(from: startTime)
+                     ?? backupFormatter.date(from: startTime)
+                     ?? Date()
+                     
+        let endDate = isoFormatter.date(from: endTime)
+                   ?? backupFormatter.date(from: endTime)
+                   ?? Date()
         
         return Schedule(
             id: id,
             title: title,
-            startTime: dateFormatter.date(from: startTime) ?? Date(),
-            endTime: dateFormatter.date(from: endTime) ?? Date(),
-            category: ScheduleCategory(rawValue: category) ?? .other,
+            startTime: startDate,
+            endTime: endDate,
+            category: ScheduleCategory(rawValue: category) ?? .etc,
             temperature: temperature,
             allDay: allDay,
             alarmOption: AlarmOption(rawValue: alarmOption) ?? .none,
             completed: completed
         )
     }
+}
+
+public struct UpdateScheduleAPIResponseDTO: Decodable {
+    public let result: String
+    public let data: UpdateScheduleResponseDTO?
+    public let error: APIError?
 }
