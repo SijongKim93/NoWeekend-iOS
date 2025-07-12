@@ -32,11 +32,9 @@ public struct CalendarView: View {
         .sheet(isPresented: $showDatePickerSheet) {
             DatePickerWithLabelBottomSheet(selectedDate: $datePickerSelectedDate)
                 .onAppear {
-                    print("🔵 DatePicker sheet appeared")
                     datePickerSelectedDate = store.state.selectedDate
                 }
                 .onDisappear {
-                    print("🔵 DatePicker sheet disappeared")
                     if datePickerSelectedDate != store.state.selectedDate {
                         store.send(.dateSelected(datePickerSelectedDate))
                     }
@@ -45,21 +43,18 @@ public struct CalendarView: View {
         .sheet(isPresented: $showTaskEditSheet) {
             TaskEditBottomSheet(
                 onEditAction: {
-                    print("🟡 Edit action triggered")
                     if let index = store.state.selectedTaskIndex {
                         store.send(.taskEditRequested(index))
                     }
                     showTaskEditSheet = false
                 },
                 onTomorrowAction: {
-                    print("🟡 Tomorrow action triggered")
                     if let index = store.state.selectedTaskIndex {
                         store.send(.taskTomorrowRequested(index))
                     }
                     showTaskEditSheet = false
                 },
                 onDeleteAction: {
-                    print("🟡 Delete action triggered")
                     if let index = store.state.selectedTaskIndex {
                         store.send(.taskDeleteRequested(index))
                     }
@@ -69,11 +64,8 @@ public struct CalendarView: View {
                 isPresented: $showTaskEditSheet
             )
             .onAppear {
-                print("🟡 TaskEdit sheet appeared")
             }
             .onDisappear {
-                print("🟡 TaskEdit sheet disappeared")
-                // 🔥 Store 상태도 동기화
                 Task { @MainActor in
                     store.updateState { state in
                         state.showTaskEditSheet = false
@@ -83,7 +75,6 @@ public struct CalendarView: View {
             }
         }
         .onChange(of: store.state.showTaskEditSheet) { _, newValue in
-            print("🟢 Store showTaskEditSheet changed to: \(newValue)")
             if newValue != showTaskEditSheet {
                 showTaskEditSheet = newValue
             }
@@ -104,7 +95,6 @@ private extension CalendarView {
             CalendarNavigationBar(
                 dateText: store.state.currentDateString,
                 onDateTapped: {
-                    print("🔵 Navigation bar date tapped - showing DatePicker sheet")
                     showDatePickerSheet = true
                 },
                 onToggleChanged: { toggle in
@@ -116,7 +106,6 @@ private extension CalendarView {
                 selectedDate: store.state.selectedDate,
                 selectedToggle: store.state.selectedToggle,
                 onDateTap: { date in
-                    print("🟢 Calendar cell tapped: \(date) - direct date selection")
                     store.send(.dateSelected(date))
                 },
                 calendarCellContent: store.calendarCellContent
@@ -154,7 +143,6 @@ private extension CalendarView {
                                 store.updateState { state in
                                     state.selectedTaskIndex = newValue
                                     if newValue != nil {
-                                        print("🟡 Task selected at index: \(newValue!) - showing TaskEdit sheet")
                                         state.showTaskEditSheet = true
                                     }
                                 }
@@ -164,7 +152,6 @@ private extension CalendarView {
                     showTaskEditSheet: Binding(
                         get: { showTaskEditSheet },
                         set: { newValue in
-                            print("🟡 TodoScrollSection trying to set showTaskEditSheet to: \(newValue)")
                             showTaskEditSheet = newValue
                         }
                     ),
