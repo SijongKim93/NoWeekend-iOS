@@ -16,7 +16,7 @@ public struct TagRequestDTO {
     }
     
     public var toDictionary: [String: Any] {
-        return [
+        [
             "scheduleTags": scheduleTags
         ]
     }

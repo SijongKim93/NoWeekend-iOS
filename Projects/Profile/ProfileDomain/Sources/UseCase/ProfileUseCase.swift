@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public final class GetUserProfileUseCase: GetUserProfileUseCaseProtocol {
     
     private let repository: ProfileRepositoryInterface
@@ -18,7 +17,7 @@ public final class GetUserProfileUseCase: GetUserProfileUseCaseProtocol {
     }
     
     public func execute() async throws -> UserProfile {
-        return try await repository.getUserProfile()
+        try await repository.getUserProfile()
     }
 }
 
@@ -87,7 +86,7 @@ public final class GetUserTagsUseCase: GetUserTagsUseCaseProtocol {
     }
     
     public func execute() async throws -> UserTagsResponse {
-        return try await repository.getUserTags()
+        try await repository.getUserTags()
     }
 }
 

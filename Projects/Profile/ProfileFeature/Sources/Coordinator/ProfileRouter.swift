@@ -31,7 +31,7 @@ public enum ProfileRouter {
         }
         
         public var rawValue: String {
-            return id
+            id
         }
         
         public init?(rawValue: String) {
@@ -58,7 +58,7 @@ public enum ProfileRouter {
         
         // RawRepresentable 준수
         public var rawValue: String {
-            return id
+            id
         }
         
         public init?(rawValue: String) {

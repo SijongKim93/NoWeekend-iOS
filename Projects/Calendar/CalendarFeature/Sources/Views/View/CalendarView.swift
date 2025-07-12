@@ -8,11 +8,9 @@
 
 import CalendarDomain
 import DesignSystem
-import Utils
 import DIContainer
 import SwiftUI
 import Utils
-
 public struct CalendarView: View {
     @Dependency private var calendarUseCase: CalendarUseCaseProtocol
 

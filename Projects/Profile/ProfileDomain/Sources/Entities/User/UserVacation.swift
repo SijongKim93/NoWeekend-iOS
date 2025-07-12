@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct VacationLeave: Equatable {
     public let days: Int
     public let hours: Int

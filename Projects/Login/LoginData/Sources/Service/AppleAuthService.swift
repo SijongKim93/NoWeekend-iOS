@@ -41,7 +41,7 @@ public final class AppleAuthService: NSObject, ObservableObject, AppleAuthServic
     
     @MainActor
     public func requestWithdrawalAuthorization() async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             self.withdrawalContinuation = continuation
             
             let appleIDProvider = ASAuthorizationAppleIDProvider()
@@ -55,7 +55,7 @@ public final class AppleAuthService: NSObject, ObservableObject, AppleAuthServic
     }
     
     public func getCredentialState(for userID: String) async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             let appleIDProvider = ASAuthorizationAppleIDProvider()
             appleIDProvider.getCredentialState(forUserID: userID) { credentialState, error in
                 if let error = error {

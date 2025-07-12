@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public enum ProfileError: Error, LocalizedError {
     case noData(source: String)
     case updateFailed(source: String)

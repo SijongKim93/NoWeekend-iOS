@@ -7,9 +7,8 @@
 //
 
 import Foundation
-import ProfileDomain
 import NWNetwork
-
+import ProfileDomain
 
 public final class ProfileNetworkService: ProfileNetworkServiceInterface {
     

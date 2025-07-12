@@ -6,9 +6,9 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import Combine
 import Foundation
 import ProfileDomain
-import Combine
 
 public final class TagsStore: ObservableObject {
     
@@ -240,18 +240,18 @@ public extension TagsStore {
     
     // UI에서 사용할 편의 프로퍼티들
     var allSelectedTags: [String] {
-        return Array(state.selectedBasicTags) + Array(state.selectedCustomTags)
+        Array(state.selectedBasicTags) + Array(state.selectedCustomTags)
     }
     
     var availableBasicTags: [String] {
-        return state.allBasicTags.map { $0.content }
+        state.allBasicTags.map { $0.content }
     }
     
     var availableCustomTags: [String] {
-        return state.allCustomTags.map { $0.content }
+        state.allCustomTags.map { $0.content }
     }
     
     func isTagSelected(_ tag: String) -> Bool {
-        return state.selectedBasicTags.contains(tag) || state.selectedCustomTags.contains(tag)
+        state.selectedBasicTags.contains(tag) || state.selectedCustomTags.contains(tag)
     }
 }

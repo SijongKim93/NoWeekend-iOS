@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public struct AppleWithdrawalRequestDTO: Codable {
     let identityToken: String
     

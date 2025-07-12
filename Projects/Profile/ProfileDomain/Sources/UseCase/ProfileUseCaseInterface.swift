@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public protocol GetUserProfileUseCaseProtocol {
     func execute() async throws -> UserProfile
 }

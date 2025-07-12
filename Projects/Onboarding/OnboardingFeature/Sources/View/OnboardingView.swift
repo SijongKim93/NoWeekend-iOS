@@ -6,13 +6,12 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import SwiftUI
-import DIContainer
 import DesignSystem
+import DIContainer
+import SwiftUI
 
 public struct OnboardingView: View {
     @ObservedObject private var store: OnboardingStore
-    
     
     public init() {
         self.store = DIContainer.shared.resolve(OnboardingStore.self)
