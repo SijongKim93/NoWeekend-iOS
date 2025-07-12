@@ -103,13 +103,7 @@ struct TodoScrollSection: View {
                         onMoreTapped: {
                             selectedTaskIndex = index
                             showTaskEditSheet = true
-                        },
-                        onTitleChanged: { newTitle in
-                            todoItems[index].title = newTitle
-                            editingTaskIndex = nil
-                            onTitleChanged?(index, newTitle)
-                        },
-                        isEditingMode: editingTaskIndex == index
+                        }
                     )
                     .contentShape(Rectangle())
                 }

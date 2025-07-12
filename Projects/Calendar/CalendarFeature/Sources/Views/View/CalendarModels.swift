@@ -20,6 +20,7 @@ public enum CalendarIntent {
     case categorySelected(TaskCategory)
     case directInputTapped
     case taskEditRequested(Int)
+    case taskTomorrowRequested(Int)
     case taskDeleteRequested(Int)
     case taskTitleChanged(Int, String)
     case categorySelectionToggled
@@ -63,11 +64,12 @@ public struct CalendarState: Equatable {
     }
 }
 
-// MARK: - Effect 
+// MARK: - Effect
 public enum CalendarEffect {
     case navigateToTaskCreate(Date)
     case navigateToTaskEdit(Int, String, String?, String?, Date)
     case showError(String)
+    case showSuccess(String)
 }
 
 // MARK: - Domain Extensions

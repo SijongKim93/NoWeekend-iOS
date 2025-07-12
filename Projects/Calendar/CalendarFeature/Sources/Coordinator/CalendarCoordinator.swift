@@ -61,33 +61,6 @@ public enum CalendarRouter {
         case main
         case taskCreate(selectedDate: Date)
         case taskEdit(todoId: Int, title: String, category: String?, scheduleId: String?, selectedDate: Date)
-        
-        public func hash(into hasher: inout Hasher) {
-            switch self {
-            case .main:
-                hasher.combine("main")
-            case .taskCreate(let selectedDate):
-                hasher.combine("taskCreate")
-                hasher.combine(selectedDate.timeIntervalSince1970)
-            case .taskEdit(let todoId, _, _, _, let selectedDate):
-                hasher.combine("taskEdit")
-                hasher.combine(todoId)
-                hasher.combine(selectedDate.timeIntervalSince1970)
-            }
-        }
-        
-        public static func == (lhs: CalendarRouter.Screen, rhs: CalendarRouter.Screen) -> Bool {
-            switch (lhs, rhs) {
-            case (.main, .main):
-                return true
-            case (.taskCreate(let lhsDate), .taskCreate(let rhsDate)):
-                return lhsDate == rhsDate
-            case (.taskEdit(let lhsId, _, _, _, let lhsDate), .taskEdit(let rhsId, _, _, _, let rhsDate)):
-                return lhsId == rhsId && lhsDate == rhsDate
-            default:
-                return false
-            }
-        }
     }
     
     public enum Sheet: String, Identifiable {
