@@ -59,7 +59,7 @@ public struct TaskCategorySelectionView: View {
                     
                     VStack(spacing: 0) {
                         VStack(spacing: 0) {
-                            ForEach(Array(categories.enumerated()), id: \.offset) { index, category in
+                            ForEach(Array(categories.enumerated()), id: \.offset) { _, category in
                                 CategoryRowCenter(
                                     category: category
                                 ) {

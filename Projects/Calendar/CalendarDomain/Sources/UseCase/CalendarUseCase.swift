@@ -88,7 +88,6 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         try await calendarRepository.deleteSchedule(id: id)
     }
     
-    
     private func calculateWeekRange(for date: Date) -> (Date, Date) {
         guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: date) else {
             return (date, date)

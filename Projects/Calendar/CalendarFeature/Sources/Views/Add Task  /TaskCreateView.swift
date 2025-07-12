@@ -6,10 +6,10 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
-import DesignSystem
-import SwiftUI
 import CalendarDomain
+import DesignSystem
 import DIContainer
+import SwiftUI
 
 public struct TaskCreateView: View {
     @EnvironmentObject var coordinator: CalendarCoordinator
@@ -248,7 +248,7 @@ public struct TaskCreateView: View {
                     return
                 }
                 
-                let _ = try await calendarUseCase.updateSchedule(
+                _ = try await calendarUseCase.updateSchedule(
                     id: scheduleId,
                     title: title,
                     startTime: startDate,
@@ -262,7 +262,7 @@ public struct TaskCreateView: View {
                 print("✅ 할 일 수정 완료: \(title)")
             } else {
               
-                let _ = try await calendarUseCase.createSchedule(
+                _ = try await calendarUseCase.createSchedule(
                     title: title,
                     date: dateOnly,
                     startTime: startDate,
