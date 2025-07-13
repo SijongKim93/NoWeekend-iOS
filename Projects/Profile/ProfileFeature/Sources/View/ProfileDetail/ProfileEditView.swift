@@ -96,6 +96,8 @@ public struct ProfileEditView: View {
         )
     }
     
+    // MARK: - Effect Handling (순수 UI 반응만)
+    
     private func handleEffect(_ effect: ProfileEditEffect) {
         switch effect {
         case .showSuccessMessage(let message):

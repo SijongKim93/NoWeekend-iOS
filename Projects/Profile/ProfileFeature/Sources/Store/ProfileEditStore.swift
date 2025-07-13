@@ -18,7 +18,8 @@ public final class ProfileEditStore: ObservableObject {
     public var effect: AnyPublisher<ProfileEditEffect, Never> {
         effectSubject.eraseToAnyPublisher()
     }
-
+    
+    // MARK: - Dependencies
     private let updateUserProfileUseCase: UpdateUserProfileUseCaseProtocol
     private let profileStore: ProfileStore
     private var cancellables = Set<AnyCancellable>()
@@ -33,7 +34,7 @@ public final class ProfileEditStore: ObservableObject {
         self.profileStore = profileStore
         setupProfileStoreSubscription()
     }
-
+    
     private func setupProfileStoreSubscription() {
         profileStore.$state
             .map(\.userProfile)
@@ -174,6 +175,8 @@ public final class ProfileEditStore: ObservableObject {
         state = ProfileEditState()
         isInitialized = false
     }
+    
+    // MARK: - UI 검증
     
     private func validateNicknameUI(_ nickname: String) {
         if nickname.isEmpty {

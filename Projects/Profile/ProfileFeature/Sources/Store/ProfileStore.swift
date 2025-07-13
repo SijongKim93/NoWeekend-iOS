@@ -45,6 +45,8 @@ public final class ProfileStore: ObservableObject {
         }
     }
     
+    // MARK: - Action Handlers
+    
     private func handleLoadUserProfile() {
         guard !state.isLoading && state.userProfile == nil else {
             print("⚠️ ProfileStore: 이미 로딩 중이거나 데이터가 존재함")
@@ -67,7 +69,6 @@ public final class ProfileStore: ObservableObject {
     private func handleUserProfileLoaded(_ profile: UserProfile) {
         state.isLoading = false
         state.userProfile = profile
-        print("✅ ProfileStore: 사용자 프로필 로드 완료")
     }
     
     private func handleLoadUserProfileFailed(_ error: Error) {

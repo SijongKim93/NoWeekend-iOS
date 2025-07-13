@@ -62,8 +62,6 @@ public struct ProfileFeatureAssembly: Assembly {
             return UpdateVacationLeaveUseCase(repository: repository)
         }.inObjectScope(.graph)
         
-        // MARK: - Presentation Layer (Stores)
-        
         container.register(ProfileStore.self) { resolver in
             let getUserProfileUseCase = resolver.resolve(GetUserProfileUseCaseProtocol.self)!
             return ProfileStore(getUserProfileUseCase: getUserProfileUseCase)
