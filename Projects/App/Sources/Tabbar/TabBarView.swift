@@ -56,7 +56,7 @@ public struct TabBarView: View {
     public var body: some View {
         TabView(selection: $selectedTab) {
             // 홈 탭
-            HomeView()
+            HomeCoordinatorView()
                 .tabItem {
                     (selectedTab == .home ? Tab.home.iconOn : Tab.home.iconOff)
                     Text(Tab.home.title)
