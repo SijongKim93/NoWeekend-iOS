@@ -31,9 +31,9 @@ struct ContentView: View {
         if appState.isLoading {
             LoadingView()
         } else if !appState.isLoggedIn {
-            OnboardingView()
+            TabBarView()
         } else if !appState.isOnboardingCompleted {
-            OnboardingView()
+            TabBarView()
         } else {
             TabBarView()
         }
