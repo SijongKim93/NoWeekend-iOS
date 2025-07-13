@@ -22,14 +22,6 @@ struct ContentView: View {
     }
 }
 
-
-// 임시, 언제든 삭제 가능 현재 런치스크린 이전에 남겨둠
-struct LoadingView: View {
-    var body: some View {
-        Text("Loading...")
-    }
-}
-
 #Preview {
     ContentView()
 }
