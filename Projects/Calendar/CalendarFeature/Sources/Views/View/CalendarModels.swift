@@ -17,6 +17,7 @@ public enum CalendarIntent {
     case viewDidAppear
     case toggleChanged(CalendarNavigationBar.ToggleOption)
     case dateSelected(Date)
+    case dateDetailRequested(Date)
     case categorySelected(TaskCategory)
     case directInputTapped
     case taskEditRequested(Int)
@@ -68,6 +69,7 @@ public struct CalendarState: Equatable {
 public enum CalendarEffect {
     case navigateToTaskCreate(Date)
     case navigateToTaskEdit(Int, String, String?, String?, Date)
+    case navigateToDateDetail(Date) 
     case showError(String)
     case showSuccess(String)
 }

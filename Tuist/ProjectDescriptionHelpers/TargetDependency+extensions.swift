@@ -141,4 +141,9 @@ public extension TargetDependency {
             path: .relativeToRoot("Projects/DataBridge")
         )
     }
+    
+    // MARK: - SDK Dependencies
+    enum SDK {
+        public static let coreLocation = TargetDependency.sdk(name: "CoreLocation", type: .framework)
+    }
 }

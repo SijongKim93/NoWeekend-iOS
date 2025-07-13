@@ -2,7 +2,7 @@
 //  UpdateScheduleRequestDTO.swift
 //  CalendarData
 //
-//  Created by Assistant on 7/9/25.
+//  Created by 이지훈 on 7/9/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 

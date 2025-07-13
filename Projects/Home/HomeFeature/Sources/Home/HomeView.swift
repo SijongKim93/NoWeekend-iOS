@@ -8,6 +8,7 @@
 
 import SwiftUI
 import DesignSystem
+import Utils
 
 public struct HomeView: View {
     @StateObject private var store = HomeStore()
@@ -15,6 +16,10 @@ public struct HomeView: View {
     
     @State private var currentLongCardPage: Int = 0
     @State private var currentShortCardPage: Int = 0
+    
+    // 위치권한 관련 알림 상태
+    @State private var showLocationPermissionDeniedAlert = false
+    @State private var showLocationSettingsAlert = false
     
     public init() {}
     
@@ -55,7 +60,13 @@ public struct HomeView: View {
                         .background(DS.Colors.Background.alternative01)
                         
                         Spacer(minLength: 48)
-                        WeekVacation()
+                        WeekVacation(
+                            currentMonth: store.state.currentMonth,
+                            currentWeekOfMonth: store.state.currentWeekOfMonth,
+                            onLocationIconTapped: {
+                                store.send(.locationIconTapped)
+                            }
+                        )
                         
                         Spacer(minLength: 48)
                         ShortCardSection(
@@ -79,6 +90,51 @@ public struct HomeView: View {
         }
         .onChange(of: store.state.remainingAnnualLeave) { oldValue, newValue in
             coordinator.remainingAnnualLeave = newValue
+        }
+        .onReceive(store.effect) { effect in
+            handleEffect(effect)
+        }
+        .alert("", isPresented: $showLocationPermissionDeniedAlert) {
+            Button("확인", role: .cancel) { }
+        } message: {
+            Text("위치정보를 설정하지 않아 임의 위치로 검색됩니다.")
+        }
+        .alert("GPS 권한 설정", isPresented: $showLocationSettingsAlert) {
+            Button("취소", role: .cancel) { }
+            Button("확인") {
+                if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsUrl)
+                }
+            }
+        } message: {
+            Text("GPS 권한이 없습니다. 날씨 기반 휴가 추천을 하려면 GPS 권한이 필요합니다. 설정으로 이동하시겠습니까?")
+        }
+    }
+    
+    private func handleEffect(_ effect: HomeEffect) {
+        switch effect {
+        case .requestLocationPermission:
+            LocationManager.shared.requestLocationPermission()
+        case .openAppSettings:
+            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsUrl)
+            }
+        case .showLocationPermissionDeniedAlert:
+            showLocationPermissionDeniedAlert = true
+        case .showLocationSettingsAlert:
+            showLocationSettingsAlert = true
+        case .showError(let message):
+            // TODO: 에러 처리
+            print("Error: \(message)")
+        case .navigateToDetail(let cardType):
+            // TODO: 상세 페이지 네비게이션
+            print("Navigate to detail: \(cardType)")
+        case .showLoading:
+            // TODO: 로딩 표시
+            break
+        case .hideLoading:
+            // TODO: 로딩 숨김
+            break
         }
     }
 }
