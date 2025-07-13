@@ -7,6 +7,7 @@
 //
 
 import Utils
+import HomeDomain
 
 // MARK: - Home State
 
@@ -23,6 +24,11 @@ struct HomeState: Equatable {
     var hasLocationPermission: Bool = false
     var currentLocation: LocationInfo? = nil
     var savedLocation: LocationInfo? = nil
+    
+    // 위치 및 날씨 관련 상태
+    var isLocationRegistered: Bool = false
+    var isWeatherLoading: Bool = false
+    var weatherRecommendations: [Weather] = []
     
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
@@ -48,6 +54,8 @@ enum HomeIntent {
     case remainingAnnualLeaveLoaded(Int)
     case locationIconTapped
     case locationPermissionChanged(LocationPermissionStatus)
+    case registerLocation
+    case loadWeatherRecommendations
 }
 
 // MARK: - Home Effect

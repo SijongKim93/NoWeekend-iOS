@@ -63,8 +63,13 @@ public struct HomeView: View {
                         WeekVacation(
                             currentMonth: store.state.currentMonth,
                             currentWeekOfMonth: store.state.currentWeekOfMonth,
+                            weatherData: store.state.weatherRecommendations,
+                            isWeatherLoading: store.state.isWeatherLoading,
                             onLocationIconTapped: {
                                 store.send(.locationIconTapped)
+                            },
+                            onWeatherRefresh: {
+                                store.send(.loadWeatherRecommendations)
                             }
                         )
                         

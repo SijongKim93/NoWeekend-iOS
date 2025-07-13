@@ -8,11 +8,15 @@
 
 import SwiftUI
 import DesignSystem
+import HomeDomain
 
 struct WeekVacation: View {
     let currentMonth: String
     let currentWeekOfMonth: String
+    let weatherData: [Weather]
+    let isWeatherLoading: Bool
     let onLocationIconTapped: () -> Void
+    let onWeatherRefresh: () -> Void
     
     var body: some View {
         VStack {
@@ -25,7 +29,6 @@ struct WeekVacation: View {
                         .resizable()
                         .frame(width: 24, height: 24)
                 }
-                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 24)
             
@@ -35,6 +38,15 @@ struct WeekVacation: View {
                     .scaledToFit()
                     .frame(width: 38)
             })
+            
+            // 날씨 데이터가 있을 때만 WeatherSection 표시
+            if !weatherData.isEmpty || isWeatherLoading {
+                WeatherSection(
+                    weatherData: weatherData,
+                    isLoading: isWeatherLoading,
+                    onPlusTapped: onWeatherRefresh
+                )
+            }
         }
     }
 } 
@@ -43,6 +55,9 @@ struct WeekVacation: View {
     WeekVacation(
         currentMonth: "7", 
         currentWeekOfMonth: "첫째",
-        onLocationIconTapped: {}
+        weatherData: [],
+        isWeatherLoading: false,
+        onLocationIconTapped: {},
+        onWeatherRefresh: {}
     )
 }

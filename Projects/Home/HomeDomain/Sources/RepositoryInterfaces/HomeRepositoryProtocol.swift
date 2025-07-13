@@ -12,4 +12,7 @@ public protocol HomeRepositoryProtocol {
     func getHomes() async throws -> [Home]
     func createHome(_ home: Home) async throws
     func deleteHome(id: String) async throws
+    
+    func registerLocation(_ location: LocationRegistration) async throws
+    func getWeatherRecommendations() async throws -> [Weather]
 } 

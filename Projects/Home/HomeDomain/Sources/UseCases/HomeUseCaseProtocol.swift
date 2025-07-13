@@ -13,4 +13,7 @@ public protocol HomeUseCaseProtocol {
     func createHome(title: String, date: Date, description: String?) async throws
     func deleteHome(id: String) async throws
     func getUpcomingHomes() async throws -> [Home]
+    
+    func registerLocation(latitude: Double, longitude: Double) async throws
+    func getWeatherRecommendations() async throws -> [Weather]
 } 

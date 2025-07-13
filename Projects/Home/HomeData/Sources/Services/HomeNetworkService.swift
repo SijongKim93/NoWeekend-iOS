@@ -1,34 +1,24 @@
 //
-//  HomeRepositoryImpl.swift
+//  HomeNetworkService.swift
 //  HomeData
 //
-//  Created by 이지훈 on 7/3/25.
-//  Copyright © 2025 com.noweekend. All rights reserved.
+//  Created by 김나희 on 2025/01/13.
 //
 
-import DIContainer
 import Foundation
-import HomeDomain
 import NWNetwork
+import HomeDomain
 
-public final class HomeRepositoryImpl: HomeRepositoryProtocol {
+public protocol HomeNetworkServiceProtocol {
+    func registerLocation(_ location: LocationRegistration) async throws
+    func getWeatherRecommendations() async throws -> [WeatherItemDTO]
+}
+
+public final class HomeNetworkService: HomeNetworkServiceProtocol {
     private let networkService: NWNetworkServiceProtocol
 
     public init(networkService: NWNetworkServiceProtocol) {
         self.networkService = networkService
-    }
-    
-    public func getHomes() async throws -> [Home] {
-        // 빈 배열 반환 - 뷰에서 자체 데이터 사용
-        return []
-    }
-    
-    public func createHome(_ home: Home) async throws {
-        // 빈 구현
-    }
-    
-    public func deleteHome(id: String) async throws {
-        // 빈 구현
     }
 
     public func registerLocation(_ location: LocationRegistration) async throws {
@@ -43,11 +33,11 @@ public final class HomeRepositoryImpl: HomeRepositoryProtocol {
         )
     }
 
-    public func getWeatherRecommendations() async throws -> [Weather] {
+    public func getWeatherRecommendations() async throws -> [WeatherItemDTO] {
         let response: ApiResponse<WeatherRecommendResponseDTO> = try await networkService.get(
             endpoint: HomeEndpoint.getWeatherRecommendations.path,
             parameters: nil
         )
-        return response.data?.weatherResponses.map { $0.toDomain() } ?? []
+        return response.data?.weatherResponses ?? []
     }
 } 
