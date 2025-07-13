@@ -36,6 +36,8 @@ public final class CalendarCoordinator: ObservableObject, Coordinatorable {
                 editingScheduleId: scheduleId,
                 selectedDate: selectedDate
             )
+        case .dateDetail(let selectedDate):
+            DateDetailView(selectedDate: selectedDate)
         }
     }
     
@@ -61,6 +63,7 @@ public enum CalendarRouter {
         case main
         case taskCreate(selectedDate: Date)
         case taskEdit(todoId: Int, title: String, category: String?, scheduleId: String?, selectedDate: Date)
+        case dateDetail(selectedDate: Date)
     }
     
     public enum Sheet: String, Identifiable {

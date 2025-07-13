@@ -1,5 +1,5 @@
 //
-//  TaskEditBottomSheet.swift - 연차 처리 추가
+//  TaskEditBottomSheet.swift
 //  Shared
 //
 //  Created by 이지훈 on 6/18/25.
@@ -42,7 +42,7 @@ public struct TaskEditBottomSheet: View {
         var items = [
             ActionItem(
                 image: Image(.icnEdit),
-                title: " 할 일 수정",
+                title: "할 일 수정",
                 textColor: DS.Colors.Text.netural,
                 action: onEditAction
             )
