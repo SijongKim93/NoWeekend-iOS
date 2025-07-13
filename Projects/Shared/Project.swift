@@ -10,7 +10,8 @@ let project = Project.make(
             sources: ["Utils/Sources/**"],
             dependencies: [
                 .Core.diContainer,
-                .External.swinject
+                .External.swinject,
+                .SDK.coreLocation
             ]
         ),
         .framework(

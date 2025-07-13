@@ -256,6 +256,9 @@ private extension CalendarView {
                 selectedDate: selectedDate
             ))
             
+        case .navigateToDateDetail(let selectedDate):
+            coordinator.push(.dateDetail(selectedDate: selectedDate))
+            
         case .showError(let message):
             print("❌ Error: \(message)")
             

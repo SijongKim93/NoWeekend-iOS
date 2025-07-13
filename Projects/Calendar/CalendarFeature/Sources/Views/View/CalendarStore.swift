@@ -46,6 +46,8 @@ public final class CalendarStore: ObservableObject {
             await handleToggleChanged(toggle)
         case .dateSelected(let date):
             await handleDateSelected(date)
+        case .dateDetailRequested(let date):
+            handleDateDetailRequested(date)
         case .categorySelected(let category):
             handleCategorySelected(category)
         case .directInputTapped:
@@ -85,8 +87,18 @@ private extension CalendarStore {
     @MainActor
     func handleDateSelected(_ date: Date) async {
         state.selectedDate = date
-        await loadSchedules()
-        updateTodoItemsForSelectedDate()
+        
+        if state.selectedToggle == .month {
+            effectSubject.send(.navigateToDateDetail(date))
+        } else {
+            await loadSchedules()
+            updateTodoItemsForSelectedDate()
+        }
+    }
+    
+    @MainActor
+    func handleDateDetailRequested(_ date: Date) {
+        effectSubject.send(.navigateToDateDetail(date))
     }
     
     @MainActor

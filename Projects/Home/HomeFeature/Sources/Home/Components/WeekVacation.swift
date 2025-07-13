@@ -10,12 +10,22 @@ import SwiftUI
 import DesignSystem
 
 struct WeekVacation: View {
+    let currentMonth: String
+    let currentWeekOfMonth: String
+    let onLocationIconTapped: () -> Void
+    
     var body: some View {
         VStack {
             HStack {
-                Text("6월 첫째주 휴가를 추천드려요")
+                Text("\(currentMonth)월 \(currentWeekOfMonth)주 휴가를 추천드려요")
                     .font(.heading5)
                 Spacer()
+                Button(action: onLocationIconTapped) {
+                    DS.Images.icnLocation
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 24)
             
@@ -28,3 +38,11 @@ struct WeekVacation: View {
         }
     }
 } 
+
+#Preview {
+    WeekVacation(
+        currentMonth: "7", 
+        currentWeekOfMonth: "첫째",
+        onLocationIconTapped: {}
+    )
+}

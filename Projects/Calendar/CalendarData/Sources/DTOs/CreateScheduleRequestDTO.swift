@@ -2,19 +2,18 @@
 //  CreateScheduleDTO.swift
 //  CalendarData
 //
-//  Created by Assistant on 7/9/25.
+//  Created by 이지훈 on 7/9/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
 import CalendarDomain
 import Foundation
 
-// 요청 DTO - Encodable만 필요
 public struct CreateScheduleRequestDTO: Encodable {
     public let title: String
-    public let date: String        // "2025-07-12"
-    public let startTime: String   // "10:00:00"
-    public let endTime: String     // "11:00:00"
+    public let date: String
+    public let startTime: String
+    public let endTime: String
     public let category: String
     public let temperature: Int
     public let allDay: Bool
@@ -25,8 +24,8 @@ public struct CreateScheduleRequestDTO: Encodable {
 public struct CreateScheduleDataDTO: Decodable {
     public let id: String
     public let title: String
-    public let startTime: String   // "2025-07-12T10:00:00"
-    public let endTime: String     // "2025-07-12T11:00:00"
+    public let startTime: String  
+    public let endTime: String    
     public let category: String
     public let temperature: Int
     public let allDay: Bool
