@@ -16,11 +16,11 @@ public enum OnboardingEndpoint {
     public var path: String {
         switch self {
         case .profile:
-            return "/api/v1/user/onboarding/profile"
+            return "/user/onboarding/profile"
         case .leave:
-            return "/api/v1/user/onboarding/leave"
+            return "/user/onboarding/leave"
         case .tag:
-            return "/api/v1/user/onboarding/tag"
+            return "/user/onboarding/tag"
         }
     }
     

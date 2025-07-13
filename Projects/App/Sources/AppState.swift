@@ -20,19 +20,11 @@ public class AppState {
     public var isLoading: Bool = true
     
     private var cancellables = Set<AnyCancellable>()
+    private let tokenManager: TokenManagerInterface
     
     public init() {
-        print("🌐 AppState 초기화")
-        setupTempTokenIfNeeded()
+        self.tokenManager = DIContainer.shared.resolve(TokenManagerInterface.self)
         setupLoginBinding()
-    }
-    
-    private func setupTempTokenIfNeeded() {
-        let savedToken = UserDefaults.standard.string(forKey: "access_token")
-        if savedToken?.isEmpty != false {
-            print("🔑 임시 토큰을 UserDefaults에 저장")
-            UserDefaults.standard.set(nil, forKey: "access_token")
-        }
     }
     
     private func setupLoginBinding() {
@@ -44,9 +36,14 @@ public class AppState {
                 switch effect {
                 case .navigateToHome:
                     self?.handleLoginSuccess()
+                case .navigateToOnboarding:
+                    self?.handleLoginSuccess()
+                case .navigateToLogin:
+                    self?.handleLogout()
                 case .showError(let message):
                     print("로그인 에러: \(message)")
-                
+                case .showWithdrawalSuccess:
+                    print("회원탈퇴 성공")
                 @unknown default:
                     print("알 수 없는 Effect: \(effect)")
                 }
@@ -58,7 +55,7 @@ public class AppState {
         isLoading = true
         
         DispatchQueue.main.async {
-            let hasValidToken = self.hasValidAccessToken()
+            let hasValidToken = self.tokenManager.hasValidAccessToken()
             self.isLoggedIn = hasValidToken
             
             if hasValidToken {
@@ -66,45 +63,55 @@ public class AppState {
             } else {
                 self.isLoading = false
             }
-            
-            print("✅ 로그인 상태: \(hasValidToken)")
         }
     }
     
     public func checkOnboardingStatus() {
-        let repository = DIContainer.shared.resolve(OnboardingRepositoryInterface.self)
+        let onboardingCompleted = UserDefaults.standard.bool(forKey: "onboarding_completed")
+        self.isOnboardingCompleted = onboardingCompleted
         
         isLoading = false
-        
-        print("✅ 온보딩 상태 확인 완료: \(isOnboardingCompleted)")
     }
     
     public func completeOnboarding() {
-        print("✅ 온보딩 완료 처리")
+        UserDefaults.standard.set(true, forKey: "onboarding_completed")
         isOnboardingCompleted = true
     }
-    
-    // MARK: - Login
     
     private func handleLoginSuccess() {
         isLoggedIn = true
         checkOnboardingStatus()
     }
     
-    public func logout() {
-        print("🚪 로그아웃 처리")
-    
-        UserDefaults.standard.removeObject(forKey: "access_token")
-        
-        // 상태 초기화
+    private func handleLogout() {
         isLoggedIn = false
+        isOnboardingCompleted = false
     }
     
-    private func hasValidAccessToken() -> Bool {
-        guard let token = UserDefaults.standard.string(forKey: "access_token"),
-              !token.isEmpty else {
-            return false
+    public func logout() {
+        tokenManager.clearAllTokens()
+        UserDefaults.standard.removeObject(forKey: "onboarding_completed")
+        
+        isLoggedIn = false
+        isOnboardingCompleted = false
+        
+        updateNetworkServiceToken(nil)
+        
+        print("✅ 수동 로그아웃 완료")
+    }
+    
+    public func getAuthenticationState() -> (isLoggedIn: Bool, isOnboardingCompleted: Bool) {
+        let hasValidToken = tokenManager.hasValidAccessToken()
+        let onboardingCompleted = UserDefaults.standard.bool(forKey: "onboarding_completed")
+        
+        return (isLoggedIn: hasValidToken, isOnboardingCompleted: onboardingCompleted)
+    }
+    
+    private func updateNetworkServiceToken(_ token: String?) {
+        DIContainer.shared.register(NWNetworkServiceProtocol.self) { _ in
+            return NWNetworkService(authToken: token)
         }
-        return true
+        
+        print("🔄 NetworkService 토큰 업데이트: \(token != nil ? "있음" : "없음")")
     }
 }

@@ -104,6 +104,9 @@ public final class LoginStore: ObservableObject {
     private func handleSignOut() {
         authUseCase.signOutGoogle()
         authUseCase.signOutApple()
+        
+        UserDefaults.standard.removeObject(forKey: "access_token")
+        
         state = LoginState()
     }
     
@@ -111,7 +114,6 @@ public final class LoginStore: ObservableObject {
     
     @MainActor
     private func handleAppleWithdrawal() async {
-        print("🗑️ Apple 계정 회원탈퇴 시작")
         state.errorMessage = ""
         state.isWithdrawing = true
 
