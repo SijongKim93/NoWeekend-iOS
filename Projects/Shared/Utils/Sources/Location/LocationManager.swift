@@ -155,14 +155,15 @@ extension LocationManager: CLLocationManagerDelegate {
             self.currentLocation = LocationInfo(from: location)
             self.locationError = nil
             self.saveLocation(location)
-            print("위치 업데이트: \(location.coordinate)")
+            print("✅ 위치 업데이트 성공: \(location.coordinate)")
         }
     }
     
     nonisolated public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
             self.locationError = error
-            print("위치 오류: \(error.localizedDescription)")
+            print("❌ 위치 오류: \(error.localizedDescription)")
+            print("   - 오류 코드: \(error)")
         }
     }
     
@@ -174,8 +175,8 @@ extension LocationManager: CLLocationManagerDelegate {
             
             switch status {
             case .authorizedWhenInUse, .authorizedAlways:
-                print("권한 허용됨 - 위치 요청 가능")
-                break
+                print("권한 허용됨 - 위치 요청 시작")
+                self.requestLocation()
             case .denied, .restricted:
                 print("권한 거부됨")
                 break
