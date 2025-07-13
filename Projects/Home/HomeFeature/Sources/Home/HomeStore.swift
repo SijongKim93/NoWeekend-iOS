@@ -41,6 +41,28 @@ final class HomeStore: ObservableObject {
     private func handleViewDidLoad() {
         // 초기 데이터 로딩 로직
         // TODO: UseCase를 통해 사용자 정보 로딩
+        updateCurrentDateInfo()
+    }
+    
+    private func updateCurrentDateInfo() {
+        // TimeZone 고정
+        let koreaTimeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        let now = Date()
+        
+        // 월 계산
+        let monthFormatter = DateFormatter()
+        monthFormatter.locale = Locale(identifier: "ko_KR")
+        monthFormatter.dateFormat = "M"
+        monthFormatter.timeZone = koreaTimeZone
+        state.currentMonth = monthFormatter.string(from: now)
+        
+        // 주차 계산
+        var calendar = Calendar.current
+        calendar.timeZone = koreaTimeZone
+        let weekOfMonth = calendar.component(.weekOfMonth, from: now)
+        
+        let weekNames = ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째"]
+        state.currentWeekOfMonth = weekNames[weekOfMonth - 1]
     }
     
     private func handleVacationCardTapped(_ cardType: VacationCardType) {

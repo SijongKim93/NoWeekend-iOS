@@ -18,6 +18,8 @@ struct HomeState: Equatable {
     var vacationBakingStatus: VacationBakingStatus = .notStarted
     var remainingAnnualLeave: Int = 10
     
+    var currentMonth: String = ""
+    var currentWeekOfMonth: String = ""
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .home)
