@@ -15,31 +15,15 @@ import SwiftUI
 
 @MainActor
 struct ContentView: View {
-    @State private var appState = AppState()
-    
     init() {}
     
     var body: some View {
-        currentView
-            .onAppear {
-                appState.checkLoginStatus()
-            }
-    }
-
-    @ViewBuilder
-    private var currentView: some View {
-        if appState.isLoading {
-            LoadingView()
-        } else if !appState.isLoggedIn {
-            TabBarView()
-        } else if !appState.isOnboardingCompleted {
-            OnboardingView()
-        } else {
-            TabBarView()
-        }
+        AppCoordinatorView()
     }
 }
 
+
+// 임시, 언제든 삭제 가능 현재 런치스크린 이전에 남겨둠
 struct LoadingView: View {
     var body: some View {
         Text("Loading...")

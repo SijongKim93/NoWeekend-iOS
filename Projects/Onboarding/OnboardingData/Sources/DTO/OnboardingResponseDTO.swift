@@ -9,13 +9,27 @@
 import Foundation
 
 public struct OnboardingResponseDTO: Decodable {
-    public let success: Bool
-    public let message: String?
-    public let data: OnboardingDataDTO?
+    public let result: String
+    public let data: String
+    public let error: ErrorInfo?
     
-    public init(success: Bool, message: String?, data: OnboardingDataDTO?) {
-        self.success = success
-        self.message = message
+    public init(result: String, data: String, error: ErrorInfo? = nil) {
+        self.result = result
         self.data = data
+        self.error = error
+    }
+    
+    public var isSuccess: Bool {
+        return result == "SUCCESS"
+    }
+}
+
+public struct ErrorInfo: Decodable {
+    public let code: String?
+    public let message: String?
+    
+    public init(code: String? = nil, message: String? = nil) {
+        self.code = code
+        self.message = message
     }
 }
