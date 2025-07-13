@@ -10,6 +10,8 @@ import SwiftUI
 import DesignSystem
 
 struct WeekVacation: View {
+    @ObservedObject var store: HomeStore
+    
     var body: some View {
         VStack {
             HStack {
@@ -19,12 +21,13 @@ struct WeekVacation: View {
             }
             .padding(.horizontal, 24)
             
-            WeekCalendarView(cellContent: {_ in
-                DS.Images.imgToastVacation
-                    .resizable()
-                    .scaledToFit()
+            WeekCalendarView(cellContent: { date in
+                store.calendarCellContent(for: date) 
                     .frame(width: 38)
             })
         }
+        .task {
+            await store.loadWeeklySchedules()
+        }
     }
-} 
+}

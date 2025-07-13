@@ -55,7 +55,7 @@ public struct HomeView: View {
                         .background(DS.Colors.Background.alternative01)
                         
                         Spacer(minLength: 48)
-                        WeekVacation()
+                        WeekVacation(store: store)
                         
                         Spacer(minLength: 48)
                         ShortCardSection(
