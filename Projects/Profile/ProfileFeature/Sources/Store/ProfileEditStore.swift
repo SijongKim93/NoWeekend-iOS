@@ -1,5 +1,5 @@
 //
-//  ProfileEditStore.swift
+//  ProfileEditStore.swift (개선된 버전)
 //  ProfileFeature
 //
 //  Created by 김시종 on 7/12/25.
@@ -18,13 +18,52 @@ public final class ProfileEditStore: ObservableObject {
     public var effect: AnyPublisher<ProfileEditEffect, Never> {
         effectSubject.eraseToAnyPublisher()
     }
-    
+
     private let updateUserProfileUseCase: UpdateUserProfileUseCaseProtocol
+    private let profileStore: ProfileStore
     private var cancellables = Set<AnyCancellable>()
     
-    public init(updateUserProfileUseCase: UpdateUserProfileUseCaseProtocol) {
+    @Published public private(set) var isInitialized = false
+    
+    public init(
+        updateUserProfileUseCase: UpdateUserProfileUseCaseProtocol,
+        profileStore: ProfileStore
+    ) {
         self.updateUserProfileUseCase = updateUserProfileUseCase
+        self.profileStore = profileStore
+        setupProfileStoreSubscription()
     }
+
+    private func setupProfileStoreSubscription() {
+        profileStore.$state
+            .map(\.userProfile)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .first()
+            .sink { [weak self] profile in
+                self?.handleProfileLoaded(profile)
+            }
+            .store(in: &cancellables)
+    }
+    
+    public func initializeIfNeeded() {
+        guard !isInitialized else { return }
+        
+        if let profile = profileStore.state.userProfile {
+            handleProfileLoaded(profile)
+        } else if !profileStore.state.isLoading {
+            profileStore.loadInitialData()
+        }
+    }
+    
+    private func handleProfileLoaded(_ profile: UserProfile) {
+        guard !isInitialized else { return }
+        
+        send(.initializeWithProfile(profile))
+        isInitialized = true
+    }
+    
+    // MARK: - Action Handler
     
     public func send(_ action: ProfileEditAction) {
         switch action {
@@ -54,13 +93,12 @@ public final class ProfileEditStore: ObservableObject {
         }
     }
     
-    // MARK: - Action Handlers (편집 로직만)
+    // MARK: - Action Handlers
     
     private func handleInitializeWithProfile(_ profile: UserProfile) {
         state.nickname = profile.nickname ?? profile.name
         state.birthDate = formatBirthDateForDisplay(profile.birthDate)
         
-        // UI 검증만 수행 (길이, 빈 값 등)
         validateNicknameUI(state.nickname)
         validateBirthDateUI(state.birthDate)
     }
@@ -102,6 +140,7 @@ public final class ProfileEditStore: ObservableObject {
     private func handleProfileSaved(_ profile: UserProfile) {
         state.isSaving = false
         state.saveSuccess = true
+        
         effectSubject.send(.showSuccessMessage("프로필이 성공적으로 저장되었습니다"))
         effectSubject.send(.navigateBack)
     }
@@ -133,9 +172,8 @@ public final class ProfileEditStore: ObservableObject {
     
     private func handleResetState() {
         state = ProfileEditState()
+        isInitialized = false
     }
-    
-    // MARK: - UI 검증 (간단한 것만)
     
     private func validateNicknameUI(_ nickname: String) {
         if nickname.isEmpty {
@@ -169,27 +207,25 @@ public final class ProfileEditStore: ObservableObject {
         birthDate
     }
     
-    func initializeWith(profile: UserProfile) {
-        send(.initializeWithProfile(profile))
-    }
+    // MARK: - Public Interface (편의 메서드)
     
-    func updateNickname(_ nickname: String) {
+    public func updateNickname(_ nickname: String) {
         send(.updateNickname(nickname))
     }
     
-    func updateBirthDate(_ birthDate: String) {
+    public func updateBirthDate(_ birthDate: String) {
         send(.updateBirthDate(birthDate))
     }
     
-    func saveProfile() {
+    public func saveProfile() {
         send(.saveProfile)
     }
     
-    func clearErrors() {
+    public func clearErrors() {
         send(.clearErrors)
     }
     
-    func resetState() {
+    public func resetState() {
         send(.resetState)
     }
 }
