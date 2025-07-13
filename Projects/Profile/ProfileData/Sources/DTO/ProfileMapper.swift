@@ -19,7 +19,7 @@ extension UserProfileDTO {
             gender: Gender(rawValue: gender) ?? .other,
             providerId: providerId,
             providerType: ProviderType(rawValue: providerType) ?? .apple,
-            revocableToken: revocableToken,
+            revocableToken: revocableToken ?? "",
             role: UserRole(rawValue: role) ?? .user,
             birthDate: birthDate,
             remainingAnnualLeave: remainingAnnualLeave,
