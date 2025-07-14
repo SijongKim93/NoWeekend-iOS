@@ -12,8 +12,8 @@ public struct DatePickerWithLabelBottomSheet: View {
     @Binding public var selectedDate: Date
     @Environment(\.dismiss) private var dismiss
     
-    @State private var tempSelectedMonth: Int = 0
-    @State private var tempSelectedYear: Int = 0
+    @State private var tempSelectedMonth: Int
+    @State private var tempSelectedYear: Int
     
     private let months = [
         "January", "February", "March", "April", "May", "June",
@@ -25,32 +25,23 @@ public struct DatePickerWithLabelBottomSheet: View {
     }
     
     private var years: [Int] {
-        Array((currentYear - 50)...(currentYear + 50))
+        Array((currentYear - 5)...(currentYear + 5))
     }
     
     public init(selectedDate: Binding<Date>) {
         self._selectedDate = selectedDate
+        _tempSelectedMonth = State(initialValue: Calendar.current.component(.month, from: selectedDate.wrappedValue))
+        _tempSelectedYear = State(initialValue: Calendar.current.component(.year, from: selectedDate.wrappedValue))
     }
     
     public var body: some View {
         BottomSheetContainer(height: 480) {
             VStack(spacing: 24) {
                 BottomSheetHeader(
-                    title: "확인하고 싶은",
-                    subtitle: "휴가 날짜를 선택해주세요"
+                    title: "확인하고 싶은\n휴가 날짜를 선택해주세요"
                 )
                 
                 HStack(spacing: 0) {
-                    Picker("Month", selection: $tempSelectedMonth) {
-                        ForEach(1...12, id: \.self) { month in
-                            Text(months[month - 1])
-                                .tag(month)
-                        }
-                    }
-                    .pickerStyle(.wheel)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    
                     Picker("Year", selection: $tempSelectedYear) {
                         ForEach(years, id: \.self) { year in
                             Text(String(year))
@@ -60,16 +51,25 @@ public struct DatePickerWithLabelBottomSheet: View {
                     .pickerStyle(.wheel)
                     .frame(maxWidth: .infinity)
                     .clipped()
-                }
-                .onAppear {
-                    tempSelectedMonth = Calendar.current.component(.month, from: selectedDate)
-                    tempSelectedYear = Calendar.current.component(.year, from: selectedDate)
+                    .labelsHidden()
+                    
+                    Picker("Month", selection: $tempSelectedMonth) {
+                        ForEach(1...12, id: \.self) { month in
+                            Text(months[month - 1])
+                                .tag(month)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                    .labelsHidden()
+                    
                 }
                 
                 Spacer()
                 
                 NWButton.black(
-                    "확인",
+                    "선택하기",
                     size: .xl
                 ) {
                     applySelectedDate()
