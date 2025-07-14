@@ -10,15 +10,22 @@ import NWNetwork
 
 public enum LoginDataModule {
     public static func registerRepositories() {
-        print("🔐 LoginData Repository 등록")
         
-        DIContainer.shared.container.register(NWNetworkServiceProtocol.self) { _ in
-            NWNetworkService()
+        DIContainer.shared.container.register(NWNetworkServiceProtocol.self) { resolver in
+            let tokenManager = resolver.resolve(TokenManagerInterface.self)!
+            let savedToken = tokenManager.getAccessToken()
+            let authToken = savedToken?.isEmpty == false ? savedToken : Config.tempAccessToken
+            
+            return NWNetworkService(authToken: authToken)
         }.inObjectScope(.container)
         
         DIContainer.shared.container.register(AuthRepositoryInterface.self) { resolver in
             let networkService = resolver.resolve(NWNetworkServiceProtocol.self)!
-            return AuthRepositoryImpl(networkService: networkService)
+            let tokenManager = resolver.resolve(TokenManagerInterface.self)!
+            return AuthRepositoryImpl(
+                networkService: networkService,
+                tokenManager: tokenManager
+            )
         }.inObjectScope(.container)
         
         DIContainer.shared.container.register(AppleAuthServiceInterface.self) { _ in
@@ -31,6 +38,5 @@ public enum LoginDataModule {
             GoogleAuthService()
         }.inObjectScope(.graph)
         
-        print("✅ LoginData Repository 등록 완료")
     }
 }

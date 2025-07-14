@@ -9,9 +9,8 @@ import Foundation
 import LoginDomain
 
 public struct GoogleLoginResponseDTO: Decodable {
-    public let email: String
-    public let exists: Bool
     public let accessToken: String
+    public let exists: Bool
 }
 
 public struct ApiResponseGoogleLoginDTO: Decodable {
@@ -28,7 +27,7 @@ public struct ErrorMessageDTO: Decodable {
 extension GoogleLoginResponseDTO {
     public func toDomain() -> LoginUser {
         LoginUser(
-            email: self.email,
+            email: "",
             accessToken: self.accessToken,
             isExistingUser: self.exists
         )

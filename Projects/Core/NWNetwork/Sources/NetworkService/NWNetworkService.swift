@@ -8,6 +8,7 @@
 
 import Alamofire
 import Foundation
+import DIContainer
 
 public protocol NWNetworkServiceProtocol {
     func get<T: Decodable>(endpoint: String, parameters: [String: Any]?) async throws -> T
@@ -65,16 +66,24 @@ public class NWNetworkService: NWNetworkServiceProtocol {
     }
     
     private func getCurrentToken() -> String? {
+        if let runtimeToken = authToken, !runtimeToken.isEmpty {
+            return runtimeToken
+        }
+        
+        do {
+            let tokenManager = DIContainer.shared.resolve(TokenManagerInterface.self)
+            if let token = tokenManager.getAccessToken(), !token.isEmpty {
+                return token
+            }
+        }
+        
         if let savedToken = UserDefaults.standard.string(forKey: "access_token"), !savedToken.isEmpty {
             return savedToken
         }
         
-        if let staticToken = authToken, !staticToken.isEmpty {
-            return staticToken
-        }
-        
         return Config.tempAccessToken
     }
+    
     
     // MARK: - Main Request Method
     

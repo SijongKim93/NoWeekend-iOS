@@ -28,7 +28,7 @@ public struct UserProfileDTO: Codable {
     public let gender: String
     public let providerId: String
     public let providerType: String
-    public let revocableToken: String
+    public let revocableToken: String?
     public let role: String
     public let birthDate: String?
     public let remainingAnnualLeave: Double
@@ -44,7 +44,7 @@ public struct UserProfileDTO: Codable {
         gender: String,
         providerId: String,
         providerType: String,
-        revocableToken: String,
+        revocableToken: String?,
         role: String,
         birthDate: String?,
         remainingAnnualLeave: Double,
