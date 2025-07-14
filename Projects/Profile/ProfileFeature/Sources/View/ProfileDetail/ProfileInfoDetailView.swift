@@ -44,6 +44,7 @@ private struct InfoDetailHeaderSection: View {
 
 private struct InfoDetailSettingSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
+    @State private var showLogoutAlert = false
     let store: ProfileStore
     
     var body: some View {
@@ -72,14 +73,23 @@ private struct InfoDetailSettingSection: View {
                 rightText: store.providerDisplayText,
                 rightIcon: providerIcon,
                 action: {
-                    handleLogout()
+                    showLogoutAlert = true
                 }
             )
+        }
+        .alert("로그아웃을 하시나요?", isPresented: $showLogoutAlert) {
+            Button("취소", role: .cancel) {
+                
+            }
+            
+            Button("로그아웃", role: .destructive) {
+                handleLogout()
+            }
         }
     }
     
     private func handleLogout() {
-        print("로그아웃 처리 (알럿, 상태 변경, 토큰삭제 등 들어가야함")
+        
     }
     
     private var providerIcon: Image {
