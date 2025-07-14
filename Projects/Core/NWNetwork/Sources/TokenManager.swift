@@ -24,15 +24,10 @@ public final class TokenManager: TokenManagerInterface {
         static let accessToken = "ACCESS_TOKEN"
     }
     
-    public init() {
-        print("🔐 TokenManager 초기화 완료")
-    }
+    public init() {}
     
     // MARK: - Access Token 관리
-    
     public func saveAccessToken(_ token: String) {
-        print("💾 Access Token 저장")
-        print("   - Token 앞 20자: \(String(token.prefix(20)))...")
         userDefaults.set(token, forKey: TokenKey.accessToken)
         userDefaults.synchronize()
         print("✅ Access Token 저장 완료")
@@ -40,19 +35,12 @@ public final class TokenManager: TokenManagerInterface {
     
     public func getAccessToken() -> String? {
         let token = userDefaults.string(forKey: TokenKey.accessToken)
-        if let token = token {
-            print("📖 Access Token 조회 성공")
-            print("   - Token 앞 20자: \(String(token.prefix(20)))...")
-        } else {
-            print("❌ Access Token 없음")
-        }
+        
         return token
     }
     
     // MARK: - 토큰 관리
-    
     public func clearAllTokens() {
-        print("🗑️ Access Token 삭제")
         userDefaults.removeObject(forKey: TokenKey.accessToken)
         userDefaults.synchronize()
         print("✅ Access Token 삭제 완료")

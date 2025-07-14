@@ -12,7 +12,7 @@ import UIKit
 public protocol AppleAuthServiceInterface {
     @MainActor
     func signIn() async throws -> AppleSignInResult
-    
+
     func getCredentialState(for userID: String) async throws -> String
     
     @MainActor

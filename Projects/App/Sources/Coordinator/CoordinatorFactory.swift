@@ -26,4 +26,12 @@ struct CoordinatorFactory {
     var calendarCoordinatorRootView: some View {
         CalendarCoordinatorView()
     }
+    
+    var appCoordinatorRootView: some View {
+        AppCoordinatorView()
+    }
+    
+    static func createAppCoordinator() -> AppCoordinator {
+        return AppCoordinator()
+    }
 }

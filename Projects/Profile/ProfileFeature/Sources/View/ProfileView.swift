@@ -13,9 +13,9 @@ public struct ProfileView: View {
     
     public var body: some View {
         VStack {
-            ProfileHeaderSection()
-            ProfileVacationSection()
-            ProfileSettingSection()
+            ProfileHeaderSection(store: store)
+            ProfileVacationSection(store: store)
+            ProfileSettingSection(store: store)
             
             Spacer()
         }
@@ -30,17 +30,17 @@ public struct ProfileView: View {
 
 private struct ProfileHeaderSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
+    let store: ProfileStore
     
     var body: some View {
         HStack(alignment: .center) {
-            Text("김시종이")
+            Text(store.state.userProfile?.nickname ?? "알 수 없음")
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
             
             Spacer()
             
             Button {
-                print("프로필 정보 수정 버튼")
                 coordinator.push(.infoEdit)
             } label: {
                 Text("수정")
@@ -56,7 +56,8 @@ private struct ProfileHeaderSection: View {
 }
 
 private struct ProfileVacationSection: View {
-
+    let store: ProfileStore
+    
     var body: some View {
         statusCardView
             .padding(.horizontal, 20)
@@ -79,7 +80,7 @@ private struct ProfileVacationSection: View {
                         .font(.body2)
                         .foregroundColor(DS.Colors.Text.netural)
                     
-                    Text("10.5")
+                    Text(store.remainingLeaveText)
                         .font(.heading5)
                         .foregroundColor(DS.Colors.Text.netural)
                 }
@@ -92,11 +93,11 @@ private struct ProfileVacationSection: View {
                 VStack(spacing: 4) {
                     Text("사용한 연차")
                         .font(.body2)
-                        .foregroundColor(DS.Colors.Text.netural)// netural
+                        .foregroundColor(DS.Colors.Text.netural)
                     
-                    Text("3")
+                    Text(store.usedLeaveText)
                         .font(.heading5)
-                        .foregroundColor(DS.Colors.Text.netural)// netural
+                        .foregroundColor(DS.Colors.Text.netural)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -108,6 +109,7 @@ private struct ProfileVacationSection: View {
 
 private struct ProfileSettingSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
+    let store: ProfileStore
 
     var body: some View {
         VStack(spacing: 32) {
@@ -125,7 +127,7 @@ private struct ProfileSettingSection: View {
                         titleFont: .body1,
                         rightText: "개인",
                         color: DS.Colors.TaskItem.orange
-                    ) // 선택한 카테고리값 적용해야함
+                    )
                     
                     SettingDivider()
                     
@@ -148,7 +150,7 @@ private struct ProfileSettingSection: View {
                     SettingRow.withRightTextOnly(
                         title: "현재 버전",
                         titleFont: .heading6,
-                        rightText: "v. 1.0"
+                        rightText: store.appVersion
                     )
                 }
         }

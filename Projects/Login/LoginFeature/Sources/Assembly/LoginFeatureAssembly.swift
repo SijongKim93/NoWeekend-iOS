@@ -16,13 +16,14 @@ public struct LoginFeatureAssembly: Assembly {
     public init() {}
     
     public func assemble(container: Container) {
-        print("🔐 LoginFeatureAssembly 등록 시작")
+        print("🔧 LoginFeatureAssembly - 등록 시작")
         
         container.register(AppleLoginUseCaseInterface.self) { resolver in
             let authRepository = resolver.resolve(AuthRepositoryInterface.self)!
             let appleAuthService = resolver.resolve(AppleAuthServiceInterface.self)!
             return AppleLoginUseCase(
-                appleAuthService: appleAuthService, authRepository: authRepository
+                appleAuthService: appleAuthService,
+                authRepository: authRepository
             )
         }.inObjectScope(.graph)
         
@@ -62,14 +63,17 @@ public struct LoginFeatureAssembly: Assembly {
             let appleLoginUseCase = resolver.resolve(AppleLoginUseCaseInterface.self)!
             let authUseCase = resolver.resolve(AuthUseCaseInterface.self)!
 
-            return LoginStore(
+            let loginStore = LoginStore(
                 loginWithGoogleUseCase: googleLoginUseCase,
                 loginWithAppleUseCase: appleLoginUseCase,
                 authUseCase: authUseCase
             )
+            
+            print("🔧 LoginStore 인스턴스 생성: \(ObjectIdentifier(loginStore))")
+            return loginStore
         }
-        .inObjectScope(.graph)
+        .inObjectScope(.container)
         
-        print("✅ LoginFeatureAssembly 등록 완료")
+        print("✅ LoginFeatureAssembly - 등록 완료")
     }
 }

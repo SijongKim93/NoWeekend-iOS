@@ -72,7 +72,8 @@ public struct HomeView: View {
                             },
                             onWeatherRefresh: {
                                 store.send(.loadWeatherRecommendations)
-                            }
+                            }, 
+                            store: store
                         )
                         
                         Spacer(minLength: 48)

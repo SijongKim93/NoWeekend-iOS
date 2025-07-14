@@ -7,17 +7,21 @@
 //
 
 import DesignSystem
+import DIContainer
 import SwiftUI
 
 struct ProfileInfoDetailView: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
+    @ObservedObject var store: ProfileStore
     
-    public init() {}
+    public init() {
+        self.store = DIContainer.shared.resolve(ProfileStore.self)
+    }
     
     public var body: some View {
         VStack {
             InfoDetailHeaderSection()
-            InfoDetailSettingSection()
+            InfoDetailSettingSection(store: store)
             
             Spacer()
         }
@@ -40,11 +44,13 @@ private struct InfoDetailHeaderSection: View {
 
 private struct InfoDetailSettingSection: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
+    let store: ProfileStore
+    
     var body: some View {
         VStack(spacing: 16) {
             SettingRow.withRightText(
                 title: "계정",
-                rightText: "김매숑",
+                rightText: store.displayNickname,
                 action: {
                     coordinator.push(.edit)
                 }
@@ -63,8 +69,8 @@ private struct InfoDetailSettingSection: View {
             
             SettingRow.withIconAndRightText(
                 title: "로그아웃",
-                rightText: "구글 계정",
-                rightIcon: DS.Images.icon1,
+                rightText: store.providerDisplayText,
+                rightIcon: providerIcon,
                 action: {
                     handleLogout()
                 }
@@ -75,6 +81,22 @@ private struct InfoDetailSettingSection: View {
     private func handleLogout() {
         print("로그아웃 처리 (알럿, 상태 변경, 토큰삭제 등 들어가야함")
     }
+    
+    private var providerIcon: Image {
+        guard let profile = store.state.userProfile else {
+            return DS.Images.icon1
+        }
+        
+        switch profile.providerType {
+        case .google:
+            return DS.Images.icon1
+        case .apple:
+            return DS.Images.icon
+        @unknown default:
+            return DS.Images.icon1
+        }
+    }
+    
 }
 
 private struct InfoDetailBottomSection: View {

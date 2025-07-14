@@ -17,6 +17,8 @@ struct WeekVacation: View {
     let isWeatherLoading: Bool
     let onLocationIconTapped: () -> Void
     let onWeatherRefresh: () -> Void
+
+    @ObservedObject var store: HomeStore
     
     var body: some View {
         VStack {
@@ -32,10 +34,8 @@ struct WeekVacation: View {
             }
             .padding(.horizontal, 24)
             
-            WeekCalendarView(cellContent: {_ in
-                DS.Images.imgToastVacation
-                    .resizable()
-                    .scaledToFit()
+            WeekCalendarView(cellContent: { date in
+                store.calendarCellContent(for: date) 
                     .frame(width: 38)
             })
             
@@ -48,16 +48,8 @@ struct WeekVacation: View {
                 )
             }
         }
+        .task {
+            await store.loadWeeklySchedules()
+        }
     }
-} 
-
-#Preview {
-    WeekVacation(
-        currentMonth: "7", 
-        currentWeekOfMonth: "첫째",
-        weatherData: [],
-        isWeatherLoading: false,
-        onLocationIconTapped: {},
-        onWeatherRefresh: {}
-    )
 }

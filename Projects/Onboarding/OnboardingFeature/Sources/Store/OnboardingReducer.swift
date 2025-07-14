@@ -42,6 +42,8 @@ public struct OnboardingReducer {
                 newState.selectedTags.insert(tag)
             }
             
+            newState.isNextButtonEnabled = newState.isCurrentStepValid && !newState.isLoading
+            
         case .stepValidated(let isValid):
             newState.isNextButtonEnabled = isValid && !newState.isLoading
             
@@ -112,10 +114,10 @@ public struct OnboardingIntentMapper {
             return []
             
         case .updateHasHalfDay(let hasHalfDay):
-            return [.halfDayToggled(hasHalfDay)]
+            return [.halfDayToggled(hasHalfDay), .stepValidationRequested]
             
         case .toggleTag(let tag):
-            return [.tagToggled(tag)]
+            return [.tagToggled(tag), .stepValidationRequested]
             
         case .validateCurrentStep:
             return [.stepValidated(currentState.isCurrentStepValid)]

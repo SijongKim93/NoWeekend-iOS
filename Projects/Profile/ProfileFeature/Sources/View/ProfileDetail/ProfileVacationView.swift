@@ -34,42 +34,44 @@ struct ProfileVacationView: View {
                     vacationStore.saveVacationLeave()
                 }
             )
-            .padding(.bottom, 40)
+            .padding(.bottom, 48)
             
-            NWUserInputView(
-                title: "올해 남은 연차를 알려주세요"
-            ) {
-                VStack {
-                    NWRemainingDaysDisplaySection(
-                        displayDays: displayDaysText,
-                        displayHours: displayHoursText
-                    )
-                    
-                    NWRemainingDaysInputSection(
-                        remainingDays: Binding(
-                            get: {
-                                String(vacationStore.state.remainingDays)
-                            },
-                            set: { newValue in
-                                if let intValue = Int(newValue) {
-                                    vacationStore.updateRemainingDays(intValue)
-                                } else if newValue.isEmpty {
-                                    vacationStore.updateRemainingDays(0)
-                                }
-                            }
-                        ),
-                        remainingDaysError: vacationStore.state.remainingDaysError,
-                        hasHalfDay: Binding(
-                            get: { vacationStore.state.hasHalfDay },
-                            set: { vacationStore.updateHasHalfDay($0) }
+            VStack(spacing: 32) {
+                NWUserInputView(
+                    title: "올해 남은 연차를 알려주세요"
+                ) {
+                    VStack {
+                        NWRemainingDaysDisplaySection(
+                            displayDays: displayDaysText,
+                            displayHours: displayHoursText
                         )
-                    )
-                    
-                    Spacer()
+                        
+                        NWRemainingDaysInputSection(
+                            remainingDays: Binding(
+                                get: {
+                                    String(vacationStore.state.remainingDays)
+                                },
+                                set: { newValue in
+                                    if let intValue = Int(newValue) {
+                                        vacationStore.updateRemainingDays(intValue)
+                                    } else if newValue.isEmpty {
+                                        vacationStore.updateRemainingDays(0)
+                                    }
+                                }
+                            ),
+                            remainingDaysError: vacationStore.state.remainingDaysError,
+                            hasHalfDay: Binding(
+                                get: { vacationStore.state.hasHalfDay },
+                                set: { vacationStore.updateHasHalfDay($0) }
+                            )
+                        )
+                        
+                        Spacer()
+                    }
                 }
             }
+            .padding(.horizontal, 24)
         }
-        .padding(.horizontal, 24)
         .navigationBarHidden(true)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .tabBar)

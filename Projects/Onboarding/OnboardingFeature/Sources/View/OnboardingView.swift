@@ -17,13 +17,12 @@ public struct OnboardingView: View {
         self.store = DIContainer.shared.resolve(OnboardingStore.self)
     }
     
-    // 테스트용 생성자
     public init(store: OnboardingStore) {
         self.store = store
     }
     
     public var body: some View {
-        VStack(spacing: 0) {
+        VStack {
             CustomNavigationBar.conditionalBack(
                 title: "\(store.state.currentStep + 1)/\(OnboardingState.totalSteps)",
                 showBackButton: store.state.currentStep > 0,
@@ -31,7 +30,7 @@ public struct OnboardingView: View {
                     store.send(.goToPreviousStep)
                 }
             )
-            .padding(.bottom, 56)
+            .padding(.bottom, 48)
             
             TabView(selection: $store.state.currentStep) {
                 nicknameStepView
@@ -94,33 +93,34 @@ public struct OnboardingView: View {
     }
     
     private var experienceStepView: some View {
-        NWUserInputView(
-            title: "올해 남은 연차를 알려주세요"
-        ) {
-            VStack {
-                NWRemainingDaysDisplaySection(
-                    displayDays: store.state.displayRemainingDays,
-                    displayHours: store.state.displayRemainingHours
-                )
-            }
-            .padding(.vertical, 32)
-                
-            VStack {
-                NWRemainingDaysInputSection(
-                    remainingDays: Binding(
-                        get: { store.state.remainingDays },
-                        set: { store.send(.updateRemainingDays($0)) }
-                    ),
-                    remainingDaysError: store.state.remainingDaysError,
-                    hasHalfDay: Binding(
-                        get: { store.state.hasHalfDay },
-                        set: { store.send(.updateHasHalfDay($0)) }
+        VStack(spacing: 32) {
+            NWUserInputView(
+                title: "올해 남은 연차를 알려주세요"
+            ) {
+                VStack {
+                    NWRemainingDaysDisplaySection(
+                        displayDays: store.state.displayRemainingDays,
+                        displayHours: store.state.displayRemainingHours
                     )
-                )
+                }
+                
+                VStack {
+                    NWRemainingDaysInputSection(
+                        remainingDays: Binding(
+                            get: { store.state.remainingDays },
+                            set: { store.send(.updateRemainingDays($0)) }
+                        ),
+                        remainingDaysError: store.state.remainingDaysError,
+                        hasHalfDay: Binding(
+                            get: { store.state.hasHalfDay },
+                            set: { store.send(.updateHasHalfDay($0)) }
+                        )
+                    )
+                }
+                
+                Spacer()
+                
             }
-            
-            Spacer()
-    
         }
         .padding(.horizontal, 24)
     }

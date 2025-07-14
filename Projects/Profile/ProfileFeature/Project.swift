@@ -12,6 +12,7 @@ let project = Project.make(
                 .Profile.domain,
                 .Core.coordinator,
                 .Core.diContainer,
+                .Core.nwnetwork,
                 .Shared.designSystem,
                 .Shared.utils
             ]

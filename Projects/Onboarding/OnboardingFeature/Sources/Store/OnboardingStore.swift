@@ -124,7 +124,6 @@ public class OnboardingStore: ObservableObject {
                         nickname: state.nickname,
                         birthDate: state.birthDate
                     )
-                    // MainActor에서 안전하게 processAction 호출
                     await MainActor.run {
                         self.processAction(.saveProfileSucceeded)
                     }
@@ -168,8 +167,13 @@ public class OnboardingStore: ObservableObject {
             }
             
         case .saveTagsSucceeded:
-            print("✅ OnboardingStore: 모든 온보딩 데이터 저장 완료")
-            // 동기적 호출이므로 MainActor.assumeIsolated 사용
+            UserDefaults.standard.set(true, forKey: "onboarding_completed")
+            
+            NotificationCenter.default.post(
+                name: .init("OnboardingCompleted"),
+                object: nil
+            )
+            
             MainActor.assumeIsolated {
                 self.processAction(.onboardingCompleted)
             }

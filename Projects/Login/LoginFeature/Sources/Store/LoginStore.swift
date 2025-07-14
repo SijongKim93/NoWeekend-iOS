@@ -25,6 +25,7 @@ public final class LoginStore: ObservableObject {
         self.loginWithGoogleUseCase = loginWithGoogleUseCase
         self.loginWithAppleUseCase = loginWithAppleUseCase
         self.authUseCase = authUseCase
+        
     }
 
     public func send(_ intent: LoginIntent) {
@@ -35,9 +36,13 @@ public final class LoginStore: ObservableObject {
         case .signInWithApple:
             Task { await handleAppleSignIn() }
         case .signInSucceeded(let user):
-            Task { await handleSignInSuccess(user) }
+            Task { @MainActor in
+                await handleSignInSuccess(user)
+            }
         case .signInFailed(let error):
-            Task { await handleSignInFailure(error) }
+            Task { @MainActor in
+                await handleSignInFailure(error)
+            }
         case .signOut:
             Task { await handleSignOut() }
             
@@ -45,22 +50,29 @@ public final class LoginStore: ObservableObject {
         case .withdrawAppleAccount:
             Task { await handleAppleWithdrawal() }
         case .withdrawalSucceeded:
-            Task { await handleWithdrawalSuccess() }
+            Task { @MainActor in
+                await handleWithdrawalSuccess()
+            }
         case .withdrawalFailed(let error):
-            Task { await handleWithdrawalFailure(error) }
+            Task { @MainActor in
+                await handleWithdrawalFailure(error)
+            }
         }
     }
     
+    // MARK: - Google 로그인 처리
+    
     @MainActor
     private func handleGoogleSignIn() async {
+        
         state.errorMessage = ""
         state.isLoading = true
 
         do {
             let user = try await loginWithGoogleUseCase.execute()
-            send(.signInSucceeded(user: user))
+            await handleSignInSuccess(user)
         } catch {
-            send(.signInFailed(error: error))
+            await handleSignInFailure(error)
         }
     }
 
@@ -71,61 +83,71 @@ public final class LoginStore: ObservableObject {
 
         do {
             let user = try await loginWithAppleUseCase.execute()
-            send(.signInSucceeded(user: user))
+            
+            await handleSignInSuccess(user)
         } catch {
-            send(.signInFailed(error: error))
+            
+            await handleSignInFailure(error)
         }
     }
-
+    
     @MainActor
-    private func handleSignInSuccess(_ user: LoginUser) {
+    private func handleSignInSuccess(_ user: LoginUser) async {
         state.isSignedIn = true
         state.userEmail = user.email
         state.isLoading = false
         
-        // 키체인 변경 예정
-        UserDefaults.standard.set(user.accessToken, forKey: "access_token")
-        
+        if let accessToken = user.accessToken {
+            UserDefaults.standard.set(accessToken, forKey: "access_token")
+            print("   - Access Token 저장 완료")
+        }
         if user.isExistingUser {
+            print("   - Effect 발송: navigateToHome")
             effect.send(.navigateToHome)
         } else {
+            print("   - Effect 발송: navigateToOnboarding")
             effect.send(.navigateToOnboarding)
         }
     }
 
     @MainActor
-    private func handleSignInFailure(_ error: Error) {
+    private func handleSignInFailure(_ error: Error) async {
         state.errorMessage = error.localizedDescription
         state.isLoading = false
+        
         effect.send(.showError(message: error.localizedDescription))
+        
     }
 
     @MainActor
-    private func handleSignOut() {
+    private func handleSignOut() async {
+        
         authUseCase.signOutGoogle()
         authUseCase.signOutApple()
+        
+        UserDefaults.standard.removeObject(forKey: "access_token")
+        
         state = LoginState()
     }
     
-    // MARK: - Apple 회원탈퇴 관련 Handler들
+    // MARK: - Apple 회원탈퇴 관련
     
     @MainActor
     private func handleAppleWithdrawal() async {
-        print("🗑️ Apple 계정 회원탈퇴 시작")
+        
         state.errorMessage = ""
         state.isWithdrawing = true
 
         do {
             try await authUseCase.withdrawAppleAccount()
-            send(.withdrawalSucceeded)
+            await handleWithdrawalSuccess()
         } catch {
-            send(.withdrawalFailed(error: error))
+            await handleWithdrawalFailure(error)
         }
     }
     
     @MainActor
-    private func handleWithdrawalSuccess() {
-        print("✅ Apple 계정 회원탈퇴 성공 처리")
+    private func handleWithdrawalSuccess() async {
         state.isWithdrawing = false
         state = LoginState()
         
@@ -136,8 +158,7 @@ public final class LoginStore: ObservableObject {
     }
     
     @MainActor
-    private func handleWithdrawalFailure(_ error: Error) {
-        print("❌ Apple 계정 회원탈퇴 실패 처리: \(error)")
+    private func handleWithdrawalFailure(_ error: Error) async {
         state.errorMessage = error.localizedDescription
         state.isWithdrawing = false
         effect.send(.showError(message: error.localizedDescription))
