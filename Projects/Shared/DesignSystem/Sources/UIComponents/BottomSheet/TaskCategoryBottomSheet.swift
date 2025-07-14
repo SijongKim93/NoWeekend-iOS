@@ -38,8 +38,8 @@ public struct TaskCategoryBottomSheet: View {
                         .multilineTextAlignment(.center)
                     
                     Text("사용할 기본 카테고리를 선택하세요.")
-                        .font(.body1)
-                        .foregroundColor(DS.Colors.Text.body)
+                        .font(.heading4)
+                        .foregroundColor(DS.Colors.Text.netural)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 24)
@@ -111,7 +111,6 @@ public struct TaskCategoryBottomSheet: View {
     }
 }
 
-// MARK: - Supporting Views
 
 public struct CategorySegmentButton: View {
     let category: TaskCreateCategory
@@ -130,8 +129,6 @@ public struct CategorySegmentButton: View {
         }
     }
 }
-
-// MARK: - TaskCreateCategory Definition (Shared 모듈에 정의)
 
 public enum TaskCreateCategory: String, CaseIterable, Hashable {
     case company = "company"
