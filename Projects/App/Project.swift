@@ -17,6 +17,7 @@ let project = Project.make(
                 .Onboarding.feature,
                 .Login.feature,
                 .Bridge.dataBridge,
+                .Core.diContainer,
                 .Shared.designSystem,
                 .Shared.utils
             ],

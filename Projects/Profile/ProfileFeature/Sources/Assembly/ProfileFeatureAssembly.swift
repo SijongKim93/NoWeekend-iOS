@@ -1,5 +1,5 @@
 //
-//  ProfileFeatureAssembly.swift
+//  ProfileFeatureAssembly.swift (업데이트된 버전)
 //  ProfileFeature
 //
 //  Created by SijongKim on 7/4/25.
@@ -19,7 +19,7 @@ public struct ProfileFeatureAssembly: Assembly {
     public func assemble(container: Container) {
         print("🔧 ProfileFeatureAssembly 등록 시작")
         
-        // MARK: - Base Network Service
+        // MARK: - Infrastructure Layer
         container.register(NWNetworkServiceProtocol.self) { _ in
             let token = UserDefaults.standard.string(forKey: "access_token")
             return NWNetworkService(authToken: token)
@@ -36,6 +36,7 @@ public struct ProfileFeatureAssembly: Assembly {
             return ProfileRepository(networkService: profileNetworkService)
         }.inObjectScope(.container)
         
+        // MARK: - Domain Layer (Use Cases)
         container.register(GetUserProfileUseCaseProtocol.self) { resolver in
             let repository = resolver.resolve(ProfileRepositoryInterface.self)!
             return GetUserProfileUseCase(repository: repository)
@@ -64,11 +65,16 @@ public struct ProfileFeatureAssembly: Assembly {
         container.register(ProfileStore.self) { resolver in
             let getUserProfileUseCase = resolver.resolve(GetUserProfileUseCaseProtocol.self)!
             return ProfileStore(getUserProfileUseCase: getUserProfileUseCase)
-        }.inObjectScope(.graph)
+        }.inObjectScope(.container)
         
         container.register(ProfileEditStore.self) { resolver in
             let updateUserProfileUseCase = resolver.resolve(UpdateUserProfileUseCaseProtocol.self)!
-            return ProfileEditStore(updateUserProfileUseCase: updateUserProfileUseCase)
+            let profileStore = resolver.resolve(ProfileStore.self)!
+            
+            return ProfileEditStore(
+                updateUserProfileUseCase: updateUserProfileUseCase,
+                profileStore: profileStore
+            )
         }.inObjectScope(.graph)
         
         container.register(VacationStore.self) { resolver in
@@ -85,5 +91,7 @@ public struct ProfileFeatureAssembly: Assembly {
                 updateUserTagsUseCase: updateUserTagsUseCase
             )
         }.inObjectScope(.graph)
+        
+        print("✅ ProfileFeatureAssembly 등록 완료")
     }
 }

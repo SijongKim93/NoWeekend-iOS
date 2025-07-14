@@ -17,7 +17,6 @@ public struct OnboardingView: View {
         self.store = DIContainer.shared.resolve(OnboardingStore.self)
     }
     
-    // 테스트용 생성자
     public init(store: OnboardingStore) {
         self.store = store
     }

@@ -19,6 +19,7 @@ enum AppDependencyConfiguration {
     static func configure() {
         print("🔧 DI Container 앱 설정 시작")
         
+        registerTokenStorage()
         registerNetworkServices()
         
         DataBridge.initialize()
@@ -32,18 +33,19 @@ enum AppDependencyConfiguration {
         print("✅ DI Container 설정 완료")
     }
     
+    private static func registerTokenStorage() {
+        DIContainer.shared.register(TokenManagerInterface.self) { _ in
+            TokenManager()
+        }
+    }
+    
     private static func registerNetworkServices() {
-        print("🌐 Network Service 등록")
-        
         DIContainer.shared.register(NWNetworkServiceProtocol.self) { _ in
-            let savedToken = UserDefaults.standard.string(forKey: "access_token")
+            let tokenManager = DIContainer.shared.resolve(TokenManagerInterface.self)
+            let savedToken = tokenManager.getAccessToken()
             let authToken = savedToken?.isEmpty == false ? savedToken : Config.tempAccessToken
-            
-            print("🔑 사용할 토큰: \(authToken?.isEmpty == false ? "Bearer \(String(authToken!.prefix(20)))..." : "없음")")
             
             return NWNetworkService(authToken: authToken)
         }
-        
-        print("✅ Network Service 등록 완료")
     }
 }

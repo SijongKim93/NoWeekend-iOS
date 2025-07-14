@@ -1,5 +1,5 @@
 //
-//  ProfileStore.swift
+//  ProfileStore.swift (업데이트된 버전)
 //  ProfileFeature
 //
 //  Created by SiJongKim on 7/11/25.
@@ -45,7 +45,14 @@ public final class ProfileStore: ObservableObject {
         }
     }
     
+    // MARK: - Action Handlers
+    
     private func handleLoadUserProfile() {
+        guard !state.isLoading && state.userProfile == nil else {
+            print("⚠️ ProfileStore: 이미 로딩 중이거나 데이터가 존재함")
+            return
+        }
+        
         state.isLoading = true
         state.generalError = nil
         
@@ -68,6 +75,7 @@ public final class ProfileStore: ObservableObject {
         state.isLoading = false
         state.generalError = error.localizedDescription
         effectSubject.send(.showErrorMessage("프로필 정보를 불러오는데 실패했습니다"))
+        print("❌ ProfileStore: 프로필 로드 실패 - \(error.localizedDescription)")
     }
     
     private func handleClearErrors() {
@@ -78,15 +86,27 @@ public final class ProfileStore: ObservableObject {
         state = ProfileState()
     }
     
-    func loadInitialData() {
+    // MARK: - Public Interface
+    
+    public func loadInitialData() {
         send(.loadUserProfile)
     }
     
-    func clearErrors() {
+    public func clearErrors() {
         send(.clearErrors)
     }
     
-    func resetState() {
+    public func resetState() {
         send(.resetState)
+    }
+    
+    // MARK: - 편의 프로퍼티
+    
+    public var hasData: Bool {
+        state.userProfile != nil
+    }
+    
+    public var isLoadingOrHasData: Bool {
+        state.isLoading || hasData
     }
 }

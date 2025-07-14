@@ -50,6 +50,7 @@ public struct TabBarView: View {
     }
 
     @State private var selectedTab: Tab = .home
+    @EnvironmentObject var appCoordinator: AppCoordinator
 
     public init() {}
 
@@ -63,7 +64,7 @@ public struct TabBarView: View {
                 }
                 .tag(Tab.home)
 
-            // 캘린더 탭 
+            // 캘린더 탭
             CalendarCoordinatorView()
                 .tabItem {
                     (selectedTab == .calendar ? Tab.calendar.iconOn : Tab.calendar.iconOff)

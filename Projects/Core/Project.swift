@@ -21,7 +21,8 @@ let project = Project.make(
                 "!NWNetwork/Sources/NetworkService/Config.swift"  
             ],
             dependencies: [
-                .External.alamofire
+                .External.alamofire,
+                .Core.diContainer
             ],
             settings: .settings(
                 base: Settings.frameworkSettings.base.merging([

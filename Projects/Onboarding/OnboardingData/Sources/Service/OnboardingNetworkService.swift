@@ -36,8 +36,9 @@ public class OnboardingNetworkService: OnboardingNetworkServiceInterface {
             parameters: dto.toDictionary
         )
         
-        guard response.success else {
-            throw OnboardingError.profileSaveFailed(response.message ?? "프로필 저장 실패")
+        guard response.isSuccess else {
+            let errorMessage = response.error?.message ?? response.data
+            throw OnboardingError.tagsSaveFailed(errorMessage)
         }
         
         print("✅ Profile API call successful")
@@ -61,8 +62,9 @@ public class OnboardingNetworkService: OnboardingNetworkServiceInterface {
             parameters: dto.toDictionary
         )
         
-        guard response.success else {
-            throw OnboardingError.leaveSaveFailed(response.message ?? "연차 정보 저장 실패")
+        guard response.isSuccess else {
+            let errorMessage = response.error?.message ?? response.data
+            throw OnboardingError.tagsSaveFailed(errorMessage)
         }
         
         print("✅ Leave API call successful")
@@ -85,8 +87,9 @@ public class OnboardingNetworkService: OnboardingNetworkServiceInterface {
             parameters: dto.toDictionary
         )
         
-        guard response.success else {
-            throw OnboardingError.tagsSaveFailed(response.message ?? "태그 저장 실패")
+        guard response.isSuccess else {
+            let errorMessage = response.error?.message ?? response.data
+            throw OnboardingError.tagsSaveFailed(errorMessage)
         }
         
         print("✅ Tags API call successful")
