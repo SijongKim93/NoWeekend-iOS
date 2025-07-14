@@ -69,6 +69,5 @@ public struct LoginFeatureAssembly: Assembly {
             )
         }
         .inObjectScope(.graph)
-        
     }
 }

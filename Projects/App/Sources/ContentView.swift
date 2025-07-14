@@ -15,10 +15,13 @@ import SwiftUI
 
 @MainActor
 struct ContentView: View {
+    @StateObject private var appCoordinator = AppCoordinator()
+    
     init() {}
     
     var body: some View {
         AppCoordinatorView()
+            .environmentObject(appCoordinator)
     }
 }
 
