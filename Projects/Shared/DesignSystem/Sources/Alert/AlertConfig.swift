@@ -8,15 +8,15 @@
 
 import SwiftUI
 
-public struct iOSAlertConfig {
+public struct AlertConfig {
     public let title: String
     public let message: String?
-    public let buttons: [iOSAlertButton]
+    public let buttons: [AlertButton]
     
     public init(
         title: String,
         message: String? = nil,
-        buttons: [iOSAlertButton]
+        buttons: [AlertButton]
     ) {
         self.title = title
         self.message = message
@@ -24,7 +24,7 @@ public struct iOSAlertConfig {
     }
 }
 
-public struct iOSAlertButton {
+public struct AlertButton {
     public let title: String
     public let role: ButtonRole?
     public let action: () -> Void

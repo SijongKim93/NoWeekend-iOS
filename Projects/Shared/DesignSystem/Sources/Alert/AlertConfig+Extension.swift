@@ -8,24 +8,24 @@
 
 import Foundation
 
-public extension iOSAlertConfig {
-    static func logout(onConfirm: @escaping () -> Void) -> iOSAlertConfig {
-        iOSAlertConfig(
+public extension AlertConfig {
+    static func logout(onConfirm: @escaping () -> Void) -> AlertConfig {
+        AlertConfig(
             title: "로그아웃 하시나요?",
             buttons: [
-                iOSAlertButton(title: "취소", role: .cancel),
-                iOSAlertButton(title: "로그아웃", role: .destructive, action: onConfirm)
+                AlertButton(title: "취소", role: .cancel),
+                AlertButton(title: "로그아웃", role: .destructive, action: onConfirm)
             ]
         )
     }
     
-    static func withdrawal(onConfirm: @escaping () -> Void) -> iOSAlertConfig {
-        iOSAlertConfig(
+    static func withdrawal(onConfirm: @escaping () -> Void) -> AlertConfig {
+        AlertConfig(
             title: "정말로 탈퇴 하시나요?",
             message: "지금까지의 모든 데이터가 사라지고 계정이 완전히 기록에서 삭제됩니다.",
             buttons: [
-                iOSAlertButton(title: "취소", role: .cancel),
-                iOSAlertButton(title: "계정 삭제", role: .destructive, action: onConfirm)
+                AlertButton(title: "취소", role: .cancel),
+                AlertButton(title: "계정 삭제", role: .destructive, action: onConfirm)
             ]
         )
     }
@@ -36,13 +36,13 @@ public extension iOSAlertConfig {
         confirmTitle: String = "확인",
         cancelTitle: String = "취소",
         onConfirm: @escaping () -> Void
-    ) -> iOSAlertConfig {
-        iOSAlertConfig(
+    ) -> AlertConfig {
+        AlertConfig(
             title: title,
             message: message,
             buttons: [
-                iOSAlertButton(title: cancelTitle, role: .cancel),
-                iOSAlertButton(title: confirmTitle, action: onConfirm)
+                AlertButton(title: cancelTitle, role: .cancel),
+                AlertButton(title: confirmTitle, action: onConfirm)
             ]
         )
     }
@@ -52,12 +52,12 @@ public extension iOSAlertConfig {
         message: String? = nil,
         buttonTitle: String = "확인",
         onConfirm: @escaping () -> Void = {}
-    ) -> iOSAlertConfig {
-        iOSAlertConfig(
+    ) -> AlertConfig {
+        AlertConfig(
             title: title,
             message: message,
             buttons: [
-                iOSAlertButton(title: buttonTitle, action: onConfirm)
+                AlertButton(title: buttonTitle, action: onConfirm)
             ]
         )
     }
@@ -65,13 +65,13 @@ public extension iOSAlertConfig {
     static func delete(
         itemName: String,
         onConfirm: @escaping () -> Void
-    ) -> iOSAlertConfig {
-        iOSAlertConfig(
+    ) -> AlertConfig {
+        AlertConfig(
             title: "\(itemName)을(를) 삭제하시겠습니까?",
             message: "삭제된 내용은 복구할 수 없습니다.",
             buttons: [
-                iOSAlertButton(title: "취소", role: .cancel),
-                iOSAlertButton(title: "삭제", role: .destructive, action: onConfirm)
+                AlertButton(title: "취소", role: .cancel),
+                AlertButton(title: "삭제", role: .destructive, action: onConfirm)
             ]
         )
     }
