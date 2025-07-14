@@ -8,6 +8,7 @@
 
 import Utils
 import HomeDomain
+import Foundation
 
 // MARK: - Home State
 
@@ -63,6 +64,7 @@ enum HomeIntent {
     case loadWeatherRecommendations
     case loadSandwichHoliday
     case loadHolidays
+    case selectedDateChanged(Date)
 }
 
 // MARK: - Home Effect

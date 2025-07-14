@@ -57,6 +57,8 @@ final class HomeStore: ObservableObject {
             handleLoadSandwichHoliday()
         case .loadHolidays:
             handleLoadHolidays()
+        case .selectedDateChanged(let date):
+            handleSelectedDateChanged(date)
         }
     }
     
@@ -289,6 +291,34 @@ final class HomeStore: ObservableObject {
             state.isHolidayLoading = false
             effect.send(.showError("공휴일 데이터를 가져오는데 실패했습니다."))
         }
+    }
+    
+    private func handleSelectedDateChanged(_ date: Date) {
+        // 선택된 날짜에 따라 카드 데이터 업데이트
+        updateCardData(for: date)
+    }
+    
+    private func updateCardData(for date: Date) {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: date)
+        let month = calendar.component(.month, from: date)
+        
+        // 월 이름 가져오기
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        let monthName = dateFormatter.monthSymbols[month - 1]
+        
+        // 선택된 월의 데이터로 카드 업데이트
+        state.shortCards = [
+            VacationCardItem(dateString: "\(month)/00(\(monthName)) ~ \(month)/00(\(monthName))", type: .sandwich),
+            VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .birthday),
+            VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .holiday),
+            VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .friday)
+        ]
+        
+        // TODO: 실제 API 호출로 해당 월의 데이터 가져오기
+        // send(.loadSandwichHoliday)
+        // send(.loadHolidays)
     }
     
     private func setupLocationManager() {
