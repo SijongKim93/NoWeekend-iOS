@@ -6,6 +6,10 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import SwiftUI
+import DesignSystem
+import CalendarDomain
+import DIContainer
 import Combine
 import Foundation
 import Utils
@@ -13,6 +17,9 @@ import Utils
 @MainActor
 final class HomeStore: ObservableObject {
     @Published private(set) var state = HomeState()
+    @Published var weeklySchedules: [DailySchedule] = []
+    @Dependency private var calendarUseCase: CalendarUseCaseProtocol
+        
     let effect = PassthroughSubject<HomeEffect, Never>()
     
     private var cancellables = Set<AnyCancellable>()
@@ -172,3 +179,71 @@ final class HomeStore: ObservableObject {
         }
     }
 } 
+
+extension HomeStore {
+    func loadWeeklySchedules() async {
+        do {
+            let schedules = try await calendarUseCase.getWeeklySchedules(for: Date())
+            await MainActor.run {
+                self.weeklySchedules = schedules
+            }
+        } catch {
+            print("❌ 주간 스케줄 로드 실패: \(error)")
+            await MainActor.run {
+                self.weeklySchedules = []
+            }
+        }
+    }
+    
+    func getSchedulesForDate(_ date: Date) -> [Schedule] {
+        let dateString = date.toString(format: "yyyy-MM-dd")
+        
+        if let daySchedule = weeklySchedules.first(where: { $0.date == dateString }) {
+            return daySchedule.schedules
+        }
+        
+        return []
+    }
+    
+    func calendarCellContent(for date: Date) -> some View {
+        let schedules = getSchedulesForDate(date)
+        return AnyView(temperatureImage(for: schedules).resizable().scaledToFit())
+    }
+    
+    private func temperatureImage(for schedules: [Schedule]) -> Image {
+        if schedules.isEmpty {
+            return DS.Images.imgFlour
+        }
+        
+        let hasVacation = schedules.contains { $0.category == .leave }
+        if hasVacation {
+            return DS.Images.imgToastVacation
+        }
+        
+        let hasCompletedTasks = schedules.contains { $0.completed }
+        
+        if !hasCompletedTasks {
+            return DS.Images.imgToastNone
+        }
+        
+        let avgTemperature = calculateAverageTemperature(for: schedules)
+        
+        switch avgTemperature {
+        case 0...25:
+            return DS.Images.imgToastDefault
+        case 26...50:
+            return DS.Images.imgToastEven
+        case 51...100:
+            return DS.Images.imgToastBurn
+        default:
+            return DS.Images.imgToastDefault
+        }
+    }
+    
+    private func calculateAverageTemperature(for schedules: [Schedule]) -> Int {
+        guard !schedules.isEmpty else { return 0 }
+        
+        let totalTemperature = schedules.reduce(0) { $0 + $1.temperature }
+        return totalTemperature / schedules.count
+    }
+}

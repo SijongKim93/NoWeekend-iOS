@@ -343,7 +343,7 @@ extension CalendarStore {
         
         if !schedulesForDate.isEmpty {
             let avgTemperature = calculateAverageTemperature(for: schedulesForDate)
-            temperatureImage(avgTemperature)
+            temperatureImage(avgTemperature, schedules: schedulesForDate)
                 .resizable()
                 .scaledToFit()
         } else {
@@ -370,14 +370,31 @@ extension CalendarStore {
         return totalTemperature / schedules.count
     }
     
-    private func temperatureImage(_ temperature: Int) -> Image {
+    private func temperatureImage(_ temperature: Int, schedules: [Schedule]) -> Image {
+        if schedules.isEmpty {
+            return DS.Images.imgFlour
+        }
+        
+        let hasVacation = schedules.contains { $0.category == .leave }
+        if hasVacation {
+            return DS.Images.imgToastVacation
+        }
+        
+        let hasCompletedTasks = schedules.contains { $0.completed }
+        
+        if !hasCompletedTasks {
+            return DS.Images.imgToastNone
+        }
+        
         switch temperature {
-        case 0...20: return DS.Images.imgToastNone
-        case 21...40: return DS.Images.imgToastDefault
-        case 41...60: return DS.Images.imgToastEven
-        case 61...80: return DS.Images.imgToastBurn
-        case 81...100: return DS.Images.imgToastVacation
-        default: return DS.Images.imgFlour
+        case 0...25:
+            return DS.Images.imgToastDefault
+        case 26...50:
+            return DS.Images.imgToastEven
+        case 51...100:
+            return DS.Images.imgToastBurn
+        default:
+            return DS.Images.imgToastDefault
         }
     }
 }
