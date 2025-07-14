@@ -16,10 +16,12 @@ public struct HomeView: View {
     
     @State private var currentLongCardPage: Int = 0
     @State private var currentShortCardPage: Int = 0
+    @State private var selectedDate: Date = Date()
     
     // 위치권한 관련 알림 상태
     @State private var showLocationPermissionDeniedAlert = false
     @State private var showLocationSettingsAlert = false
+    @State private var showDatePickerBottomSheet = false
     
     public init() {}
     
@@ -50,36 +52,49 @@ public struct HomeView: View {
                     
                     VStack {
                         Spacer(minLength: 48)
-                        LongCardSection(
-                            currentPage: $currentLongCardPage,
-                            cards: store.state.longCards,
-                            onCardTapped: { cardType in
-                                store.send(.vacationCardTapped(cardType))
-                            }
-                        )
-                        .background(DS.Colors.Background.alternative01)
+                        if !store.state.holidays.isEmpty {
+                            HolidayCardSection(
+                                holidays: store.state.holidays,
+                                onAddTapped: { holiday in
+                                }
+                            )
+                            .background(DS.Colors.Background.alternative01)
+                        }
                         
                         Spacer(minLength: 48)
                         WeekVacation(
                             currentMonth: store.state.currentMonth,
                             currentWeekOfMonth: store.state.currentWeekOfMonth,
+                            weatherData: store.state.weatherRecommendations,
+                            isWeatherLoading: store.state.isWeatherLoading,
                             onLocationIconTapped: {
                                 store.send(.locationIconTapped)
-                            }, store: store
+                            },
+                            onWeatherRefresh: {
+                                store.send(.loadWeatherRecommendations)
+                            }, 
+                            store: store
                         )
                         
                         Spacer(minLength: 48)
                         ShortCardSection(
                             currentPage: $currentShortCardPage,
+                            selectedDate: $selectedDate,
                             cards: store.state.shortCards,
                             onCardTapped: { cardType in
                                 store.send(.vacationCardTapped(cardType))
+                            },
+                            onDateButtonTapped: {
+                                showDatePickerBottomSheet = true
                             }
                         )
                         Spacer()
                     }
                     .background(DS.Colors.Background.normal)
                 }
+            }
+            .refreshable {
+                await refreshData()
             }
         }
         .onAppear {
@@ -90,6 +105,9 @@ public struct HomeView: View {
         }
         .onChange(of: store.state.remainingAnnualLeave) { oldValue, newValue in
             coordinator.remainingAnnualLeave = newValue
+        }
+        .onChange(of: selectedDate) { oldValue, newValue in
+            store.send(.selectedDateChanged(newValue))
         }
         .onReceive(store.effect) { effect in
             handleEffect(effect)
@@ -108,6 +126,9 @@ public struct HomeView: View {
             }
         } message: {
             Text("GPS 권한이 없습니다. 날씨 기반 휴가 추천을 하려면 GPS 권한이 필요합니다. 설정으로 이동하시겠습니까?")
+        }
+        .sheet(isPresented: $showDatePickerBottomSheet) {
+            DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
         }
     }
     
@@ -136,6 +157,11 @@ public struct HomeView: View {
             // TODO: 로딩 숨김
             break
         }
+    }
+    
+    @MainActor
+    private func refreshData() async {
+        store.send(.refreshData)
     }
 }
 

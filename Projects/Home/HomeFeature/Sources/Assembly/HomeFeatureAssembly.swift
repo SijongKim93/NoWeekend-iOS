@@ -20,7 +20,9 @@ public struct HomeFeatureAssembly: Assembly {
         // UseCase만 등록
         container.register(HomeUseCaseProtocol.self) { resolver in
             print("📋 HomeUseCase 생성 (Feature)")
-            let repository = resolver.resolve(HomeRepositoryProtocol.self)!
+            guard let repository = resolver.resolve(HomeRepositoryProtocol.self) else {
+                fatalError("❌ HomeRepositoryProtocol을 resolve할 수 없습니다")
+            }
             return HomeUseCase(homeRepository: repository)
         }.inObjectScope(.graph)
         

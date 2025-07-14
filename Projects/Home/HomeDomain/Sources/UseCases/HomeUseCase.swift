@@ -29,4 +29,25 @@ public class HomeUseCase: HomeUseCaseProtocol {
     public func getUpcomingHomes() async throws -> [Home] {
         return []
     }
+    
+    // MARK: - 위치 및 날씨 관련
+    
+    public func registerLocation(latitude: Double, longitude: Double) async throws {
+        let location = LocationRegistration(latitude: latitude, longitude: longitude)
+        try await homeRepository.registerLocation(location)
+    }
+    
+    public func getWeatherRecommendations() async throws -> [Weather] {
+        return try await homeRepository.getWeatherRecommendations()
+    }
+    
+    // MARK: - 샌드위치 휴일 및 공휴일 관련
+    
+    public func getSandwichHoliday() async throws -> [SandwichHoliday] {
+        return try await homeRepository.getSandwichHoliday()
+    }
+    
+    public func getHolidays() async throws -> [Holiday] {
+        return try await homeRepository.getHolidays()
+    }
 } 

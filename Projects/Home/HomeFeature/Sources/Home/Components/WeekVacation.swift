@@ -8,11 +8,16 @@
 
 import SwiftUI
 import DesignSystem
+import HomeDomain
 
 struct WeekVacation: View {
     let currentMonth: String
     let currentWeekOfMonth: String
+    let weatherData: [Weather]
+    let isWeatherLoading: Bool
     let onLocationIconTapped: () -> Void
+    let onWeatherRefresh: () -> Void
+
     @ObservedObject var store: HomeStore
     
     var body: some View {
@@ -26,7 +31,6 @@ struct WeekVacation: View {
                         .resizable()
                         .frame(width: 24, height: 24)
                 }
-                .buttonStyle(PlainButtonStyle())
             }
             .padding(.horizontal, 24)
             
@@ -34,17 +38,18 @@ struct WeekVacation: View {
                 store.calendarCellContent(for: date) 
                     .frame(width: 38)
             })
+            
+            // 날씨 데이터가 있을 때만 WeatherSection 표시
+            if !weatherData.isEmpty || isWeatherLoading {
+                WeatherSection(
+                    weatherData: weatherData,
+                    isLoading: isWeatherLoading,
+                    onPlusTapped: onWeatherRefresh
+                )
+            }
         }
         .task {
             await store.loadWeeklySchedules()
         }
     }
-} 
-//
-//#Preview {
-//    WeekVacation(
-//        currentMonth: "7", 
-//        currentWeekOfMonth: "첫째",
-//        onLocationIconTapped: {}
-//    )
-//}
+}

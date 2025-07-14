@@ -11,8 +11,16 @@ import DesignSystem
 
 struct ShortCardSection: View {
     @Binding var currentPage: Int
+    @Binding var selectedDate: Date
     let cards: [VacationCardItem]
     var onCardTapped: ((VacationCardType) -> Void)? = nil
+    var onDateButtonTapped: (() -> Void)? = nil
+    
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy년 M월"
+        return formatter.string(from: selectedDate)
+    }
     
     var body: some View {
         VStack {
@@ -23,9 +31,11 @@ struct ShortCardSection: View {
             }
             
             HStack {
-                NWButton(variant: .primary, size: .md, action: {}) {
+                NWButton(variant: .primary, size: .md, action: {
+                    onDateButtonTapped?()
+                }) {
                     HStack {
-                        Text("2025년 6월")
+                        Text(dateString)
                             .font(.subtitle1)
                         DS.Images.icnChevronDown
                     }
