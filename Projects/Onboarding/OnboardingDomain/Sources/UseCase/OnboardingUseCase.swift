@@ -1,5 +1,5 @@
 //
-//  ValidateBirthDateUseCase.swift (개선된 버전)
+//  OnboardingUseCases.swift
 //  OnboardingDomain
 //
 //  Created by SiJongKim on 7/8/25.
@@ -7,6 +7,65 @@
 //
 
 import Foundation
+
+// MARK: - Save UseCases
+
+public class SaveProfileUseCase: SaveProfileUseCaseInterface {
+    private let repository: OnboardingRepositoryInterface
+    
+    public init(repository: OnboardingRepositoryInterface) {
+        self.repository = repository
+    }
+    
+    public func execute(nickname: String, birthDate: String) async throws {
+        let profile = OnboardingProfile(nickname: nickname, birthDate: birthDate)
+        try await repository.saveProfile(profile)
+    }
+}
+
+public class SaveLeaveUseCase: SaveLeaveUseCaseInterface {
+    private let repository: OnboardingRepositoryInterface
+    
+    public init(repository: OnboardingRepositoryInterface) {
+        self.repository = repository
+    }
+    
+    public func execute(days: Int, hours: Int) async throws {
+        let leave = OnboardingLeave(days: days, hours: hours)
+        try await repository.saveLeave(leave)
+    }
+}
+
+public class SaveTagsUseCase: SaveTagsUseCaseInterface {
+    private let repository: OnboardingRepositoryInterface
+    
+    public init(repository: OnboardingRepositoryInterface) {
+        self.repository = repository
+    }
+    
+    public func execute(tags: [String]) async throws {
+        let tagModel = OnboardingTags(scheduleTags: tags)
+        try await repository.saveTags(tagModel)
+    }
+}
+
+// MARK: - Validation UseCases
+
+public class ValidateNicknameUseCase: ValidateNicknameUseCaseInterface {
+    public init() {}
+    
+    public func execute(_ nickname: String) -> ValidationResult {
+        if nickname.isEmpty {
+            return .invalid("닉네임을 입력해주세요")
+        } else if nickname.count > 6 {
+            return .invalid("6글자까지 작성할 수 있어요.")
+        } else if nickname.trimmingCharacters(in: .whitespaces).isEmpty {
+            return .invalid("유효한 닉네임을 입력해주세요")
+        } else {
+            return .valid
+        }
+    }
+}
 
 public class ValidateBirthDateUseCase: ValidateBirthDateUseCaseInterface {
     public init() {}
@@ -70,5 +129,19 @@ public class ValidateBirthDateUseCase: ValidateBirthDateUseCaseInterface {
     
     private func isLeapYear(_ year: Int) -> Bool {
         return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    }
+}
+
+public class ValidateRemainingDaysUseCase: ValidateRemainingDaysUseCaseInterface {
+    public init() {}
+    
+    public func execute(_ days: String) -> ValidationResult {
+        if days.isEmpty {
+            return .valid
+        }
+        guard Int(days) != nil else {
+            return .invalid("올바른 숫자를 입력해주세요")
+        }
+        return .valid
     }
 }
