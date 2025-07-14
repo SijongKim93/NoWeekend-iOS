@@ -30,6 +30,11 @@ struct HomeState: Equatable {
     var isWeatherLoading: Bool = false
     var weatherRecommendations: [Weather] = []
     
+    // 샌드위치 휴일 및 공휴일 관련 상태
+    var sandwichHoliday: [SandwichHoliday] = []
+    var holidays: [Holiday] = []
+    var isHolidayLoading: Bool = false
+    
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .home)
@@ -56,6 +61,8 @@ enum HomeIntent {
     case locationPermissionChanged(LocationPermissionStatus)
     case registerLocation
     case loadWeatherRecommendations
+    case loadSandwichHoliday
+    case loadHolidays
 }
 
 // MARK: - Home Effect

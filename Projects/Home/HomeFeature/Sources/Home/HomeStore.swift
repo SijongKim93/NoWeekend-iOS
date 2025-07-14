@@ -53,6 +53,10 @@ final class HomeStore: ObservableObject {
             
         case .loadWeatherRecommendations:
             handleLoadWeatherRecommendations()
+        case .loadSandwichHoliday:
+            handleLoadSandwichHoliday()
+        case .loadHolidays:
+            handleLoadHolidays()
         }
     }
     
@@ -61,6 +65,10 @@ final class HomeStore: ObservableObject {
         // TODO: UseCase를 통해 사용자 정보 로딩
         updateCurrentDateInfo()
         setupLocationManager()
+        
+        // 샌드위치 휴일 및 공휴일 데이터 로딩
+        send(.loadSandwichHoliday)
+        send(.loadHolidays)
     }
     
     private func updateCurrentDateInfo() {
@@ -95,8 +103,12 @@ final class HomeStore: ObservableObject {
         Task {
             // 저장된 위치가 있으면 날씨 데이터 새로고침
             if state.savedLocation != nil || state.isLocationRegistered {
-                send(.loadWeatherRecommendations)
+                await loadWeatherRecommendationsAsync()
             }
+            
+            // 샌드위치 휴일 및 공휴일 데이터 새로고침
+            await loadSandwichHolidayAsync()
+            await loadHolidaysAsync()
             
             state.isLoading = false
             effect.send(.hideLoading)
@@ -148,16 +160,27 @@ final class HomeStore: ObservableObject {
         // 권한이 거부된 경우 알림 표시 (이전 상태가 notDetermined일 때만)
         if (status == .denied || status == .restricted) && previousStatus == .notDetermined {
             effect.send(.showLocationPermissionDeniedAlert)
+            // 권한이 거부되면 디폴트 위치로 등록
+            if !state.isLocationRegistered {
+                send(.registerLocation)
+            }
         }
     }
     
     private func handleRegisterLocation() {
-        guard let location = state.currentLocation else { return }
+        // 현재 위치가 있으면 사용, 없으면 디폴트 위치 사용
+        let locationToRegister: LocationInfo
+        if let currentLocation = state.currentLocation {
+            locationToRegister = currentLocation
+        } else {
+            locationToRegister = locationManager.getDefaultLocation()
+        }
+        
         Task {
             do {
                 try await homeUseCase.registerLocation(
-                    latitude: location.coordinate.latitude,
-                    longitude: location.coordinate.longitude
+                    latitude: locationToRegister.coordinate.latitude,
+                    longitude: locationToRegister.coordinate.longitude
                 )
                 state.isLocationRegistered = true
                 // 위치 등록 성공 시 추천 데이터 요청
@@ -169,9 +192,16 @@ final class HomeStore: ObservableObject {
     }
 
     private func handleLoadWeatherRecommendations() {
-        // 저장된 위치가 있거나 위치가 등록되어 있으면 날씨 데이터 요청
-        guard state.savedLocation != nil || state.isLocationRegistered else { return }
-        
+        // 위치가 등록되어 있으면 날씨 데이터 요청
+        if state.isLocationRegistered {
+            loadWeatherData()
+        } else {
+            // 위치가 등록되어 있지 않으면 디폴트 위치로 등록 후 날씨 데이터 요청
+            send(.registerLocation)
+        }
+    }
+    
+    private func loadWeatherData() {
         state.isWeatherLoading = true
         Task {
             do {
@@ -182,6 +212,82 @@ final class HomeStore: ObservableObject {
                 state.isWeatherLoading = false
                 effect.send(.showError("날씨 데이터를 가져오는데 실패했습니다."))
             }
+        }
+    }
+    
+    private func handleLoadSandwichHoliday() {
+        state.isHolidayLoading = true
+        Task {
+            do {
+                let sandwichHolidays = try await homeUseCase.getSandwichHoliday()
+                state.sandwichHoliday = sandwichHolidays
+                state.isHolidayLoading = false
+            } catch {
+                state.isHolidayLoading = false
+                effect.send(.showError("샌드위치 휴일 데이터를 가져오는데 실패했습니다."))
+            }
+        }
+    }
+    
+    private func handleLoadHolidays() {
+        state.isHolidayLoading = true
+        Task {
+            do {
+                let holidays = try await homeUseCase.getHolidays()
+                state.holidays = holidays
+                state.isHolidayLoading = false
+            } catch {
+                state.isHolidayLoading = false
+                effect.send(.showError("공휴일 데이터를 가져오는데 실패했습니다."))
+            }
+        }
+    }
+    
+    // MARK: - Async Loading Methods for Pull-to-Refresh
+    
+    private func loadWeatherRecommendationsAsync() async {
+        // 위치가 등록되어 있으면 날씨 데이터 요청
+        if state.isLocationRegistered {
+            await loadWeatherDataAsync()
+        } else {
+            // 위치가 등록되어 있지 않으면 디폴트 위치로 등록 후 날씨 데이터 요청
+            send(.registerLocation)
+        }
+    }
+    
+    private func loadWeatherDataAsync() async {
+        state.isWeatherLoading = true
+        do {
+            let weatherData = try await homeUseCase.getWeatherRecommendations()
+            state.weatherRecommendations = weatherData
+            state.isWeatherLoading = false
+        } catch {
+            state.isWeatherLoading = false
+            effect.send(.showError("날씨 데이터를 가져오는데 실패했습니다."))
+        }
+    }
+    
+    private func loadSandwichHolidayAsync() async {
+        state.isHolidayLoading = true
+        do {
+            let sandwichHolidays = try await homeUseCase.getSandwichHoliday()
+            state.sandwichHoliday = sandwichHolidays
+            state.isHolidayLoading = false
+        } catch {
+            state.isHolidayLoading = false
+            effect.send(.showError("샌드위치 휴일 데이터를 가져오는데 실패했습니다."))
+        }
+    }
+    
+    private func loadHolidaysAsync() async {
+        state.isHolidayLoading = true
+        do {
+            let holidays = try await homeUseCase.getHolidays()
+            state.holidays = holidays
+            state.isHolidayLoading = false
+        } catch {
+            state.isHolidayLoading = false
+            effect.send(.showError("공휴일 데이터를 가져오는데 실패했습니다."))
         }
     }
     
@@ -198,6 +304,9 @@ final class HomeStore: ObservableObject {
             state.currentLocation = savedLocation
             state.isLocationRegistered = true
             send(.loadWeatherRecommendations)
+        } else {
+            // 저장된 위치가 없으면 디폴트 위치로 등록
+            send(.registerLocation)
         }
         
         // 위치 권한 상태 변경 감지

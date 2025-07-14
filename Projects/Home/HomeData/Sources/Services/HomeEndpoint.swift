@@ -13,13 +13,21 @@ enum HomeEndpoint {
     case registerLocation
     /// 날씨 기반 추천 (GET)
     case getWeatherRecommendations
-
+    case getSandwichHoliday
+    case getHolidays
+    
+    
     var path: String {
         switch self {
         case .registerLocation:
             return "/user/location"
+            
         case .getWeatherRecommendations:
             return "/recommend/weather"
+        case .getSandwichHoliday:
+            return "/recommend/sandwich"
+        case .getHolidays:
+            return "/holiday/remaining"
         }
     }
 } 

@@ -50,11 +50,9 @@ public struct HomeView: View {
                     
                     VStack {
                         Spacer(minLength: 48)
-                        LongCardSection(
-                            currentPage: $currentLongCardPage,
-                            cards: store.state.longCards,
-                            onCardTapped: { cardType in
-                                store.send(.vacationCardTapped(cardType))
+                        HolidayCardSection(
+                            holidays: store.state.holidays,
+                            onAddTapped: { holiday in
                             }
                         )
                         .background(DS.Colors.Background.alternative01)
@@ -85,6 +83,9 @@ public struct HomeView: View {
                     }
                     .background(DS.Colors.Background.normal)
                 }
+            }
+            .refreshable {
+                await refreshData()
             }
         }
         .onAppear {
@@ -141,6 +142,11 @@ public struct HomeView: View {
             // TODO: 로딩 숨김
             break
         }
+    }
+    
+    @MainActor
+    private func refreshData() async {
+        store.send(.refreshData)
     }
 }
 

@@ -40,4 +40,14 @@ public class HomeUseCase: HomeUseCaseProtocol {
     public func getWeatherRecommendations() async throws -> [Weather] {
         return try await homeRepository.getWeatherRecommendations()
     }
+    
+    // MARK: - 샌드위치 휴일 및 공휴일 관련
+    
+    public func getSandwichHoliday() async throws -> [SandwichHoliday] {
+        return try await homeRepository.getSandwichHoliday()
+    }
+    
+    public func getHolidays() async throws -> [Holiday] {
+        return try await homeRepository.getHolidays()
+    }
 } 
