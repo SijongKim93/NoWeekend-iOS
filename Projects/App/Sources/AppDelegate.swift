@@ -30,15 +30,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     // MARK: - Private Methods
     private func configureGoogleSignIn() {
-        print("🔐 Google Sign-In 설정 시작")
         
         let clientID = GoogleConfig.clientID
         print("📋 Google Client ID: \(clientID)")
         
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
-        
-        print("   - Client ID: \(GoogleConfig.clientID)")
-        print("   - Server Client ID: \(GoogleConfig.serverClientID)")
     }
 }
