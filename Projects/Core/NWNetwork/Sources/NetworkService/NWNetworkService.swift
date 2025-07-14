@@ -116,7 +116,6 @@ public class NWNetworkService: NWNetworkServiceProtocol {
             "Accept": "application/json"
         ]
         
-        // 토큰 우선순위: UserDefaults → 초기화 토큰 → 임시 토큰
         if let token = getCurrentToken() {
             headers["Authorization"] = "Bearer \(token)"
         }

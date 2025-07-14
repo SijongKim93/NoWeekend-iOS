@@ -1,5 +1,5 @@
 //
-//  NWTagButton.swift
+//  NWTagButton.swift (터치 응답성만 개선)
 //  DesignSystem
 //
 //  Created by SiJongKim on 7/4/25.
@@ -77,9 +77,18 @@ public struct NWTagButton: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(borderColor, lineWidth: 1)
                 )
+                .contentShape(Rectangle())
         }
         .disabled(isDisabled)
         .opacity(isDisabled ? 0.5 : 1.0)
+        .buttonStyle(PlainButtonStyle())
+        .allowsHitTesting(true)
+        .highPriorityGesture(
+            TapGesture()
+                .onEnded { _ in
+                    action()
+                }
+        )
     }
     
     private var textColor: Color {

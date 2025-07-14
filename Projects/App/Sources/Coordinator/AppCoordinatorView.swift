@@ -10,7 +10,7 @@ import SwiftUI
 
 @MainActor
 public struct AppCoordinatorView: View {
-    @StateObject private var coordinator = AppCoordinator()
+    @EnvironmentObject var coordinator: AppCoordinator
     
     public init() {}
     
@@ -34,8 +34,6 @@ public struct AppCoordinatorView: View {
                         .environmentObject(coordinator)
                 }
         }
-        .environmentObject(coordinator)
         .navigationBarHidden(true)
     }
 }
-

@@ -27,19 +27,22 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
     @Published public var path: NavigationPath = NavigationPath()
     @Published public var sheet: SheetScreen?
     @Published public var fullScreenCover: FullScreen?
-    
+
     @Published public var currentScreen: Screen = .login
+    @Published public var isLoading: Bool = true
     
     private var cancellables = Set<AnyCancellable>()
     private let tokenManager: TokenManagerInterface
     
     public init() {
         self.tokenManager = DIContainer.shared.resolve(TokenManagerInterface.self)
-        setupBindings()
+        
+        setupLoginEffectBinding()
         checkInitialFlow()
+        
     }
     
-    // MARK: - Coordinatorable Implementation
+    // MARK: - 📱 Coordinatorable Implementation
     
     public func view(_ screen: Screen) -> AnyView {
         switch screen {
@@ -71,7 +74,77 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
         }
     }
     
-    // MARK: - Navigation Methods
+    // MARK: - 🔗 LoginStore Effect 바인딩 (핵심 수정사항)
+    
+    private func setupLoginEffectBinding() {
+        
+        let loginStore: LoginStore = DIContainer.shared.resolve(LoginStore.self)
+        
+        loginStore.effect
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] effect in
+                guard let self = self else {
+                    print("❌ AppCoordinator - self가 nil (메모리 해제됨)")
+                    return
+                }
+                
+                switch effect {
+                case .navigateToHome:
+                    self.handleLoginSuccess(shouldGoToMain: true)
+                    
+                case .navigateToOnboarding:
+                    self.handleLoginSuccess(shouldGoToMain: false)
+                    
+                case .navigateToLogin:
+                    self.handleLogout()
+                    
+                case .showError(let message):
+                    self.isLoading = false
+                    
+                case .showWithdrawalSuccess:
+                    self.isLoading = false
+                    
+                @unknown default:
+                    print("⚠️ AppCoordinator - 알 수 없는 Effect: \(effect)")
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    
+    private func handleLoginSuccess(shouldGoToMain: Bool) {
+        
+        let hasValidToken = tokenManager.hasValidAccessToken()
+        
+        if hasValidToken {
+            let targetScreen: AppRouter.Screen
+            
+            if shouldGoToMain {
+                targetScreen = .main
+            } else {
+                targetScreen = .onboarding
+            }
+            
+            currentScreen = targetScreen
+            
+        } else {
+            currentScreen = .login
+        }
+        
+        isLoading = false
+        popToRoot()
+    }
+    
+    private func handleLogout() {
+        
+        UserDefaults.standard.removeObject(forKey: "onboarding_completed")
+        
+        currentScreen = .login
+        isLoading = false
+        popToRoot()
+        
+        print("   - 로그인 화면으로 이동 완료")
+    }
     
     public func navigateToLogin() {
         currentScreen = .login
@@ -93,42 +166,33 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
         navigateToMain()
     }
     
-    // MARK: - Private Methods
-    
-    private func setupBindings() {
-        let loginStore: LoginStore = DIContainer.shared.resolve(LoginStore.self)
-        
-        loginStore.effect
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] effect in
-                switch effect {
-                case .navigateToHome:
-                    self?.navigateToMain()
-                case .navigateToOnboarding:
-                    self?.navigateToOnboarding()
-                case .navigateToLogin:
-                    self?.navigateToLogin()
-                case .showError, .showWithdrawalSuccess:
-                    break
-                @unknown default:
-                    break
-                }
-            }
-            .store(in: &cancellables)
-    }
-    
     private func checkInitialFlow() {
+        isLoading = true
+        
         let hasValidToken = tokenManager.hasValidAccessToken()
+        print("   - 유효한 토큰: \(hasValidToken)")
         
         if hasValidToken {
             let onboardingCompleted = UserDefaults.standard.bool(forKey: "onboarding_completed")
+            print("   - 온보딩 완료: \(onboardingCompleted)")
+            
             if onboardingCompleted {
+                print("   - 결정: 메인 화면으로 이동")
                 currentScreen = .main
             } else {
+                print("   - 결정: 온보딩 화면으로 이동")
                 currentScreen = .onboarding
             }
         } else {
+            print("   - 결정: 로그인 화면으로 이동")
             currentScreen = .login
         }
+        
+        isLoading = false
+    }
+    
+    
+    public func refreshAuthenticationState() {
+        checkInitialFlow()
     }
 }

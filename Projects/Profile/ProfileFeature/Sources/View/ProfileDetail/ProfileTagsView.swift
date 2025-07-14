@@ -26,7 +26,7 @@ struct ProfileTagsView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack {
             CustomNavigationBar(
                 type: .backWithLabelAndSave("자주하는 일정"),
                 onBackTapped: {
@@ -38,7 +38,7 @@ struct ProfileTagsView: View {
             )
             .padding(.bottom, 48)
             
-            VStack {
+            VStack(spacing: 40) {
                 NWUserInputView(
                     title: "자주하는 일정을 알려주세요",
                     subtitle: "할일 등록을 AI에게 추천받을 수 있어요"
@@ -46,20 +46,19 @@ struct ProfileTagsView: View {
                     VStack {
                         createTagSelectionView()
                     }
-                    .padding(.top, 40)
                 }
                 
                 Spacer()
                 
-                NWButton(
-                    title: buttonTitle,
-                    variant: .black,
-                    isEnabled: tagsStore.state.isFormValid && !tagsStore.state.isSaving
-                ) {
-                    handleSaveButtonTapped()
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 8)
+//                NWButton(
+//                    title: buttonTitle,
+//                    variant: .black,
+//                    isEnabled: tagsStore.state.isFormValid && !tagsStore.state.isSaving
+//                ) {
+//                    handleSaveButtonTapped()
+//                }
+//                .padding(.horizontal, 24)
+//                .padding(.bottom, 8)
             }
         }
         .background(DS.Colors.Background.normal)

@@ -17,7 +17,6 @@ public struct LoginView: View {
         self.store = DIContainer.shared.resolve(LoginStore.self)
     }
     
-    // 일단 기존 방식도 유지 (혹시나)
     public init(store: LoginStore) {
         self.store = store
     }
