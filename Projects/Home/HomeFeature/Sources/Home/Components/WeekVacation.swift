@@ -40,11 +40,11 @@ struct WeekVacation: View {
         }
     }
 } 
-
-#Preview {
-    WeekVacation(
-        currentMonth: "7", 
-        currentWeekOfMonth: "첫째",
-        onLocationIconTapped: {}
-    )
-}
+//
+//#Preview {
+//    WeekVacation(
+//        currentMonth: "7", 
+//        currentWeekOfMonth: "첫째",
+//        onLocationIconTapped: {}
+//    )
+//}

@@ -65,7 +65,7 @@ public struct HomeView: View {
                             currentWeekOfMonth: store.state.currentWeekOfMonth,
                             onLocationIconTapped: {
                                 store.send(.locationIconTapped)
-                            }
+                            }, store: store
                         )
                         
                         Spacer(minLength: 48)
