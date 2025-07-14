@@ -12,6 +12,7 @@ struct BottomSheetExampleView: View {
     @State private var sliderValue: Double = 3.0
     @State private var textInput: String = ""
     @State private var selectedDate: Date = Date()
+    @State private var selectedCategory: TaskCreateCategory = .personal
     
     @State private var showSliderSheet = false
     @State private var showTextInputSheet = false
@@ -19,6 +20,7 @@ struct BottomSheetExampleView: View {
     @State private var showDatePickerOnlySheet = false
     @State private var showTaskEditSheet = false
     @State private var showDeleteSheet = false
+    @State private var showCategorySheet = false
     @State private var showCustomSheet = false
     
     var body: some View {
@@ -36,6 +38,10 @@ struct BottomSheetExampleView: View {
                     
                     Button("텍스트 입력 바텀시트") {
                         showTextInputSheet = true
+                    }
+                    
+                    Button("카테고리 선택 바텀시트") {
+                        showCategorySheet = true
                     }
                     
                     Button("날짜 선택 (레이블 포함) 바텀시트") {
@@ -73,6 +79,18 @@ struct BottomSheetExampleView: View {
                 subtitle: "연차 제목을 작성하면\n할 일에 추가돼요",
                 placeholder: "연차 제목을 입력하세요",
                 text: $textInput
+            )
+        }
+        .sheet(isPresented: $showCategorySheet) {
+            TaskCategoryBottomSheet(
+                selectedCategory: $selectedCategory,
+                onCategorySelected: { category in
+                    print("카테고리 선택됨: \(category.displayName)")
+                },
+                onSelectTapped: {
+                    print("선택하기 버튼 탭됨")
+                },
+                isPresented: $showCategorySheet
             )
         }
         .sheet(isPresented: $showDatePickerWithLabelSheet) {
