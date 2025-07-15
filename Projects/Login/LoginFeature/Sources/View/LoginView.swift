@@ -25,7 +25,7 @@ public struct LoginView: View {
         VStack {
             Spacer()
             
-            DS.Images.imgLaunchScreen
+            DS.Images.appLogo
                 .resizable()
                 .frame(width: 243, height: 324)
             
