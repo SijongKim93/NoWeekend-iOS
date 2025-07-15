@@ -24,7 +24,7 @@ public struct HomeFeatureAssembly: Assembly {
                 fatalError("❌ HomeRepositoryProtocol을 resolve할 수 없습니다")
             }
             return HomeUseCase(homeRepository: repository)
-        }.inObjectScope(.graph)
+        }.inObjectScope(.container)
         
         print("✅ HomeFeatureAssembly 등록 완료")
     }

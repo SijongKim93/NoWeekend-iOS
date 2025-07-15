@@ -26,17 +26,6 @@ extension VacationCardType {
         }
     }
     
-    var highlight: String? {
-        switch self {
-        case .monday, .friday: return "일 쉬어요"
-        case .birthday: return "축하드려요!"
-        case .holiday: return "곧 공휴일이 다가와요"
-        case .noholiday: return "이번 달엔 공휴일이 없어요"
-        case .sandwich: return "일 쉴 수 있어요"
-        default: return nil
-        }
-    }
-    
     var icon: Image {
         switch self {
         case .trip: return DS.Images.imgTrip
@@ -51,34 +40,20 @@ extension VacationCardType {
     
     var attributedText: AttributedString? {
         switch self {
-        case .birthday:
-            var str = AttributedString("Happy Birthday")
-            if let range = str.range(of: "Birthday") {
-                str[range].foregroundColor = DS.Colors.Toast._500
-            }
-            return str
-        case .holiday:
-            return AttributedString("공휴일")
         case .friday:
-            var str = AttributedString("금요일에 연차쓰고 일 쉬어요")
-            if let range = str.range(of: "일 쉬어요") {
-                str[range].foregroundColor = DS.Colors.Toast._500
-            }
-            return str
+            return createHighlightedText("금요일에 연차쓰고 일 쉬어요", highlight: "일 쉬어요")
         case .monday:
-            var str = AttributedString("월요일에 연차쓰고 일 쉬어요")
-            if let range = str.range(of: "일 쉬어요") {
-                str[range].foregroundColor = DS.Colors.Toast._500
-            }
-            return str
-        case .sandwich:
-            var str = AttributedString("주말 포함 일 쉴 수 있어요")
-            if let range = str.range(of: "일 쉴 수 있어요") {
-                str[range].foregroundColor = DS.Colors.Toast._500
-            }
-            return str
+            return createHighlightedText("월요일에 연차쓰고 일 쉬어요", highlight: "일 쉬어요")
         default:
             return nil
         }
+    }
+    
+    private func createHighlightedText(_ text: String, highlight: String) -> AttributedString {
+        var str = AttributedString(text)
+        if let range = str.range(of: highlight) {
+            str[range].foregroundColor = DS.Colors.Toast._500
+        }
+        return str
     }
 } 

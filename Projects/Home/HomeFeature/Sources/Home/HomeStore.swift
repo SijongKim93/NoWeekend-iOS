@@ -14,22 +14,27 @@ import Combine
 import Foundation
 import Utils
 import HomeDomain
-import DIContainer
 import ProfileDomain
 
 @MainActor
 final class HomeStore: ObservableObject {
-    @Dependency private var homeUseCase: HomeUseCaseProtocol
-    @Dependency private var getUserProfileUseCase: GetUserProfileUseCaseProtocol
+    private let homeUseCase: HomeUseCaseProtocol
+    private let getUserProfileUseCase: GetUserProfileUseCaseProtocol
+    private let calendarUseCase: CalendarUseCaseProtocol
     
     @Published private(set) var state = HomeState()
     @Published var weeklySchedules: [DailySchedule] = []
-    @Dependency private var calendarUseCase: CalendarUseCaseProtocol
         
     let effect = PassthroughSubject<HomeEffect, Never>()
     
     private var cancellables = Set<AnyCancellable>()
     private let locationManager = LocationManager.shared
+
+    init() {
+        self.homeUseCase = DIContainer.shared.resolve(HomeUseCaseProtocol.self)
+        self.getUserProfileUseCase = DIContainer.shared.resolve(GetUserProfileUseCaseProtocol.self)
+        self.calendarUseCase = DIContainer.shared.resolve(CalendarUseCaseProtocol.self)
+    }
 
     func send(_ intent: HomeIntent) {
         switch intent {
@@ -238,6 +243,8 @@ final class HomeStore: ObservableObject {
                 let sandwichHolidays = try await homeUseCase.getSandwichHoliday()
                 state.sandwichHoliday = sandwichHolidays
                 state.isHolidayLoading = false
+                // 샌드위치 휴일 데이터 로드 후 카드 업데이트
+                updateShortCardsWithSandwichHolidayData()
             } catch {
                 state.isHolidayLoading = false
                 effect.send(.showError("샌드위치 휴일 데이터를 가져오는데 실패했습니다."))
@@ -290,6 +297,8 @@ final class HomeStore: ObservableObject {
             let sandwichHolidays = try await homeUseCase.getSandwichHoliday()
             state.sandwichHoliday = sandwichHolidays
             state.isHolidayLoading = false
+            // 샌드위치 휴일 데이터 로드 후 카드 업데이트
+            updateShortCardsWithSandwichHolidayData()
         } catch {
             state.isHolidayLoading = false
             effect.send(.showError("샌드위치 휴일 데이터를 가져오는데 실패했습니다."))
@@ -317,7 +326,6 @@ final class HomeStore: ObservableObject {
     
     private func updateCardData(for date: Date) {
         let calendar = Calendar.current
-        let year = calendar.component(.year, from: date)
         let month = calendar.component(.month, from: date)
         
         // 월 이름 가져오기
@@ -330,28 +338,48 @@ final class HomeStore: ObservableObject {
             VacationCardItem(dateString: "\(month)/00(\(monthName)) ~ \(month)/00(\(monthName))", type: .sandwich),
             VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .birthday),
             VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .holiday),
-            VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .friday)
         ]
         
+        // 실제 데이터로 카드 업데이트
         updateShortCardsWithHolidayData()
+        updateShortCardsWithSandwichHolidayData()
+        updateBirthdayCard()
         
         // TODO: 실제 API 호출로 해당 월의 데이터 가져오기
         // send(.loadSandwichHoliday)
         // send(.loadHolidays)
     }
     
-    // MARK: - 공휴일 카드 업데이트 메서드
+    // MARK: - 카드 업데이트 공통 메서드
     private func updateShortCardsWithHolidayData() {
-        guard !state.holidays.isEmpty else { return }
-        
-        let nextHoliday = getNextUpcomingHoliday()
-        let holidayDateString = nextHoliday?.dateString ?? "공휴일 없음"
+        updateCard(for: .holiday, data: state.holidays, defaultText: "공휴일 없음") { holidays in
+            getNextUpcomingHoliday(from: holidays)
+        }
+    }
+    
+    private func updateShortCardsWithSandwichHolidayData() {
+        print("🔥 샌드위치 휴일 카드 업데이트 시작 - 데이터 개수: \(state.sandwichHoliday.count)")
+        updateCard(for: .sandwich, data: state.sandwichHoliday, defaultText: "샌드위치 휴일 없음") { sandwichHolidays in
+            let nextHoliday = getNextUpcomingSandwichHoliday(from: sandwichHolidays)
+            print("🔥 다음 샌드위치 휴일: \(nextHoliday?.dateString ?? "없음")")
+            return nextHoliday
+        }
+    }
+    
+    private func updateCard<T>(
+        for cardType: VacationCardType,
+        data: [T],
+        defaultText: String,
+        getNextUpcoming: ([T]) -> (any DateStringConvertible)?
+    ) {
+        let nextItem = data.isEmpty ? nil : getNextUpcoming(data)
+        let dateString = nextItem?.dateString ?? defaultText
         
         for index in state.shortCards.indices {
-            if state.shortCards[index].type == .holiday {
+            if state.shortCards[index].type == cardType {
                 state.shortCards[index] = VacationCardItem(
-                    dateString: holidayDateString,
-                    type: .holiday
+                    dateString: dateString,
+                    type: cardType
                 )
                 break
             }
@@ -359,17 +387,31 @@ final class HomeStore: ObservableObject {
     }
     
     // MARK: - 다음 공휴일 찾기 메서드
-    private func getNextUpcomingHoliday() -> Holiday? {
+    private func getNextUpcomingHoliday(from holidays: [Holiday]) -> Holiday? {
         let today = Date()
         let calendar = Calendar.current
         
-        let upcomingHolidays = state.holidays
+        let upcomingHolidays = holidays
             .filter { holiday in
                 calendar.compare(holiday.date, to: today, toGranularity: .day) != .orderedAscending
             }
             .sorted { $0.date < $1.date }
         
         return upcomingHolidays.first
+    }
+    
+    // MARK: - 다음 샌드위치 휴일 찾기 메서드
+    private func getNextUpcomingSandwichHoliday(from sandwichHolidays: [SandwichHoliday]) -> SandwichHoliday? {
+        let today = Date()
+        let calendar = Calendar.current
+        
+        let upcomingSandwichHolidays = sandwichHolidays
+            .filter { sandwichHoliday in
+                calendar.compare(sandwichHoliday.endDate, to: today, toGranularity: .day) != .orderedAscending
+            }
+            .sorted { $0.startDate < $1.startDate }
+        
+        return upcomingSandwichHolidays.first
     }
     
     private func setupLocationManager() {
@@ -380,11 +422,10 @@ final class HomeStore: ObservableObject {
         // 저장된 위치 정보 불러오기
         state.savedLocation = locationManager.getSavedLocation()
         
-        // 저장된 위치가 있으면 바로 날씨 데이터 요청
+        // 저장된 위치가 있으면 위치 등록 상태만 설정
         if let savedLocation = state.savedLocation {
             state.currentLocation = savedLocation
             state.isLocationRegistered = true
-            send(.loadWeatherRecommendations)
         } else {
             // 저장된 위치가 없으면 디폴트 위치로 등록
             send(.registerLocation)
@@ -431,6 +472,7 @@ extension HomeStore {
         state.isBirthdayLoading = true
         do {
             let userProfile = try await getUserProfileUseCase.execute()
+            print("🔥 userProfile: \(userProfile)")
 
             // 생일 정보 저장
             state.userBirthday = userProfile.birthDate
@@ -452,7 +494,7 @@ extension HomeStore {
     
     private func updateBirthdayCard() {
         guard let birthday = state.userBirthday, !birthday.isEmpty else {
-            updateBirthdayCardWithDefault()
+            updateCard(for: .birthday, data: [], defaultText: "생일 정보 없음") { _ in nil }
             return
         }
         
@@ -460,29 +502,11 @@ extension HomeStore {
             let birthdayDateString = formatBirthdayDate(nextBirthday)
             state.nextBirthday = nextBirthday
             
-            for index in state.shortCards.indices {
-                if state.shortCards[index].type == .birthday {
-                    state.shortCards[index] = VacationCardItem(
-                        dateString: birthdayDateString,
-                        type: .birthday
-                    )
-                    break
-                }
+            updateCard(for: .birthday, data: [nextBirthday], defaultText: "생일 정보 없음") { _ in
+                BirthdayItem(date: nextBirthday, dateString: birthdayDateString)
             }
         } else {
-            updateBirthdayCardWithDefault()
-        }
-    }
-    
-    private func updateBirthdayCardWithDefault() {
-        for index in state.shortCards.indices {
-            if state.shortCards[index].type == .birthday {
-                state.shortCards[index] = VacationCardItem(
-                    dateString: "생일 정보 없음",
-                    type: .birthday
-                )
-                break
-            }
+            updateCard(for: .birthday, data: [], defaultText: "생일 정보 없음") { _ in nil }
         }
     }
     
@@ -542,6 +566,27 @@ extension HomeStore {
         dateFormatter.timeZone = TimeZone(identifier: "Asia/Seoul")
         
         return dateFormatter.string(from: date)
+    }
+    
+    // MARK: - BirthdayItem (DateStringConvertible)
+    private struct BirthdayItem: DateStringConvertible {
+        let date: Date
+        let dateString: String
+    }
+    
+    // MARK: - 날씨 날짜 포맷팅
+    func formatWeatherDate(_ dateString: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        guard let date = dateFormatter.date(from: dateString) else {
+            return dateString
+        }
+        
+        let outputFormatter = DateFormatter()
+        outputFormatter.locale = Locale(identifier: "ko_KR")
+        outputFormatter.dateFormat = "M/dd(E)"
+        return outputFormatter.string(from: date)
     }
 }
 

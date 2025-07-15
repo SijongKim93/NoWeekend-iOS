@@ -32,6 +32,7 @@ struct LongCardSection: View {
                     VacationCardView(
                         vactionType: cardData.type,
                         variableText: cardData.dateString,
+                        attributedText: cardData.attributedText,
                         onTap: {
                             onCardTapped?(cardData.type)
                         }

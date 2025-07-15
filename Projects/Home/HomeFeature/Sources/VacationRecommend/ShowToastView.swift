@@ -11,6 +11,7 @@ import DesignSystem
 
 struct ShowToastView: View {
     @State private var isToastVisible = false
+    @EnvironmentObject private var coordinator: HomeCoordinator
     let toastText: String
     let dateText: String
 
@@ -20,6 +21,7 @@ struct ShowToastView: View {
                 CustomNavigationBar(
                     type: .backOnly,
                     onBackTapped: {
+                        coordinator.popToRoot()
                     }
                 )
              
@@ -64,14 +66,14 @@ struct ToastContentView: View {
             BalloonView(dateText: dateText)
             ToastView(isVisible: true, toastMessage: toastText)
                 .animation(.easeInOut(duration: 0.5), value: true)
-            HStack(spacing: 0) {
-                Text("일정 볼래말래")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Neutral.gray900)
-                
-                DS.Images.icnChevronRight
-            }
-            .frame(height: 24)
+//            HStack(spacing: 0) {
+//                Text("일정 볼래말래")
+//                    .font(.body1)
+//                    .foregroundColor(DS.Colors.Neutral.gray900)
+//                
+//                DS.Images.icnChevronRight
+//            }
+//            .frame(height: 24)
         }
     }
 }
@@ -160,9 +162,9 @@ struct BalloonView: View {
                 Text(dateText)
                     .font(.heading6)
                     .foregroundColor(DS.Colors.Text.netural)
-                DS.Images.icnPlus
-                    .resizable()
-                    .frame(width: 24, height: 24)
+//                DS.Images.icnPlus
+//                    .resizable()
+//                    .frame(width: 24, height: 24)
             }
             .padding(.top, 16)
             .padding(.bottom, 25)

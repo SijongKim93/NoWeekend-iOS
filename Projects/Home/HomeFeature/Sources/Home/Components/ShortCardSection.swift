@@ -24,36 +24,20 @@ struct ShortCardSection: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 20) {
             HStack {
-                Text("인기 휴가, 모두 확인하세요")
+                Text("1년까지의 휴가를 모두 모아봤어요.")
                     .font(.heading5)
                 Spacer()
             }
-            
-            HStack {
-                NWButton(variant: .primary, size: .md, action: {
-                    onDateButtonTapped?()
-                }) {
-                    HStack {
-                        Text(dateString)
-                            .font(.subtitle1)
-                        DS.Images.icnChevronDown
-                    }
-                }
-                .frame(width: 114)
-                
-                Spacer()
-            }
-            .padding(.top, 22)
-            .padding(.bottom, 16)
-            
+          
             LazyVGrid(columns: [GridItem(), GridItem()], spacing: 16) {
                 ForEach(cards.indices, id: \.self) { idx in
                     let cardData = cards[idx]
                     VacationCardView(
                         vactionType: cardData.type,
                         variableText: cardData.dateString,
+                        attributedText: cardData.attributedText,
                         onTap: {
                             onCardTapped?(cardData.type)
                         }

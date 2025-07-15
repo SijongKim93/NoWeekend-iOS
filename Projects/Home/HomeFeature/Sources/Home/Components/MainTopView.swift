@@ -38,19 +38,6 @@ struct MainTopView: View {
             }
             .padding(.bottom, 4)
             
-            HStack(spacing: 4) {
-                Text("최대")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Text.body)
-                Text("\(remainingAnnualLeave)일")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Toast._600)
-                Text("휴가 굽기")
-                    .font(.body1)
-                    .foregroundColor(DS.Colors.Text.body)
-            }
-            .padding(.bottom, 4)
-            
             Text(vacationBakingStatus.titleText)
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
@@ -62,7 +49,7 @@ struct MainTopView: View {
                 .padding(.vertical, 16)
             
             Button(action: onVacationBakingTapped) {
-                Text(vacationBakingStatus.buttonText)
+                Text(getButtonText())
                     .font(.body1)
                     .foregroundColor(vacationBakingStatus.isButtonEnabled ? .white : DS.Colors.Text.body)
                     .frame(width: 200, height: 60)
@@ -73,6 +60,17 @@ struct MainTopView: View {
             }
             .disabled(!vacationBakingStatus.isButtonEnabled)
             .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    private func getButtonText() -> String {
+        switch vacationBakingStatus {
+        case .notStarted:
+            return "최대 \(remainingAnnualLeave)일 휴가 굽기"
+        case .processing:
+            return "휴가 굽는중"
+        case .completed:
+            return "휴가 쓸래말래?"
         }
     }
 } 
