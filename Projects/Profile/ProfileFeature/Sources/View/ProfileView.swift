@@ -34,7 +34,7 @@ private struct ProfileHeaderSection: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            Text(store.state.userProfile?.nickname ?? "알 수 없음")
+            Text(store.state.userProfile?.nickname ?? "마이 페이지")
                 .font(.heading4)
                 .foregroundColor(DS.Colors.Text.netural)
             
@@ -136,13 +136,13 @@ private struct ProfileSettingSection: View {
             SettingSection(
                 title: "기타") {
                     SettingRow.basic(title: "서비스 문의") {
-                        
+                        coordinator.push(.serviceCall)
                     }
                     
                     SettingDivider()
                     
                     SettingRow.basic(title: "정책") {
-                        
+                        coordinator.push(.policy)
                     }
                     
                     SettingDivider()

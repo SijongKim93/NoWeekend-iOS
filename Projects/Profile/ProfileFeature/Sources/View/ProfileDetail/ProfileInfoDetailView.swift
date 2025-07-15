@@ -62,7 +62,7 @@ struct ProfileInfoDetailView: View {
             Button("취소", role: .cancel) {
             }
             Button("계정 삭제", role: .destructive) {
-                handleWithdrawalConfirm()
+                handleLogoutConfirm()
             }
         } message: {
             Text("삭제하시면 모든 정보가 복구되지 않으며,\n이용 기록이 사라집니다.")
@@ -116,7 +116,7 @@ private struct InfoDetailSettingSection: View {
         VStack(spacing: 16) {
             SettingRow.withRightText(
                 title: "계정",
-                rightText: store.displayNickname,
+                rightText: "",//displayName
                 action: {
                     coordinator.push(.edit)
                 }

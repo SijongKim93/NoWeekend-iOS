@@ -15,6 +15,8 @@ public enum ProfileRouter {
         case infoEdit
         case tags
         case vacation
+        case serviceCall
+        case policy
     }
     
     public enum Sheet: RawRepresentable, Identifiable {

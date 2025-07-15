@@ -87,7 +87,7 @@ public final class ProfileStore: ObservableObject {
     
     public var remainingLeaveText: String {
         guard let profile = state.userProfile else {
-            return "-"
+            return "15"
         }
         
         let remainingHours = profile.remainingAnnualLeave
@@ -96,11 +96,11 @@ public final class ProfileStore: ObservableObject {
     
     public var usedLeaveText: String {
         guard state.userProfile != nil else {
-            return "-"
+            return "0"
         }
         
         // TODO: 추후 실제 사용한 연차 API가 추가되면 교체
-        return "3"
+        return "0"
     }
     
     private func formatLeaveHours(_ hours: Double) -> String {
