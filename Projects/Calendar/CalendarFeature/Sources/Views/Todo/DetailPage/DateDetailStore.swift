@@ -64,15 +64,9 @@ public class DateDetailStore {
             state.showCategorySelection = false
             
         case .selectCategory(let category):
-            let newTodo = DesignSystem.TodoItem(
-                id: state.todoItems.count + 1,
-                title: category.name,
-                isCompleted: false,
-                category: DesignSystem.TodoCategory(name: category.name, color: category.color),
-                time: nil
-            )
-            state.todoItems.append(newTodo)
-            state.editingTaskIndex = state.todoItems.count - 1
+            Task {
+                await createScheduleFromCategory(category)
+            }
             state.showCategorySelection = false
             
         case .navigateToTaskCreate:
@@ -84,110 +78,96 @@ public class DateDetailStore {
 // MARK: - Private Methods
 private extension DateDetailStore {
     func loadSchedules() async {
-        guard let useCase = calendarUseCase ?? DIContainer.shared.container.resolve(CalendarUseCaseProtocol.self) else {
-            await loadMockData()
-            return
-        }
+        let useCase = calendarUseCase ?? DIContainer.shared.resolve(CalendarUseCaseProtocol.self)
         
         state.isLoading = true
         state.errorMessage = nil
         
         do {
-            let dateString = selectedDate.toString(format: "yyyy-MM-dd")
-            let dailySchedules = try await useCase.getSchedulesForDateRange(
+            let schedules = try await useCase.getSchedulesForDateRange(
                 startDate: selectedDate,
                 endDate: selectedDate
             )
             
-            if let daySchedule = dailySchedules.first(where: { $0.date == dateString }) {
-                let schedulesForDay = daySchedule.schedules
-                state.schedules = schedulesForDay
-                state.todoItems = createTodoItemsFromSchedules(schedulesForDay)
+            if let daySchedule = schedules.first {
+                let todoItems = daySchedule.schedules.enumerated().map { index, schedule in
+                    createTodoFromSchedule(id: index + 1, schedule: schedule)
+                }
+                state.todoItems = todoItems
+                state.schedules = daySchedule.schedules
             } else {
-                state.schedules = []
                 state.todoItems = []
+                state.schedules = []
             }
-            state.isLoading = false
             
         } catch {
-            state.errorMessage = error.localizedDescription
-            state.isLoading = false
+            state.errorMessage = "일정 로딩에 실패했습니다: \(error.localizedDescription)"
         }
-    }
-    
-    func loadMockData() async {
-        state.schedules = mockSchedules
-        state.todoItems = mockTodoItems
+        
         state.isLoading = false
     }
     
-    var mockSchedules: [Schedule] {
-        [
-            Schedule(
-                id: "1",
-                title: "길게 들어가면 이렇게 보여집니다. 길게 들어...",
-                startTime: Date(),
-                endTime: Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date(),
-                category: .company,
+    func createScheduleFromCategory(_ category: TaskCategory) async {
+        let useCase = calendarUseCase ?? DIContainer.shared.resolve(CalendarUseCaseProtocol.self)
+        
+        do {
+            let calendar = Calendar.current
+            
+            let startTime = calendar.date(bySettingHour: calendar.component(.hour, from: Date()),
+                                        minute: calendar.component(.minute, from: Date()),
+                                        second: 0,
+                                        of: selectedDate) ?? selectedDate
+            
+            let endTime = calendar.date(byAdding: .hour, value: 1, to: startTime) ?? startTime
+            
+            let scheduleCategory = mapTaskCategoryToScheduleCategory(category.name)
+            
+            let createdSchedule = try await useCase.createSchedule(
+                title: category.name,
+                date: selectedDate,
+                startTime: startTime,
+                endTime: endTime,
+                category: scheduleCategory,
                 temperature: 50,
                 allDay: false,
-                alarmOption: .none,
-                completed: false
-            ),
-            Schedule(
-                id: "2",
-                title: "할 일 제목이 들어갑니다.",
-                startTime: Date(),
-                endTime: Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date(),
-                category: .personal,
-                temperature: 60,
-                allDay: false,
-                alarmOption: .none,
-                completed: true
-            )
-        ]
-    }
-    
-    var mockTodoItems: [DesignSystem.TodoItem] {
-        [
-            DesignSystem.TodoItem(
-                id: 1,
-                title: "길게 들어가면 이렇게 보여집니다. 길게 들어...",
-                isCompleted: false,
-                category: DesignSystem.TodoCategory(name: "회사", color: DS.Colors.TaskItem.green),
-                time: "오전 10:00"
-            ),
-            DesignSystem.TodoItem(
-                id: 2,
-                title: "할 일 제목이 들어갑니다.",
-                isCompleted: false,
-                category: DesignSystem.TodoCategory(name: "개인", color: DS.Colors.TaskItem.orange),
-                time: "오전 10:00"
-            ),
-            DesignSystem.TodoItem(
-                id: 3,
-                title: "할 일 제목이 들어갑니다.",
-                isCompleted: true,
-                category: DesignSystem.TodoCategory(name: "개인", color: DS.Colors.TaskItem.orange),
-                time: "오전 10:00"
-            )
-        ]
-    }
-    
-    func createTodoItemsFromSchedules(_ schedules: [Schedule]) -> [DesignSystem.TodoItem] {
-        return schedules.enumerated().map { index, schedule in
-            let category = DesignSystem.TodoCategory(
-                name: schedule.category.displayName,
-                color: schedule.category.designSystemColor
+                alarmOption: .none
             )
             
-            return DesignSystem.TodoItem(
-                id: index + 1,
-                title: schedule.title,
-                isCompleted: schedule.completed,
-                category: category,
-                time: schedule.allDay ? "하루 종일" : schedule.startTime.toString(format: "a h:mm")
-            )
+            print("✅ 일정 생성 성공: \(category.name)")
+            
+            await loadSchedules()
+            
+        } catch {
+            print("❌ 일정 생성 실패: \(error.localizedDescription)")
         }
+    }
+    
+    func mapTaskCategoryToScheduleCategory(_ categoryName: String) -> ScheduleCategory {
+        let companyKeywords = ["출근", "회사", "회의", "업무", "근무", "사무", "직장"]
+        let personalKeywords = ["운동", "쇼핑", "선물", "개인", "취미", "여가"]
+        
+        if companyKeywords.contains(where: { categoryName.contains($0) }) {
+            return .company
+        } else if personalKeywords.contains(where: { categoryName.contains($0) }) {
+            return .personal
+        } else {
+            return .etc 
+        }
+    }
+    
+    func createTodoFromSchedule(id: Int, schedule: Schedule) -> DesignSystem.TodoItem {
+        let category = DesignSystem.TodoCategory(
+            name: schedule.category.displayName,
+            color: schedule.category.designSystemColor
+        )
+        
+        return DesignSystem.TodoItem(
+            id: id,
+            title: schedule.title,
+            isCompleted: schedule.completed,
+            category: category,
+            time: schedule.allDay ? "하루 종일" : schedule.startTime.toString(format: "a h:mm"),
+            scheduleId: schedule.id
+        )
     }
 }

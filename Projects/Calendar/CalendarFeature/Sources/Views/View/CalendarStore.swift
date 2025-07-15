@@ -2,7 +2,7 @@
 //  CalendarStore.swift
 //  CalendarFeature
 //
-//  Created by Assistant on 7/12/25.
+//  Created by 이지훈 on 7/12/25.
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
@@ -104,17 +104,10 @@ private extension CalendarStore {
     
     @MainActor
     func handleCategorySelected(_ category: TaskCategory) {
-        let newTodo = createTodoFromCategory(
-            id: state.todoItems.count + 1,
-            title: category.name,
-            category: category
-        )
-        
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            state.todoItems.append(newTodo)
+        Task {
+            await createScheduleFromCategory(category)
         }
         
-        state.editingTaskIndex = state.todoItems.count - 1
         state.showCategorySelection = false
     }
     
@@ -316,6 +309,54 @@ private extension CalendarStore {
         }
         
         return (firstWeekStart, lastWeekEnd)
+    }
+    
+    @MainActor
+    func createScheduleFromCategory(_ category: TaskCategory) async {
+        do {
+            let calendar = Calendar.current
+            let selectedDate = state.selectedDate
+            
+            let startTime = calendar.date(bySettingHour: calendar.component(.hour, from: Date()),
+                                        minute: calendar.component(.minute, from: Date()),
+                                        second: 0,
+                                        of: selectedDate) ?? selectedDate
+            
+            let endTime = calendar.date(byAdding: .hour, value: 1, to: startTime) ?? startTime
+            
+            let scheduleCategory = mapTaskCategoryToScheduleCategory(category.name)
+            
+            let createdSchedule = try await calendarUseCase.createSchedule(
+                title: category.name,
+                date: selectedDate,
+                startTime: startTime,
+                endTime: endTime,
+                category: scheduleCategory,
+                temperature: 50,
+                allDay: false,
+                alarmOption: .none
+            )
+            
+            effectSubject.send(.showSuccess("\(category.name) 일정이 추가되었습니다"))
+            
+            await loadSchedules()
+            
+        } catch {
+            effectSubject.send(.showError("일정 추가에 실패했습니다: \(error.localizedDescription)"))
+        }
+    }
+    
+    func mapTaskCategoryToScheduleCategory(_ categoryName: String) -> ScheduleCategory {
+        let companyKeywords = ["출근", "회사", "회의", "업무", "근무", "사무", "직장"]
+        let personalKeywords = ["운동", "쇼핑", "선물", "개인", "취미", "여가"]
+        
+        if companyKeywords.contains(where: { categoryName.contains($0) }) {
+            return .company
+        } else if personalKeywords.contains(where: { categoryName.contains($0) }) {
+            return .personal
+        } else {
+            return .etc 
+        }
     }
     
     func mapCategoryNameToScheduleCategory(_ categoryName: String) -> ScheduleCategory {
