@@ -81,6 +81,9 @@ public struct TabBarView: View {
                 .tag(Tab.profile)
         }
         .accentColor(DS.Colors.Neutral.gray900)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SwitchToCalendarTab"))) { _ in
+            selectedTab = .calendar
+        }
     }
 }
 
