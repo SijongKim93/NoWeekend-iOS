@@ -11,9 +11,8 @@ import SwiftUI
 public struct TextInputBottomSheet: View {
     public let subtitle: String
     public let placeholder: String
-    public let onAddButtonTapped: () -> Void
-
     @Binding public var text: String
+    public let onAddButtonTapped: () -> Void
     @Binding public var isPresented: Bool
     
     public init(
@@ -43,6 +42,7 @@ public struct TextInputBottomSheet: View {
                     placeholder: placeholder,
                     text: $text
                 )
+                .foregroundColor(DS.Colors.Text.netural)
                 
                 NWButton.black(
                     "추가하기",
@@ -54,7 +54,6 @@ public struct TextInputBottomSheet: View {
                 )
                 .padding(.bottom, 34)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
