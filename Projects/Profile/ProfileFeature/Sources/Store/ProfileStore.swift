@@ -142,7 +142,7 @@ public final class ProfileStore: ObservableObject {
     
     public var providerDisplayText: String {
         guard let profile = state.userProfile else {
-            return "알 수 없음"
+            return "애플 계정"
         }
         
         switch profile.providerType {
@@ -151,7 +151,7 @@ public final class ProfileStore: ObservableObject {
         case .apple:
             return "애플 계정"
         @unknown default:
-            return "알 수 없음"
+            return "애플 계정"
         }
     }
     

@@ -10,7 +10,7 @@ import Foundation
 import LoginDomain
 
 public struct AppleLoginResponseDTO: Decodable {
-    public let email: String
+    public let email: String?
     public let exists: Bool
     public let accessToken: String
 }
@@ -24,9 +24,10 @@ public struct ApiResponseAppleLoginDTO: Decodable {
 extension AppleLoginResponseDTO {
     public func toDomain() -> LoginUser {
         LoginUser(
-            email: self.email,
+            email: self.email ?? "",
             accessToken: self.accessToken,
             isExistingUser: self.exists
         )
     }
 }
+

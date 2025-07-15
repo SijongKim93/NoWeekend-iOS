@@ -89,12 +89,11 @@ public final class AuthRepositoryImpl: AuthRepositoryInterface {
     public func withdrawAppleAccount(identityToken: String) async throws {
         let requestDTO = AppleWithdrawalRequestDTO(identityToken: identityToken)
         let parameters = try requestDTO.asDictionary()
-        let endpoint = "/withdrawal/APPLE"
+        let endpoint = "/user"
         
         do {
-            let apiDTO: ApiResponseWithdrawalDTO = try await networkService.post(
-                endpoint: endpoint,
-                parameters: parameters
+            let apiDTO: ApiResponseWithdrawalDTO = try await networkService.delete(
+                endpoint: endpoint
             )
             
             guard apiDTO.result == "SUCCESS" else {

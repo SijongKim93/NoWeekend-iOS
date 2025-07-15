@@ -1,29 +1,92 @@
 //
-//  MypageInfoDetailView.swift
-//  Mypage
-//
-//  Created by SiJongKim on 7/4/25.
-//  Copyright © 2025 com.noweekend. All rights reserved.
+//  ProfileInfoDetailView.swift (즉시 네비게이션 초기화)
+//  ProfileFeature
 //
 
 import DesignSystem
 import DIContainer
 import SwiftUI
+import Combine
+import LoginFeature
 
 struct ProfileInfoDetailView: View {
     @EnvironmentObject var coordinator: ProfileCoordinator
     @ObservedObject var store: ProfileStore
+    @ObservedObject var loginStore: LoginStore
+    
+    @State private var showingLogoutAlert = false
+    @State private var showingWithdrawalAlert = false
     
     public init() {
         self.store = DIContainer.shared.resolve(ProfileStore.self)
+        self.loginStore = DIContainer.shared.resolve(LoginStore.self)
+        print("🏗️ ProfileInfoDetailView - LoginStore 주입 완료")
     }
     
     public var body: some View {
         VStack {
             InfoDetailHeaderSection()
-            InfoDetailSettingSection(store: store)
+            InfoDetailSettingSection(
+                store: store,
+                showingLogoutAlert: $showingLogoutAlert,
+                showingWithdrawalAlert: $showingWithdrawalAlert,
+                loginStore: loginStore,
+                coordinator: coordinator
+            )
             
             Spacer()
+            
+            Button(action: {
+                showingWithdrawalAlert = true
+            }, label: {
+                HStack {
+                    Text("계정 삭제")
+                        .font(.body1)
+                        .foregroundColor(DS.Colors.Text.body)
+                    
+                    DS.Images.icnChevronRight
+                        .tint(DS.Colors.Text.body)
+                }
+            })
+        }
+        .alert("로그아웃", isPresented: $showingLogoutAlert) {
+            Button("취소", role: .cancel) {
+            }
+            Button("로그아웃", role: .destructive) {
+                handleLogoutConfirm()
+            }
+        } message: {
+            Text("정말 로그아웃 하시겠습니까?")
+        }
+        .alert("정말로 앱을 떠나시나요?", isPresented: $showingWithdrawalAlert) {
+            Button("취소", role: .cancel) {
+            }
+            Button("계정 삭제", role: .destructive) {
+                handleWithdrawalConfirm()
+            }
+        } message: {
+            Text("삭제하시면 모든 정보가 복구되지 않으며,\n이용 기록이 사라집니다.")
+        }
+    }
+    
+    private func handleLogoutConfirm() {
+        
+        DispatchQueue.main.async {
+            self.coordinator.popToRoot()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.loginStore.send(.signOut)
+            }
+        }
+    }
+    
+    private func handleWithdrawalConfirm() {
+        DispatchQueue.main.async {
+            self.coordinator.popToRoot()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.loginStore.send(.withdrawAppleAccount)
+            }
         }
     }
 }
@@ -43,8 +106,11 @@ private struct InfoDetailHeaderSection: View {
 }
 
 private struct InfoDetailSettingSection: View {
-    @EnvironmentObject var coordinator: ProfileCoordinator
     let store: ProfileStore
+    @Binding var showingLogoutAlert: Bool
+    @Binding var showingWithdrawalAlert: Bool
+    let loginStore: LoginStore
+    let coordinator: ProfileCoordinator
     
     var body: some View {
         VStack(spacing: 16) {
@@ -79,7 +145,16 @@ private struct InfoDetailSettingSection: View {
     }
     
     private func handleLogout() {
-        print("로그아웃 처리 (알럿, 상태 변경, 토큰삭제 등 들어가야함")
+        showingLogoutAlert = true
+    }
+    
+    private func handleWithdrawal() {
+        showingWithdrawalAlert = true
+    }
+    
+    private var isAppleAccount: Bool {
+        guard let profile = store.state.userProfile else { return false }
+        return profile.providerType == .apple
     }
     
     private var providerIcon: Image {
@@ -93,15 +168,8 @@ private struct InfoDetailSettingSection: View {
         case .apple:
             return DS.Images.icon
         @unknown default:
-            return DS.Images.icon1
+            return DS.Images.icon
         }
-    }
-    
-}
-
-private struct InfoDetailBottomSection: View {
-    var body: some View {
-        Text("InfoDetailBottom")
     }
 }
 

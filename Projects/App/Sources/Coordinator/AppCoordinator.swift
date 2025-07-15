@@ -28,8 +28,9 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
     @Published public var sheet: SheetScreen?
     @Published public var fullScreenCover: FullScreen?
 
-    @Published public var currentScreen: Screen = .login
+    @Published public var rootScreen: Screen = .login
     @Published public var isLoading: Bool = true
+    @Published public var transitionDirection: TransitionDirection = .forward
     
     private var cancellables = Set<AnyCancellable>()
     private let tokenManager: TokenManagerInterface
@@ -39,11 +40,8 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
         
         setupLoginEffectBinding()
         checkInitialFlow()
-        
     }
-    
-    // MARK: - 📱 Coordinatorable Implementation
-    
+
     public func view(_ screen: Screen) -> AnyView {
         switch screen {
         case .login:
@@ -74,19 +72,13 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
         }
     }
     
-    // MARK: - 🔗 LoginStore Effect 바인딩 (핵심 수정사항)
-    
     private func setupLoginEffectBinding() {
-        
         let loginStore: LoginStore = DIContainer.shared.resolve(LoginStore.self)
         
         loginStore.effect
             .receive(on: DispatchQueue.main)
             .sink { [weak self] effect in
-                guard let self = self else {
-                    print("❌ AppCoordinator - self가 nil (메모리 해제됨)")
-                    return
-                }
+                guard let self = self else { return }
                 
                 switch effect {
                 case .navigateToHome:
@@ -111,88 +103,161 @@ public final class AppCoordinator: ObservableObject, Coordinatorable {
             .store(in: &cancellables)
     }
     
-    
     private func handleLoginSuccess(shouldGoToMain: Bool) {
-        
         let hasValidToken = tokenManager.hasValidAccessToken()
         
-        if hasValidToken {
-            let targetScreen: AppRouter.Screen
-            
-            if shouldGoToMain {
-                targetScreen = .main
-            } else {
-                targetScreen = .onboarding
-            }
-            
-            currentScreen = targetScreen
-            
+        guard hasValidToken else {
+            safeNavigateToLogin()
+            isLoading = false
+            return
+        }
+        
+        if shouldGoToMain {
+            navigateToMainWithAnimation()
         } else {
-            currentScreen = .login
+            navigateToOnboardingWithAnimation()
         }
         
         isLoading = false
-        popToRoot()
     }
     
-    private func handleLogout() {
-        
-        UserDefaults.standard.removeObject(forKey: "onboarding_completed")
-        
-        currentScreen = .login
-        isLoading = false
-        popToRoot()
-        
-        print("   - 로그인 화면으로 이동 완료")
+    private func navigateToOnboardingWithAnimation() {
+        if rootScreen == .login {
+            safeAppendToPath(.onboarding)
+        } else {
+            rootScreen = .login
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.safeAppendToPath(.onboarding)
+            }
+        }
     }
     
-    public func navigateToLogin() {
-        currentScreen = .login
-        popToRoot()
-    }
-    
-    public func navigateToOnboarding() {
-        currentScreen = .onboarding
-        popToRoot()
-    }
-    
-    public func navigateToMain() {
-        currentScreen = .main
-        popToRoot()
+    private func navigateToMainWithAnimation() {
+        transitionDirection = .forward
+        withAnimation(.easeInOut(duration: 0.3)) {
+            self.rootScreen = .main
+            self.safeResetPath()
+        }
     }
     
     public func completeOnboarding() {
         UserDefaults.standard.set(true, forKey: "onboarding_completed")
-        navigateToMain()
+        
+        transitionDirection = .forward
+        
+        withAnimation(.timingCurve(0.4, 0.0, 0.2, 1.0, duration: 0.5)) {
+            self.rootScreen = .main
+            self.safeResetPath()
+        }
+    }
+    
+    private func handleLogout() {
+        safeResetAllNavigation()
+
+        transitionDirection = .backward
+    
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                self.rootScreen = .login
+            }
+        
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.safeResetPath()
+                self.isLoading = false
+            }
+        }
+    }
+    
+    private func safeResetPath() {
+        DispatchQueue.main.async {
+            self.path = NavigationPath()
+        }
+    }
+
+    private func safeAppendToPath(_ screen: Screen) {
+        DispatchQueue.main.async {
+            self.path.append(screen)
+        }
+    }
+    
+    private func safeResetAllNavigation() {
+        sheet = nil
+        fullScreenCover = nil
+        
+        DispatchQueue.main.async {
+            self.safeResetPath()
+        }
+    }
+    
+    private func safeNavigateToLogin() {
+        transitionDirection = .backward
+        withAnimation(.easeInOut(duration: 0.3)) {
+            rootScreen = .login
+            safeResetPath()
+        }
+    }
+    
+    // MARK: - Public Navigation Methods
+    
+    public func navigateToLogin() {
+        safeNavigateToLogin()
+    }
+    
+    public func navigateToOnboarding() {
+        if rootScreen == .login {
+            safeAppendToPath(.onboarding)
+        } else {
+            transitionDirection = .forward
+            withAnimation(.easeInOut(duration: 0.3)) {
+                rootScreen = .login
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.safeAppendToPath(.onboarding)
+            }
+        }
+    }
+    
+    public func navigateToMain() {
+        transitionDirection = .forward
+        withAnimation(.easeInOut(duration: 0.3)) {
+            rootScreen = .main
+            safeResetPath()
+        }
     }
     
     private func checkInitialFlow() {
         isLoading = true
         
         let hasValidToken = tokenManager.hasValidAccessToken()
-        print("   - 유효한 토큰: \(hasValidToken)")
         
         if hasValidToken {
             let onboardingCompleted = UserDefaults.standard.bool(forKey: "onboarding_completed")
-            print("   - 온보딩 완료: \(onboardingCompleted)")
             
             if onboardingCompleted {
-                print("   - 결정: 메인 화면으로 이동")
-                currentScreen = .main
+                rootScreen = .main
             } else {
-                print("   - 결정: 온보딩 화면으로 이동")
-                currentScreen = .onboarding
+                rootScreen = .login
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if self.rootScreen == .login {
+                        self.safeAppendToPath(.onboarding)
+                    }
+                }
             }
         } else {
-            print("   - 결정: 로그인 화면으로 이동")
-            currentScreen = .login
+            rootScreen = .login
         }
         
         isLoading = false
     }
     
-    
     public func refreshAuthenticationState() {
         checkInitialFlow()
     }
+}
+
+// MARK: - TransitionDirection
+
+public enum TransitionDirection {
+    case forward
+    case backward
 }

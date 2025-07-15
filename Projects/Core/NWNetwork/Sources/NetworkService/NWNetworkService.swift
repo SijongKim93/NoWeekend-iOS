@@ -267,7 +267,6 @@ public class NWNetworkService: NWNetworkServiceProtocol {
             return nil
         }
         
-        // 일반적인 에러 응답 구조들 확인
         if let error = json["error"] as? [String: Any],
            let message = error["message"] as? String {
             return message

@@ -1,5 +1,5 @@
 //
-//  LoginStore.swift
+//  LoginStore.swift (로그아웃 Effect 수정)
 //  Calendar
 //
 //  Created by SiJongKim on 6/12/25.
@@ -25,7 +25,6 @@ public final class LoginStore: ObservableObject {
         self.loginWithGoogleUseCase = loginWithGoogleUseCase
         self.loginWithAppleUseCase = loginWithAppleUseCase
         self.authUseCase = authUseCase
-        
     }
 
     public func send(_ intent: LoginIntent) {
@@ -61,10 +60,8 @@ public final class LoginStore: ObservableObject {
     }
     
     // MARK: - Google 로그인 처리
-    
     @MainActor
     private func handleGoogleSignIn() async {
-        
         state.errorMessage = ""
         state.isLoading = true
 
@@ -83,10 +80,8 @@ public final class LoginStore: ObservableObject {
 
         do {
             let user = try await loginWithAppleUseCase.execute()
-            
             await handleSignInSuccess(user)
         } catch {
-            
             await handleSignInFailure(error)
         }
     }
@@ -99,13 +94,11 @@ public final class LoginStore: ObservableObject {
         
         if let accessToken = user.accessToken {
             UserDefaults.standard.set(accessToken, forKey: "access_token")
-            print("   - Access Token 저장 완료")
         }
+        
         if user.isExistingUser {
-            print("   - Effect 발송: navigateToHome")
             effect.send(.navigateToHome)
         } else {
-            print("   - Effect 발송: navigateToOnboarding")
             effect.send(.navigateToOnboarding)
         }
     }
@@ -116,11 +109,11 @@ public final class LoginStore: ObservableObject {
         state.isLoading = false
         
         effect.send(.showError(message: error.localizedDescription))
-        
     }
 
     @MainActor
     private func handleSignOut() async {
+        print("🚪 LoginStore - 로그아웃 처리 시작")
         
         authUseCase.signOutGoogle()
         authUseCase.signOutApple()
@@ -128,13 +121,15 @@ public final class LoginStore: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "access_token")
         
         state = LoginState()
+        
+        
+        effect.send(.navigateToLogin)
     }
     
     // MARK: - Apple 회원탈퇴 관련
     
     @MainActor
     private func handleAppleWithdrawal() async {
-        
         state.errorMessage = ""
         state.isWithdrawing = true
 
