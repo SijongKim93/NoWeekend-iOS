@@ -115,7 +115,6 @@ private extension CalendarUseCase {
         let firstDayOfMonth = monthInterval.start
         let lastDayOfMonth = calendar.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
         
-        // 월 달력 뷰에서는 첫 번째 주의 시작일부터 마지막 주의 끝일까지 표시
         guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: firstDayOfMonth)?.start else {
             return (firstDayOfMonth, lastDayOfMonth)
         }

@@ -13,5 +13,5 @@ public protocol CalendarRepositoryProtocol {
     func createSchedule(request: CreateScheduleRequest) async throws -> Schedule
     func updateSchedule(id: String, request: UpdateScheduleRequest) async throws -> Schedule
     func deleteSchedule(id: String) async throws
-    func getRecommendedTags() async throws -> RecommendTagResponse // 새로 추가된 메서드
+    func getRecommendedTags() async throws -> RecommendTagResponse 
 }
