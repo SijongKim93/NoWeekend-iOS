@@ -73,6 +73,7 @@ private extension CalendarStore {
     @MainActor
     func handleViewDidAppear() async {
         state.scrollOffset = 0
+        await loadRecommendedCategories()
         await loadSchedules()
         updateTodoItemsForSelectedDate()
     }
@@ -233,6 +234,34 @@ private extension CalendarStore {
             state.todoItems = []
             state.isLoading = false
         }
+    }
+    
+    @MainActor
+    func loadRecommendedCategories() async {
+        do {
+            let response = try await calendarUseCase.getRecommendedTags()
+            
+            if response.result == "SUCCESS", let data = response.data {
+                state.recommendedCategories = [
+                    TaskCategory(name: data.firstRecommendTag.content, color: DS.Colors.TaskItem.green),
+                    TaskCategory(name: data.secondRecommendTag.content, color: DS.Colors.TaskItem.orange),
+                    TaskCategory(name: data.thirdRecommendTag.content, color: DS.Colors.Neutral.gray700)
+                ]
+            } else {
+                state.recommendedCategories = getDefaultCategories()
+            }
+        } catch {
+            state.recommendedCategories = getDefaultCategories()
+            print("추천 카테고리 로딩 실패: \(error)")
+        }
+    }
+    
+    func getDefaultCategories() -> [TaskCategory] {
+        return [
+            TaskCategory(name: "출근하기", color: DS.Colors.TaskItem.green),
+            TaskCategory(name: "운동하기", color: DS.Colors.TaskItem.orange),
+            TaskCategory(name: "선물사기", color: DS.Colors.Neutral.gray700)
+        ]
     }
     
     func fetchSchedules() async throws -> [DailySchedule] {

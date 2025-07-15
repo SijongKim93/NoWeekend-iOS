@@ -6,6 +6,7 @@
 //  Copyright © 2025 com.noweekend. All rights reserved.
 //
 
+import CalendarDomain
 import Foundation
 import Utils
 
@@ -67,9 +68,9 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         startTime: Date,
         endTime: Date,
         category: ScheduleCategory,
-        temperature: Int = 3,
-        allDay: Bool = false,
-        alarmOption: AlarmOption = .none
+        temperature: Int,
+        allDay: Bool,
+        alarmOption: AlarmOption
     ) async throws -> Schedule {
         let request = UpdateScheduleRequest(
             title: title,
@@ -88,14 +89,25 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         try await calendarRepository.deleteSchedule(id: id)
     }
     
-    private func calculateWeekRange(for date: Date) -> (Date, Date) {
+    public func getRecommendedTags() async throws -> RecommendTagResponse {
+        return try await calendarRepository.getRecommendedTags()
+    }
+}
+
+// MARK: - Private Helper Methods
+private extension CalendarUseCase {
+    func calculateWeekRange(for date: Date) -> (Date, Date) {
         guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: date) else {
             return (date, date)
         }
-        return (weekInterval.start, calendar.date(byAdding: .day, value: -1, to: weekInterval.end) ?? weekInterval.end)
+        
+        let startDate = weekInterval.start
+        let endDate = calendar.date(byAdding: .day, value: -1, to: weekInterval.end) ?? weekInterval.end
+        
+        return (startDate, endDate)
     }
     
-    private func calculateMonthViewRange(for date: Date) -> (Date, Date) {
+    func calculateMonthViewRange(for date: Date) -> (Date, Date) {
         guard let monthInterval = calendar.dateInterval(of: .month, for: date) else {
             return (date, date)
         }
@@ -103,6 +115,7 @@ public class CalendarUseCase: CalendarUseCaseProtocol {
         let firstDayOfMonth = monthInterval.start
         let lastDayOfMonth = calendar.date(byAdding: .day, value: -1, to: monthInterval.end) ?? monthInterval.end
         
+        // 월 달력 뷰에서는 첫 번째 주의 시작일부터 마지막 주의 끝일까지 표시
         guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: firstDayOfMonth)?.start else {
             return (firstDayOfMonth, lastDayOfMonth)
         }

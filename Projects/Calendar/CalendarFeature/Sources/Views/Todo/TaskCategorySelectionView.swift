@@ -9,7 +9,8 @@
 import DesignSystem
 import SwiftUI
 
-public struct TaskCategory {
+public struct TaskCategory: Identifiable {
+    public let id = UUID()
     public let name: String
     public let color: Color
     
@@ -21,24 +22,21 @@ public struct TaskCategory {
 
 public struct TaskCategorySelectionView: View {
     @Binding var isPresented: Bool
+    let categories: [TaskCategory]
     let onCategorySelected: (TaskCategory) -> Void
     let onDirectInputTapped: () -> Void
     
     @State private var opacity: Double = 0
     @State private var scale: Double = 0.8
     
-    private let categories: [TaskCategory] = [
-        TaskCategory(name: "출근하기", color: DS.Colors.TaskItem.green),
-        TaskCategory(name: "운동하기", color: DS.Colors.TaskItem.orange),
-        TaskCategory(name: "선물사기", color: DS.Colors.Neutral.gray700)
-    ]
-    
     public init(
         isPresented: Binding<Bool>,
+        categories: [TaskCategory], 
         onCategorySelected: @escaping (TaskCategory) -> Void,
-        onDirectInputTapped: @escaping () -> Void // 새로 추가된 매개변수
+        onDirectInputTapped: @escaping () -> Void
     ) {
         self._isPresented = isPresented
+        self.categories = categories
         self.onCategorySelected = onCategorySelected
         self.onDirectInputTapped = onDirectInputTapped
     }
@@ -59,7 +57,7 @@ public struct TaskCategorySelectionView: View {
                     
                     VStack(spacing: 0) {
                         VStack(spacing: 0) {
-                            ForEach(Array(categories.enumerated()), id: \.offset) { _, category in
+                            ForEach(categories) { category in
                                 CategoryRowCenter(
                                     category: category
                                 ) {
@@ -73,7 +71,6 @@ public struct TaskCategorySelectionView: View {
                             .frame(height: 1)
                         
                         Button(action: {
-                            // 직접 입력 버튼 액션 수정
                             onDirectInputTapped()
                             dismissWithAnimation()
                         }) {
@@ -158,6 +155,11 @@ struct CategoryRowCenter: View {
 #Preview {
     TaskCategorySelectionView(
         isPresented: .constant(true),
+        categories: [
+            TaskCategory(name: "출근하기", color: DS.Colors.TaskItem.green),
+            TaskCategory(name: "운동하기", color: DS.Colors.TaskItem.orange),
+            TaskCategory(name: "선물사기", color: DS.Colors.Neutral.gray700)
+        ],
         onCategorySelected: { category in
             print("선택된 카테고리: \(category.name)")
         },

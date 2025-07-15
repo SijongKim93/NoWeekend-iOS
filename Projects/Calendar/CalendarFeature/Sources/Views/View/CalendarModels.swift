@@ -34,6 +34,7 @@ public struct CalendarState: Equatable {
     var selectedToggle: CalendarNavigationBar.ToggleOption = .week
     var dailySchedules: [DailySchedule] = []
     var todoItems: [DesignSystem.TodoItem] = []
+    var recommendedCategories: [TaskCategory] = [] 
     
     var showDatePicker = false
     var showTaskEditSheet = false
@@ -58,6 +59,7 @@ public struct CalendarState: Equatable {
         lhs.selectedToggle == rhs.selectedToggle &&
         lhs.dailySchedules.count == rhs.dailySchedules.count &&
         lhs.todoItems.count == rhs.todoItems.count &&
+        lhs.recommendedCategories.count == rhs.recommendedCategories.count &&
         lhs.showDatePicker == rhs.showDatePicker &&
         lhs.showTaskEditSheet == rhs.showTaskEditSheet &&
         lhs.showCategorySelection == rhs.showCategorySelection &&
@@ -69,7 +71,7 @@ public struct CalendarState: Equatable {
 public enum CalendarEffect {
     case navigateToTaskCreate(Date)
     case navigateToTaskEdit(Int, String, String?, String?, Date)
-    case navigateToDateDetail(Date) 
+    case navigateToDateDetail(Date)
     case showError(String)
     case showSuccess(String)
 }
