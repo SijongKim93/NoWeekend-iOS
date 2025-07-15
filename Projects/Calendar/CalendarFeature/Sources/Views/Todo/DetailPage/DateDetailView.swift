@@ -21,6 +21,12 @@ public struct DateDetailView: View {
         return formatter
     }()
     
+    private let defaultCategories: [TaskCategory] = [
+        TaskCategory(name: "출근하기", color: DS.Colors.TaskItem.green),
+        TaskCategory(name: "운동하기", color: DS.Colors.TaskItem.orange),
+        TaskCategory(name: "선물사기", color: DS.Colors.Neutral.gray700)
+    ]
+    
     public init(selectedDate: Date, calendarUseCase: CalendarUseCaseProtocol? = nil) {
         self._store = State(initialValue: DateDetailStore(selectedDate: selectedDate, calendarUseCase: calendarUseCase))
     }
@@ -115,6 +121,7 @@ private extension DateDetailView {
         if store.state.showCategorySelection {
             TaskCategorySelectionView(
                 isPresented: categorySelectionBinding,
+                categories: defaultCategories,
                 onCategorySelected: { category in store.send(.selectCategory(category)) },
                 onDirectInputTapped: {
                     store.send(.navigateToTaskCreate)

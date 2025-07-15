@@ -12,6 +12,7 @@ import DesignSystem
 import DIContainer
 import SwiftUI
 import Utils
+
 public struct CalendarView: View {
     @EnvironmentObject private var coordinator: CalendarCoordinator
     @StateObject private var store = CalendarStore()
@@ -194,6 +195,7 @@ private extension CalendarView {
                     get: { store.state.showCategorySelection },
                     set: { _ in store.send(.categorySelectionToggled) }
                 ),
+                categories: store.state.recommendedCategories.isEmpty ? getDefaultCategories() : store.state.recommendedCategories,
                 onCategorySelected: { category in
                     store.send(.categorySelected(category))
                 },
@@ -203,6 +205,14 @@ private extension CalendarView {
             )
             .zIndex(1)
         }
+    }
+    
+    private func getDefaultCategories() -> [TaskCategory] {
+        return [
+            TaskCategory(name: "출근하기", color: DS.Colors.TaskItem.green),
+            TaskCategory(name: "운동하기", color: DS.Colors.TaskItem.orange),
+            TaskCategory(name: "선물사기", color: DS.Colors.Neutral.gray700)
+        ]
     }
     
     var floatingButton: some View {

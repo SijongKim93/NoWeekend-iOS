@@ -33,4 +33,5 @@ public protocol CalendarUseCaseProtocol {
         alarmOption: AlarmOption
     ) async throws -> Schedule
     func deleteSchedule(id: String) async throws
+    func getRecommendedTags() async throws -> RecommendTagResponse 
 }

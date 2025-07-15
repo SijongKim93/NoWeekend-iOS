@@ -131,4 +131,13 @@ public final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
             throw NetworkError.serverError(errorMessage)
         }
     }
+    
+    public func getRecommendedTags() async throws -> RecommendTagResponse {
+        let response: RecommendTagResponse = try await networkService.get(
+            endpoint: "/recommend/todo/mixed",
+            parameters: [:]
+        )
+        
+        return response
+    }
 }

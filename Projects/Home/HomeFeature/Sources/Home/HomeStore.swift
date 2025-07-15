@@ -245,6 +245,7 @@ final class HomeStore: ObservableObject {
                 let holidays = try await homeUseCase.getHolidays()
                 state.holidays = holidays
                 state.isHolidayLoading = false
+                updateShortCardsWithHolidayData()
             } catch {
                 state.isHolidayLoading = false
                 effect.send(.showError("공휴일 데이터를 가져오는데 실패했습니다."))
@@ -294,6 +295,8 @@ final class HomeStore: ObservableObject {
             let holidays = try await homeUseCase.getHolidays()
             state.holidays = holidays
             state.isHolidayLoading = false
+            // 공휴일 데이터 로드 후 카드 업데이트
+            updateShortCardsWithHolidayData()
         } catch {
             state.isHolidayLoading = false
             effect.send(.showError("공휴일 데이터를 가져오는데 실패했습니다."))
@@ -323,9 +326,43 @@ final class HomeStore: ObservableObject {
             VacationCardItem(dateString: "\(month)/00(\(monthName))", type: .friday)
         ]
         
+        updateShortCardsWithHolidayData()
+        
         // TODO: 실제 API 호출로 해당 월의 데이터 가져오기
         // send(.loadSandwichHoliday)
         // send(.loadHolidays)
+    }
+    
+    // MARK: - 공휴일 카드 업데이트 메서드
+    private func updateShortCardsWithHolidayData() {
+        guard !state.holidays.isEmpty else { return }
+        
+        let nextHoliday = getNextUpcomingHoliday()
+        let holidayDateString = nextHoliday?.dateString ?? "공휴일 없음"
+        
+        for index in state.shortCards.indices {
+            if state.shortCards[index].type == .holiday {
+                state.shortCards[index] = VacationCardItem(
+                    dateString: holidayDateString,
+                    type: .holiday
+                )
+                break
+            }
+        }
+    }
+    
+    // MARK: - 다음 공휴일 찾기 메서드
+    private func getNextUpcomingHoliday() -> Holiday? {
+        let today = Date()
+        let calendar = Calendar.current
+        
+        let upcomingHolidays = state.holidays
+            .filter { holiday in
+                calendar.compare(holiday.date, to: today, toGranularity: .day) != .orderedAscending
+            }
+            .sorted { $0.date < $1.date }
+        
+        return upcomingHolidays.first
     }
     
     private func setupLocationManager() {
@@ -378,7 +415,7 @@ final class HomeStore: ObservableObject {
             }
         }
     }
-} 
+}
 
 extension HomeStore {
     func loadWeeklySchedules() async {
