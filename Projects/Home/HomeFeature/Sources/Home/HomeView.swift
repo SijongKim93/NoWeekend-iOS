@@ -149,9 +149,11 @@ public struct HomeView: View {
                     // TODO: 실제 할 일 추가 로직 구현
                     showTextInputBottomSheet = false
                     inputText = ""
+                    switchToCalendarTab()
                 }
             )
         }
+
     }
     
     private func handleEffect(_ effect: HomeEffect) {
@@ -180,6 +182,13 @@ public struct HomeView: View {
     @MainActor
     private func refreshData() async {
         store.send(.refreshData)
+    }
+    
+    private func switchToCalendarTab() {
+        NotificationCenter.default.post(
+            name: NSNotification.Name("SwitchToCalendarTab"),
+            object: nil
+        )
     }
 }
 
