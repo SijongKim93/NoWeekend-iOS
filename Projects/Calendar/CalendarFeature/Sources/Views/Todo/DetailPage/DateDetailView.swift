@@ -13,6 +13,7 @@ import SwiftUI
 public struct DateDetailView: View {
     @EnvironmentObject private var coordinator: CalendarCoordinator
     @State private var store: DateDetailStore
+    @Environment(\.presentationMode) private var presentationMode
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -70,7 +71,7 @@ private extension DateDetailView {
         CustomNavigationBar(
             type: .backWithLabel(dateFormatter.string(from: store.selectedDate)),
             onBackTapped: {
-                coordinator.pop()
+                presentationMode.wrappedValue.dismiss()
             }
         )
     }
