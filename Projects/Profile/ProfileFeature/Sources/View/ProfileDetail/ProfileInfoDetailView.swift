@@ -116,7 +116,7 @@ private struct InfoDetailSettingSection: View {
         VStack(spacing: 16) {
             SettingRow.withRightText(
                 title: "계정",
-                rightText: store.displayNickname,
+                rightText: "",//displayName
                 action: {
                     coordinator.push(.edit)
                 }

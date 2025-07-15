@@ -57,6 +57,7 @@ public struct ProfileEditView: View {
             },
             onSaveTapped: {
                 editStore.saveProfile()
+                coordinator.pop()
             }
         )
         .padding(.bottom, 48)

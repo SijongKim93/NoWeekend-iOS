@@ -34,6 +34,7 @@ struct ProfileTagsView: View {
                 },
                 onSaveTapped: {
                     handleSaveButtonTapped()
+                    coordinator.pop()
                 }
             )
             .padding(.bottom, 48)
