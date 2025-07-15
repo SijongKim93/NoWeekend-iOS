@@ -11,6 +11,8 @@ import DesignSystem
 
 struct MainTopView: View {
     let vacationBakingStatus: VacationBakingStatus
+    let averageTemperature: Double
+    let remainingAnnualLeave: Int
     let onVacationBakingTapped: () -> Void
     
     var body: some View {
@@ -30,10 +32,22 @@ struct MainTopView: View {
                 Text("평균 열정온도:")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Text.body)
-                // TODO: 데이터 넣기
-                Text("97°C")
+                Text("\(Int(averageTemperature))°C")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Toast._600)
+            }
+            .padding(.bottom, 4)
+            
+            HStack(spacing: 4) {
+                Text("최대")
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Text.body)
+                Text("\(remainingAnnualLeave)일")
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Toast._600)
+                Text("휴가 굽기")
+                    .font(.body1)
+                    .foregroundColor(DS.Colors.Text.body)
             }
             .padding(.bottom, 4)
             

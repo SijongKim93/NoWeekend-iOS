@@ -41,6 +41,9 @@ struct HomeState: Equatable {
     var nextBirthday: Date? = nil
     var isBirthdayLoading: Bool = false
     
+    // 사용자 정보
+    var averageTemperature: Double = 0.0
+    
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .home)

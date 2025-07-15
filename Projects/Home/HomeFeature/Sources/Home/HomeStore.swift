@@ -83,7 +83,7 @@ final class HomeStore: ObservableObject {
         
         // 생일 데이터 로딩
         Task {
-            await loadUserBirthdayAsync()
+            await loadUserInfoAsync()
         }
     }
     
@@ -124,7 +124,7 @@ final class HomeStore: ObservableObject {
             
             await loadSandwichHolidayAsync()
             await loadHolidaysAsync()
-            await loadUserBirthdayAsync()
+            await loadUserInfoAsync()
             
             state.isLoading = false
             effect.send(.hideLoading)
@@ -427,17 +427,26 @@ final class HomeStore: ObservableObject {
 // MARK: - 생일 관련 기능 (Extension)
 extension HomeStore {
     
-    private func loadUserBirthdayAsync() async {
+    private func loadUserInfoAsync() async {
         state.isBirthdayLoading = true
         do {
             let userProfile = try await getUserProfileUseCase.execute()
+
+            // 생일 정보 저장
             state.userBirthday = userProfile.birthDate
+            
+            // 평균 열정온도 저장
+            state.averageTemperature = userProfile.averageTemperature
+            
+            // 남은 연차 저장
+            state.remainingAnnualLeave = Int(userProfile.remainingAnnualLeave)
+            
             state.isBirthdayLoading = false
             
             updateBirthdayCard()
         } catch {
             state.isBirthdayLoading = false
-            effect.send(.showError("생일 정보를 가져오는데 실패했습니다."))
+            effect.send(.showError("사용자 정보를 가져오는데 실패했습니다."))
         }
     }
     

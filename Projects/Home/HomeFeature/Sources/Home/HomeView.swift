@@ -41,6 +41,8 @@ public struct HomeView: View {
                 VStack(spacing: 0) {
                     MainTopView(
                         vacationBakingStatus: store.state.vacationBakingStatus,
+                        averageTemperature: store.state.averageTemperature,
+                        remainingAnnualLeave: store.state.remainingAnnualLeave,
                         onVacationBakingTapped: {
                             switch store.state.vacationBakingStatus {
                             case .notStarted:
