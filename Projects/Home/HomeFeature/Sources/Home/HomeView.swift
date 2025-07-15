@@ -141,7 +141,7 @@ public struct HomeView: View {
         .sheet(isPresented: $showTextInputBottomSheet) {
             TextInputBottomSheet(
                 subtitle: "연차 제목을 작성하면\n할 일에 추가돼요",
-                placeholder: "휴가 제목을 입력하세요",
+                placeholder: "쓸래말래가 추천한 연차 ✈️",
                 text: $inputText,
                 isPresented: $showTextInputBottomSheet,
                 onAddButtonTapped: {

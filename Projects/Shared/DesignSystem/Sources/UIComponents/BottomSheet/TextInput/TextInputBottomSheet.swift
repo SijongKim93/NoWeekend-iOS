@@ -39,7 +39,7 @@ public struct TextInputBottomSheet: View {
                     .padding(.top, 4)
                 
                 UnderlineTextField(
-                    placeholder: placeholder,
+                    placeholder: placeholder.isEmpty ? "쓸래말래가 추천한 연차 ✈️" : placeholder,
                     text: $text
                 )
                 .foregroundColor(DS.Colors.Text.netural)
