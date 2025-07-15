@@ -85,7 +85,13 @@ struct BottomSheetExampleView: View {
             TextInputBottomSheet(
                 subtitle: "연차 제목을 작성하면\n할 일에 추가돼요",
                 placeholder: "연차 제목을 입력하세요",
-                text: $textInput
+                text: $textInput,
+                isPresented: $showTextInputSheet,
+                onAddButtonTapped: {
+                    print("할 일 추가됨: \(textInput)")
+                    showTextInputSheet = false
+                    textInput = ""
+                }
             )
         }
         .sheet(isPresented: $showCategorySheet) {

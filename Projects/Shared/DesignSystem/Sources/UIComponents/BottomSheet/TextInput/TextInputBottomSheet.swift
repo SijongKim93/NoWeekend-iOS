@@ -12,30 +12,47 @@ public struct TextInputBottomSheet: View {
     public let subtitle: String
     public let placeholder: String
     @Binding public var text: String
+    public let onAddButtonTapped: () -> Void
+    @Binding public var isPresented: Bool
     
     public init(
         subtitle: String,
         placeholder: String,
-        text: Binding<String>
+        text: Binding<String>,
+        isPresented: Binding<Bool>,
+        onAddButtonTapped: @escaping () -> Void
     ) {
         self.subtitle = subtitle
         self.placeholder = placeholder
         self._text = text
+        self._isPresented = isPresented
+        self.onAddButtonTapped = onAddButtonTapped
     }
     
     public var body: some View {
-        BottomSheetContainer(height: 200) {
+        BottomSheetContainer(height: 300) {
             VStack(spacing: 24) {
-                Text("연차 제목을 작성하면\n할 일에 추가돼요")
+                Text(subtitle)
                     .font(.heading4)
-                    .foregroundColor(.black)
+                    .foregroundColor(DS.Colors.Text.netural)
                     .multilineTextAlignment(.center)
-                    .padding(.top, 24)
+                    .padding(.top, 4)
                 
                 UnderlineTextField(
-                    placeholder: placeholder,
+                    placeholder: placeholder.isEmpty ? "쓸래말래가 추천한 연차 ✈️" : placeholder,
                     text: $text
                 )
+                .foregroundColor(DS.Colors.Text.netural)
+                
+                NWButton.black(
+                    "추가하기",
+                    size: .xl,
+                    isEnabled: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                    action: {
+                        onAddButtonTapped()
+                    }
+                )
+                .padding(.bottom, 34)
             }
         }
     }

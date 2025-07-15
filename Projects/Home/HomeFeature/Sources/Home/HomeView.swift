@@ -23,6 +23,10 @@ public struct HomeView: View {
     @State private var showLocationSettingsAlert = false
     @State private var showDatePickerBottomSheet = false
     
+    // 바텀시트 상태 추가
+    @State private var showTextInputBottomSheet = false
+    @State private var inputText = ""
+    
     public init() {}
     
     public var body: some View {
@@ -56,6 +60,7 @@ public struct HomeView: View {
                             HolidayCardSection(
                                 holidays: store.state.holidays,
                                 onAddTapped: { holiday in
+                                    showTextInputBottomSheet = true
                                 }
                             )
                             .background(DS.Colors.Background.alternative01)
@@ -72,7 +77,7 @@ public struct HomeView: View {
                             },
                             onWeatherRefresh: {
                                 store.send(.loadWeatherRecommendations)
-                            }, 
+                            },
                             store: store
                         )
                         
@@ -86,6 +91,9 @@ public struct HomeView: View {
                             },
                             onDateButtonTapped: {
                                 showDatePickerBottomSheet = true
+                            },
+                            onAddTapped: { cardType in
+                                showTextInputBottomSheet = true
                             }
                         )
                         Spacer()
@@ -130,6 +138,20 @@ public struct HomeView: View {
         .sheet(isPresented: $showDatePickerBottomSheet) {
             DatePickerWithLabelBottomSheet(selectedDate: $selectedDate)
         }
+        .sheet(isPresented: $showTextInputBottomSheet) {
+            TextInputBottomSheet(
+                subtitle: "연차 제목을 작성하면\n할 일에 추가돼요",
+                placeholder: "쓸래말래가 추천한 연차 ✈️",
+                text: $inputText,
+                isPresented: $showTextInputBottomSheet,
+                onAddButtonTapped: {
+                    print("할 일 추가됨: \(inputText)")
+                    // TODO: 실제 할 일 추가 로직 구현
+                    showTextInputBottomSheet = false
+                    inputText = ""
+                }
+            )
+        }
     }
     
     private func handleEffect(_ effect: HomeEffect) {
@@ -145,16 +167,12 @@ public struct HomeView: View {
         case .showLocationSettingsAlert:
             showLocationSettingsAlert = true
         case .showError(let message):
-            // TODO: 에러 처리
             print("Error: \(message)")
         case .navigateToDetail(let cardType):
-            // TODO: 상세 페이지 네비게이션
-            print("Navigate to detail: \(cardType)")
+            showTextInputBottomSheet = true
         case .showLoading:
-            // TODO: 로딩 표시
             break
         case .hideLoading:
-            // TODO: 로딩 숨김
             break
         }
     }

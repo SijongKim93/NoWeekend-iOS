@@ -15,6 +15,7 @@ struct ShortCardSection: View {
     let cards: [VacationCardItem]
     var onCardTapped: ((VacationCardType) -> Void)? = nil
     var onDateButtonTapped: (() -> Void)? = nil
+    let onAddTapped: (VacationCardType) -> Void 
     
     private var dateString: String {
         let formatter = DateFormatter()
