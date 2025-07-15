@@ -24,7 +24,11 @@ public struct LoginView: View {
     public var body: some View {
         VStack {
             Spacer()
-            DS.Images.imageMain
+            
+            DS.Images.appLogo
+                .resizable()
+                .frame(width: 243, height: 324)
+            
             Spacer()
             
             VStack(spacing: 12) {

@@ -10,6 +10,7 @@ let project = Project.make(
             sources: ["Sources/**"],
             dependencies: [
                 .Home.domain,
+                .Calendar.domain,
                 .Core.diContainer,
                 .Core.coordinator,
                 .Shared.designSystem,

@@ -16,10 +16,10 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="LaunchScreen" translatesAutoresizingMaskIntoConstraints="NO" id="VA2-W9-1K3">
-                                <rect key="frame" x="75" y="264" width="243" height="324"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreen" translatesAutoresizingMaskIntoConstraints="NO" id="VA2-W9-1K3">
+                                <rect key="frame" x="66" y="303" width="261" height="324"/>
+
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="243" id="gkb-PG-sRC"/>
                                     <constraint firstAttribute="height" constant="324" id="ogj-HJ-a7s"/>
                                 </constraints>
                             </imageView>
@@ -28,6 +28,7 @@
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
                             <constraint firstItem="VA2-W9-1K3" firstAttribute="leading" secondItem="BrK-6X-wT9" secondAttribute="leading" constant="66" id="eUh-Gq-Rgt"/>
+                            <constraint firstAttribute="trailing" secondItem="VA2-W9-1K3" secondAttribute="trailing" constant="66" id="f1a-sm-xHd"/>
                             <constraint firstItem="VA2-W9-1K3" firstAttribute="top" secondItem="BrK-6X-wT9" secondAttribute="top" constant="244" id="twL-eC-3ED"/>
                         </constraints>
                     </view>
