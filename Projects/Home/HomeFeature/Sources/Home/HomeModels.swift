@@ -36,6 +36,11 @@ struct HomeState: Equatable {
     var holidays: [Holiday] = []
     var isHolidayLoading: Bool = false
     
+    //생일축하합니다~
+    var userBirthday: String? = nil
+    var nextBirthday: Date? = nil
+    var isBirthdayLoading: Bool = false
+    
     var longCards: [VacationCardItem] = [
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .trip),
         VacationCardItem(dateString: "0/00(월) ~ 0/00(월)", type: .home)

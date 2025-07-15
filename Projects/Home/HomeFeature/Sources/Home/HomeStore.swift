@@ -15,10 +15,12 @@ import Foundation
 import Utils
 import HomeDomain
 import DIContainer
+import ProfileDomain
 
 @MainActor
 final class HomeStore: ObservableObject {
     @Dependency private var homeUseCase: HomeUseCaseProtocol
+    @Dependency private var getUserProfileUseCase: GetUserProfileUseCaseProtocol
     
     @Published private(set) var state = HomeState()
     @Published var weeklySchedules: [DailySchedule] = []
@@ -78,6 +80,11 @@ final class HomeStore: ObservableObject {
         // 샌드위치 휴일 및 공휴일 데이터 로딩
         send(.loadSandwichHoliday)
         send(.loadHolidays)
+        
+        // 생일 데이터 로딩
+        Task {
+            await loadUserBirthdayAsync()
+        }
     }
     
     private func updateCurrentDateInfo() {
@@ -115,9 +122,9 @@ final class HomeStore: ObservableObject {
                 await loadWeatherRecommendationsAsync()
             }
             
-            // 샌드위치 휴일 및 공휴일 데이터 새로고침
             await loadSandwichHolidayAsync()
             await loadHolidaysAsync()
+            await loadUserBirthdayAsync()
             
             state.isLoading = false
             effect.send(.hideLoading)
@@ -414,6 +421,118 @@ final class HomeStore: ObservableObject {
                 locationManager.requestLocationOnce()
             }
         }
+    }
+}
+
+// MARK: - 생일 관련 기능 (Extension)
+extension HomeStore {
+    
+    private func loadUserBirthdayAsync() async {
+        state.isBirthdayLoading = true
+        do {
+            let userProfile = try await getUserProfileUseCase.execute()
+            state.userBirthday = userProfile.birthDate
+            state.isBirthdayLoading = false
+            
+            updateBirthdayCard()
+        } catch {
+            state.isBirthdayLoading = false
+            effect.send(.showError("생일 정보를 가져오는데 실패했습니다."))
+        }
+    }
+    
+    private func updateBirthdayCard() {
+        guard let birthday = state.userBirthday, !birthday.isEmpty else {
+            updateBirthdayCardWithDefault()
+            return
+        }
+        
+        if let nextBirthday = calculateNextBirthday(from: birthday) {
+            let birthdayDateString = formatBirthdayDate(nextBirthday)
+            state.nextBirthday = nextBirthday
+            
+            for index in state.shortCards.indices {
+                if state.shortCards[index].type == .birthday {
+                    state.shortCards[index] = VacationCardItem(
+                        dateString: birthdayDateString,
+                        type: .birthday
+                    )
+                    break
+                }
+            }
+        } else {
+            updateBirthdayCardWithDefault()
+        }
+    }
+    
+    private func updateBirthdayCardWithDefault() {
+        for index in state.shortCards.indices {
+            if state.shortCards[index].type == .birthday {
+                state.shortCards[index] = VacationCardItem(
+                    dateString: "생일 정보 없음",
+                    type: .birthday
+                )
+                break
+            }
+        }
+    }
+    
+    private func calculateNextBirthday(from birthDateString: String) -> Date? {
+        let dateFormatter = DateFormatter()
+        
+        if birthDateString.contains("-") {
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+        } else {
+            dateFormatter.dateFormat = "yyyyMMdd"
+        }
+        
+        guard let birthDate = dateFormatter.date(from: birthDateString) else {
+            print("❌ 생년월일 파싱 실패: \(birthDateString)")
+            return nil
+        }
+        
+        let calendar = Calendar.current
+        let koreaTimeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        var calendarWithTimezone = calendar
+        calendarWithTimezone.timeZone = koreaTimeZone
+        
+        let today = Date()
+        let currentYear = calendarWithTimezone.component(.year, from: today)
+        let birthMonth = calendarWithTimezone.component(.month, from: birthDate)
+        let birthDay = calendarWithTimezone.component(.day, from: birthDate)
+        
+        var thisYearBirthday = DateComponents()
+        thisYearBirthday.year = currentYear
+        thisYearBirthday.month = birthMonth
+        thisYearBirthday.day = birthDay
+        thisYearBirthday.timeZone = koreaTimeZone
+        
+        guard let thisYearBirthdayDate = calendarWithTimezone.date(from: thisYearBirthday) else {
+            return nil
+        }
+        
+        let comparison = calendarWithTimezone.compare(thisYearBirthdayDate, to: today, toGranularity: .day)
+        
+        if comparison == .orderedAscending {
+            var nextYearBirthday = DateComponents()
+            nextYearBirthday.year = currentYear + 1
+            nextYearBirthday.month = birthMonth
+            nextYearBirthday.day = birthDay
+            nextYearBirthday.timeZone = koreaTimeZone
+            
+            return calendarWithTimezone.date(from: nextYearBirthday)
+        } else {
+            return thisYearBirthdayDate
+        }
+    }
+    
+    private func formatBirthdayDate(_ date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        dateFormatter.dateFormat = "M/dd(E)"
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Seoul")
+        
+        return dateFormatter.string(from: date)
     }
 }
 
