@@ -13,6 +13,8 @@ import Utils
 public struct HomeView: View {
     @StateObject private var store = HomeStore()
     @EnvironmentObject private var coordinator: HomeCoordinator
+
+    public init() {}
     
     @State private var currentLongCardPage: Int = 0
     @State private var currentShortCardPage: Int = 0
@@ -27,7 +29,6 @@ public struct HomeView: View {
     @State private var showTextInputBottomSheet = false
     @State private var inputText = ""
     
-    public init() {}
     
     public var body: some View {
         ZStack(alignment: .top) {
@@ -41,6 +42,8 @@ public struct HomeView: View {
                 VStack(spacing: 0) {
                     MainTopView(
                         vacationBakingStatus: store.state.vacationBakingStatus,
+                        averageTemperature: store.state.averageTemperature,
+                        remainingAnnualLeave: store.state.remainingAnnualLeave,
                         onVacationBakingTapped: {
                             switch store.state.vacationBakingStatus {
                             case .notStarted:
@@ -77,6 +80,9 @@ public struct HomeView: View {
                             },
                             onWeatherRefresh: {
                                 store.send(.loadWeatherRecommendations)
+                            },
+                            onWeatherPlusTapped: {
+                                showTextInputBottomSheet = true
                             },
                             store: store
                         )
@@ -190,8 +196,4 @@ public struct HomeView: View {
             object: nil
         )
     }
-}
-
-#Preview {
-    HomeView()
 }

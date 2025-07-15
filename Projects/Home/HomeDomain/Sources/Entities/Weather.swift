@@ -10,27 +10,31 @@ import Foundation
 
 public struct Weather: Codable, Identifiable, Equatable {
     public let id: String
-    public let date: String
-    public let message: String
+    public let localDate: String
+    public let recommendContent: String
     public let temperature: Double?
     public let weatherCondition: String?
     public let location: String?
     
     public init(
         id: String,
-        date: String,
-        message: String,
+        localDate: String,
+        recommendContent: String,
         temperature: Double? = nil,
         weatherCondition: String? = nil,
         location: String? = nil
     ) {
         self.id = id
-        self.date = date
-        self.message = message
+        self.localDate = localDate
+        self.recommendContent = recommendContent
         self.temperature = temperature
         self.weatherCondition = weatherCondition
         self.location = location
     }
+    
+    // 기존 코드와의 호환성을 위한 computed properties
+    public var date: String { localDate }
+    public var message: String { recommendContent }
 }
 
 public struct LocationRegistration: Codable, Equatable {

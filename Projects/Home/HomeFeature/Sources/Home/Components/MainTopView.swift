@@ -11,6 +11,8 @@ import DesignSystem
 
 struct MainTopView: View {
     let vacationBakingStatus: VacationBakingStatus
+    let averageTemperature: Double
+    let remainingAnnualLeave: Int
     let onVacationBakingTapped: () -> Void
     
     var body: some View {
@@ -30,8 +32,7 @@ struct MainTopView: View {
                 Text("평균 열정온도:")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Text.body)
-                // TODO: 데이터 넣기
-                Text("97°C")
+                Text("\(Int(averageTemperature))°C")
                     .font(.body1)
                     .foregroundColor(DS.Colors.Toast._600)
             }
@@ -48,7 +49,7 @@ struct MainTopView: View {
                 .padding(.vertical, 16)
             
             Button(action: onVacationBakingTapped) {
-                Text(vacationBakingStatus.buttonText)
+                Text(getButtonText())
                     .font(.body1)
                     .foregroundColor(vacationBakingStatus.isButtonEnabled ? .white : DS.Colors.Text.body)
                     .frame(width: 200, height: 60)
@@ -59,6 +60,17 @@ struct MainTopView: View {
             }
             .disabled(!vacationBakingStatus.isButtonEnabled)
             .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    private func getButtonText() -> String {
+        switch vacationBakingStatus {
+        case .notStarted:
+            return "최대 \(remainingAnnualLeave)일 휴가 굽기"
+        case .processing:
+            return "휴가 굽는중"
+        case .completed:
+            return "휴가 쓸래말래?"
         }
     }
 } 

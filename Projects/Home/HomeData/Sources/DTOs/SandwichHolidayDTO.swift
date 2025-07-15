@@ -22,14 +22,6 @@ public struct SandwichHolidayResponseDTO: Codable {
 }
 
 public struct SandwichHolidayDataDTO: Codable {
-    public let sandwichHolidays: [SandwichHolidayItemDTO]
-    
-    public init(sandwichHolidays: [SandwichHolidayItemDTO]) {
-        self.sandwichHolidays = sandwichHolidays
-    }
-}
-
-public struct SandwichHolidayItemDTO: Codable {
     public let startDate: String
     public let endDate: String
     

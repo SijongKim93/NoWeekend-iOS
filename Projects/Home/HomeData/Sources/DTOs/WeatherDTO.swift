@@ -57,8 +57,8 @@ extension WeatherItemDTO {
     func toDomain() -> Weather {
         return Weather(
             id: localDate,
-            date: localDate,
-            message: recommendContent
+            localDate: localDate,
+            recommendContent: recommendContent
         )
     }
 }

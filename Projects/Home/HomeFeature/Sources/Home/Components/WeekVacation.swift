@@ -17,6 +17,7 @@ struct WeekVacation: View {
     let isWeatherLoading: Bool
     let onLocationIconTapped: () -> Void
     let onWeatherRefresh: () -> Void
+    let onWeatherPlusTapped: () -> Void
 
     @ObservedObject var store: HomeStore
     
@@ -44,7 +45,8 @@ struct WeekVacation: View {
                 WeatherSection(
                     weatherData: weatherData,
                     isLoading: isWeatherLoading,
-                    onPlusTapped: onWeatherRefresh
+                    onPlusTapped: onWeatherPlusTapped,
+                    formatDate: store.formatWeatherDate
                 )
             }
         }

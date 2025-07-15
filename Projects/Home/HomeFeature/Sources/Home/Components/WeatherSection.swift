@@ -13,6 +13,7 @@ struct WeatherSection: View {
     let weatherData: [Weather]
     let isLoading: Bool
     let onPlusTapped: () -> Void
+    let formatDate: (String) -> String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -23,45 +24,75 @@ struct WeatherSection: View {
                     .font(.body2)
                     .foregroundColor(DS.Colors.Text.disable)
             } else {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: 0) {
                     ForEach(weatherData) { weather in
-                        WeatherItemView(weather: weather)
+                        WeatherItemView(weather: weather, onPlusTapped: onPlusTapped, formatDate: formatDate)
+                            .padding(.horizontal, 20)
                     }
                 }
             }
         }
-        .padding(.horizontal, 24)
         .background(DS.Colors.Neutral.white)
     }
 }
 
 struct WeatherItemView: View {
     let weather: Weather
+    let onPlusTapped: () -> Void
+    let formatDate: (String) -> String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(weather.date)
-                .font(.caption)
-                .foregroundColor(DS.Colors.Text.disable)
-            Text(weather.message)
-                .font(.body2)
-                .foregroundColor(DS.Colors.Text.netural)
-                .lineLimit(2)
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(formatDate(weather.localDate))
+                    .font(.subtitle1)
+                    .foregroundColor(DS.Colors.Text.body)
+                Text(weather.recommendContent)
+                    .font(.heading6)
+                    .foregroundColor(DS.Colors.Text.netural)
+            }
+            
+            Spacer()
+            
+            Button(action: onPlusTapped) {
+                DS.Images.icnPlus
+                    .foregroundColor(DS.Colors.Text.body)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(DS.Colors.Background.alternative01)
-        .cornerRadius(8)
+        .padding(.leading, 16)
+        .padding(.trailing, 23)
+        .padding(.vertical, 12)
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(DS.Colors.Border.border01),
+            alignment: .bottom
+        )
+        .background(DS.Colors.Neutral.white)
     }
 }
 
 #Preview {
     WeatherSection(
         weatherData: [
-            Weather(id: "1", date: "오늘", message: "맑은 날씨에 드라이브하기 좋은 날이에요"),
-            Weather(id: "2", date: "내일", message: "비가 올 예정이니 실내 활동을 추천해요")
+            Weather(id: "1", localDate: "2025-07-16", recommendContent: "오전 8시부터 9시, 11시부터 12시, 그리고 오후 5시부터 8시까지 총 5시간 동안 비가 와요. 연차 어떠세요?"),
+            Weather(id: "2", localDate: "2025-07-17", recommendContent: "오전 7시부터 오후 5시까지 총 10시간 동안 비가 와요. 연차 쓰는 게 좋을 것 같아요.")
         ],
         isLoading: false,
-        onPlusTapped: {}
+        onPlusTapped: {},
+        formatDate: { dateString in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            
+            guard let date = dateFormatter.date(from: dateString) else {
+                return dateString
+            }
+            
+            let outputFormatter = DateFormatter()
+            outputFormatter.locale = Locale(identifier: "ko_KR")
+            outputFormatter.dateFormat = "M/dd(E)"
+            return outputFormatter.string(from: date)
+        }
     )
 }

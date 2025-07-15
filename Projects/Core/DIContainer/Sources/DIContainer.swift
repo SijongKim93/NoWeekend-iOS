@@ -24,16 +24,19 @@ public enum NWObjectScope {
 public final class DIContainer {
     public static let shared: DIContainer = DIContainer()
     public let container: Container = Container()
+    private let queue = DispatchQueue(label: "DIContainer.resolve", attributes: .concurrent)
     
     private init() {
         print("📦 DIContainer 초기화 (Feature별 통합 DI)")
     }
     
     public func resolve<T>(_ serviceType: T.Type) -> T {
-        guard let service = container.resolve(serviceType) else {
-            fatalError("❌ \(serviceType) 타입을 해결할 수 없습니다. 등록되었는지 확인하세요.")
+        return queue.sync {
+            guard let service = container.resolve(serviceType) else {
+                fatalError("❌ \(serviceType) 타입을 해결할 수 없습니다. 등록되었는지 확인하세요.")
+            }
+            return service
         }
-        return service
     }
     
     public func register<T>(
@@ -71,9 +74,33 @@ public struct DIResolver {
 
 @propertyWrapper
 public struct Dependency<T> {
-    public let wrappedValue: T
+    private let _wrappedValue: Lazy<T>
     
     public init() {
-        self.wrappedValue = DIContainer.shared.resolve(T.self)
+        self._wrappedValue = Lazy {
+            DIContainer.shared.resolve(T.self)
+        }
+    }
+    
+    public var wrappedValue: T {
+        return _wrappedValue.value
+    }
+}
+
+private class Lazy<T> {
+    private var _value: T?
+    private let _factory: () -> T
+    
+    init(factory: @escaping () -> T) {
+        self._factory = factory
+    }
+    
+    var value: T {
+        if let value = _value {
+            return value
+        }
+        let value = _factory()
+        _value = value
+        return value
     }
 }

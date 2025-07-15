@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct Holiday: Equatable {
+public struct Holiday: Equatable, DateStringConvertible {
     public let date: Date
     public let name: String
     public let dayOfWeekKor: String

@@ -21,8 +21,8 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
     var onVacationBakingCompleted: (() -> Void)?
     var remainingAnnualLeave: Int = 10
     
-    var recommendText: String = "도쿄에 다코야키 먹으러 가요 타키 먹으러가야키 먹으러가야키 먹으러가야키 먹으러가요"
-    var recommendDate: String = "12/28(수) ~ 12/31(금)"
+    var recommendText: String = "도쿄에 타코야키 먹으러 가요!"
+    var recommendDate: String = "7/25(금) ~ 7/27(일)"
 
     init() {}
     
@@ -51,6 +51,10 @@ final class HomeCoordinator: ObservableObject, Coordinatorable {
     @ViewBuilder
     func fullCoverView(_ cover: FullScreen) -> some View {
         EmptyView()
+    }
+    
+    func popToRoot() {
+        path = NavigationPath()
     }
 }
 
