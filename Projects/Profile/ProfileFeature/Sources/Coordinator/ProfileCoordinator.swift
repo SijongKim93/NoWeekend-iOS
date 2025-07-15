@@ -38,6 +38,10 @@ public final class ProfileCoordinator: ObservableObject, Coordinatorable {
             return AnyView(ProfileTagsView())
         case .vacation:
             return AnyView(ProfileVacationView())
+        case .serviceCall:
+            return AnyView(ServiceCallView())
+        case .policy:
+            return AnyView(PrivatePolicyView())
         }
     }
     
@@ -55,7 +59,21 @@ public final class ProfileCoordinator: ObservableObject, Coordinatorable {
     public func fullCoverView(_ cover: FullScreen) -> AnyView {
         switch cover {
         case .webView(let url):
-            return AnyView(ProfileVacationView())
+            return AnyView(PrivatePolicyView())
         }
+    }
+    
+    // MARK: - 편의 메서드
+    public func presentFullScreen(url: String) {
+        guard let url = URL(string: url) else { return }
+        fullScreenCover = .webView(url)
+    }
+    
+    public func dismissFullScreen() {
+        fullScreenCover = nil
+    }
+    
+    public func dismissSheet() {
+        sheet = nil
     }
 }

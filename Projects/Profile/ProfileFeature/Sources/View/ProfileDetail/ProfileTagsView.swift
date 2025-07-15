@@ -39,7 +39,7 @@ struct ProfileTagsView: View {
             )
             .padding(.bottom, 48)
             
-            VStack(spacing: 40) {
+            VStack {
                 NWUserInputView(
                     title: "자주하는 일정을 알려주세요",
                     subtitle: "할일 등록을 AI에게 추천받을 수 있어요"
@@ -61,6 +61,7 @@ struct ProfileTagsView: View {
 //                .padding(.horizontal, 24)
 //                .padding(.bottom, 8)
             }
+            .padding(.top, 40)
         }
         .background(DS.Colors.Background.normal)
         .navigationBarHidden(true)
